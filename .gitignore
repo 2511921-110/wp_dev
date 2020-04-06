@@ -1,0 +1,16 @@
+.DS_Store
+.ansible
+.bundle
+.envrc
+.github/
+.idea/
+.travis.yml
+.vagrant
+npm-debug.log
+package.box
+playbook.retry
+wordpress/*
+!wordpress/wp-content/plugins
+!wordpress/wp-content/themes
+!wordpress/wp-content/uploads
+wordpress/wp-content/themes/*/gulp/node_modules/

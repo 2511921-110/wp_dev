@@ -1,0 +1,344 @@
+@charset "UTF-8";
+
+@import "_reset";
+
+/*color*/
+$color-theme: #ce0613;
+$color-sub: #160804;
+$color-base: white;
+$color-text: #000;
+$color-accent: #ce0613;
+$danger-color: darken(#9e7bb3, .1);
+$color-link: #1a305a;
+$line: white;
+
+/*font*/
+//$gothic_fonts: 'Noto Serif', 游明朝,"Yu Mincho",YuMincho,"Hiragino Mincho ProN",HGS明朝E,メイリオ,Meiryo,serif;
+$gothic_fonts: 'NotoSans-R',YuGothic,"ヒラギノ角ゴ ProN W3", Hiragino Kaku Gothic ProN, Arial, "メイリオ", Meiryo, sans-serif;
+$mincho_fonts: 'NotoSans-M' ,YuGothic,"ヒラギノ角ゴ ProN W3", Hiragino Kaku Gothic ProN, Arial, "メイリオ", Meiryo, sans-serif;
+//$mincho_fonts: 游明朝,"Yu Mincho",YuMincho,"Hiragino Mincho ProN",HGS明朝E,メイリオ,Meiryo,serif;
+
+@mixin cf{
+  &:after{
+    content:" ";
+    display:block;
+    clear:both;
+  }
+}
+
+/*font size*/
+@mixin font-size($size, $base: 16) {
+    font-size: $size + px;
+    font-size: ($size / $base) * 1rem;
+}
+
+/*font関連*/
+@mixin mincho{
+  font-family: $mincho_fonts;
+}
+@mixin gothic{
+  font-family: $gothic_fonts;
+}
+
+img{
+  max-width: 100%;
+}
+
+
+html{
+  font-size:16px;
+  @media screen and (max-width: 768px){
+    font-size:12px;
+  }
+}
+
+body{
+  @include font-size(16);
+  font-family: $gothic_fonts;
+  line-height: 1.7;
+  color: $color-theme;
+  margin: 0;
+}
+
+p{
+  margin: 0 0 1em 0;
+  &:last-child{
+    margin-bottom: 0;
+  }
+}
+
+ul{
+  margin: 0;
+  padding: 0;
+  list-style:none;
+}
+
+h1,h2,h3,h4,h5,h6{
+  margin: 0;
+}
+
+address{
+  font-style: normal;
+}
+
+
+figure{
+  line-height: 0;
+}
+
+/*汎用型*/
+table{
+  width: 100%;
+  font-size:100%;
+  box-sizing: border-box;
+  tbody{
+    tr{
+      th,td{
+        padding: 5px 3px;
+        border-bottom: solid 1px #ddd;
+      }
+      th{
+        width: 25%;
+      }
+    }
+  }
+}
+
+figure{
+  margin: 0;
+}
+
+figcaption{
+  line-height: 1.7;
+}
+
+dd{
+  margin-left: 0;
+}
+
+/* iOSでのデフォルトスタイルをリセット */
+input[type="submit"],
+input[type="button"] {
+  border-radius: 0;
+  -webkit-box-sizing: content-box;
+  -webkit-appearance: button;
+  appearance: button;
+  border: none;
+  box-sizing: border-box;
+  &::-webkit-search-decoration {
+    display: none;
+  }
+  &::focus {
+    outline-offset: -2px;
+  }
+}
+
+/*******************************
+  コンテンツ幅
+*******************************/
+.container{
+  &__min{}
+  &__large{}
+}
+
+@media screen and (min-width: 415px){
+  // iphone 6 Plusよりも大きい場合
+}
+@media screen and (min-width: 769px){
+  // ipadの縦表示よりも大きい場合
+}
+@media screen and (max-width: 768px){
+  // ipadの縦表示以下の場合
+}
+
+
+
+/*******************************
+  nav
+*******************************/
+.spmenu_btn{
+  display: none;
+  @media screen and (max-width: 768px){
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 45px;
+    height: 45px;
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    z-index: 6;
+    padding: 5px;
+    background-color: rgba($color-theme, 0.7);
+    &:hover{
+      cursor: pointer;
+    }
+    &::before,&::after{
+      content: "";
+      display: block;
+      height: 1px;
+      width: 35px;
+      background-color: #000;
+      transition: all 0.3s;
+      position: absolute;
+    }
+    &::before{
+      left: 5px;
+      top: 5px;
+    }
+    &::after{
+      left: 5px;
+      bottom: 5px;
+    }
+    span{
+      display: block;
+      height: 1px;
+      width: 35px;
+      background-color: #000;
+      transition: all 0.3s;
+    }
+    &Close{
+      span{
+        width: 0;
+      }
+      &::before{
+        transform: rotate(45deg);
+        transform-origin: left top;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 140%;
+      }
+      &::after{
+        transform: rotate(-45deg);
+        transform-origin: left top;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 140%;
+      }
+    }
+  }
+}
+
+.globalNav{
+  @media screen and (max-width: 768px){
+    display: flex;
+    position: fixed;
+    height: 100vh;
+    width: 100vw;
+    right: -100vw;
+    transition: all 0.4s;
+    z-index: 5;
+    background-color: #fff;
+    &_state{
+      right: 0;
+    }
+    .menu{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      align-content: center;
+      width: 100%;
+      &-item{
+        width: 100%;
+        text-align: center;
+      }
+    }
+    .menu-globalnav-container{
+      width: 100%;
+      display: flex;
+      align-content: center;
+    }
+  }
+}
+
+/*******************************
+  title
+*******************************/
+.title{
+}
+
+
+/*******************************
+  text
+*******************************/
+
+
+/*******************************
+  table
+*******************************/
+
+
+/*******************************
+  background
+*******************************/
+
+
+/*******************************
+  border
+*******************************/
+
+
+/*******************************
+  header
+*******************************/
+
+
+/*******************************
+  nav
+*******************************/
+
+
+/*******************************
+  footer
+*******************************/
+.footer{
+}
+
+/*******************************
+  slider
+*******************************/
+
+
+/*******************************
+  map
+*******************************/
+
+
+/*******************************
+  instagram
+*******************************/
+
+
+/*******************************
+  twitter
+*******************************/
+
+
+/*******************************
+  single
+*******************************/
+
+
+/*******************************
+  archive
+*******************************/
+
+
+/*******************************
+  aside
+*******************************/
+
+
+/*******************************
+  lightbox
+*******************************/
+
+
+/*******************************
+  サイト固有
+*******************************/
+

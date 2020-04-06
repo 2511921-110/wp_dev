@@ -1,0 +1,4 @@
+require:
+  - wp-cli/browse-command.php
+@kaorigaoka-seikotsuin.wrr:
+  ssh: vagrant:kaorigaoka-seikotsuin.wrr:/var/www/html
