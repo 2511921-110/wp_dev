@@ -1,18 +1,42 @@
-# VCCW
+# 環境
 
-[![Build Status](https://travis-ci.org/vccw-team/vccw.svg?branch=master)](https://travis-ci.org/vccw-team/vccw)
+- VCCW
+- node 10.13.0
+- SCSS
+- webpack4
+- gulp
 
-This is a Vagrant configuration designed for development of WordPress plugins, themes, or websites.
+## サンプル URL
 
-To get started, check out <http://vccw.cc/>
+http://
 
-## Configuration
+### server
 
-1. Copy `provision/default.yml` to `site.yml`.
-1. Edit the `site.yml`.
-1. Run `vagrant up`.
+- tsa07.xbiz.jp
+- user
+- pw
 
-### Note
+### サイト URL
 
-* The `site.yml` has to be in the same directory with Vagrantfile.
-* You can put difference to the `site.yml`.
+- http
+
+### ワードプレス情報
+
+- http
+- user
+- pw
+
+## wp cli
+
+### 投稿データ 20 追加
+
+- wp post generate --count=20 --post_type=post --post_status=publish
+
+### 投稿データ作成
+
+wp post create --post_title="テスト投稿" --post_content="テスト投稿です。" --post_category=3 --post_status=publish
+
+### DB 関連
+
+- wp db export /vagrant/wordpress.sql
+- wp db import /vagrant/wordpress.sql
