@@ -101,10 +101,17 @@ function show_Cat_Posts_func($atts)
 
         /*$output .= '<aside class="showcatposts">'."\n";
         $output .= '<h2 class="showcatposts-title">カテゴリー「'.$catnames.'」'."の最新記事（".$show."件）</h2>\n";*/
-        $output .= '<div class="post post1 mb30">'."\n";
+        $output .= '<div class="module__posts">'."\n";
         foreach ($my_posts as $post) : // ループスタート
-            setup_postdata($post); // get_the_title() などのテンプレートタグを使えるようにする
-            $output .= '<div id="post-'.get_the_ID().'" '.get_post_class().' class="post-item"><div class="post-date">'.get_the_date().'</div><a href="'.get_permalink().'"><div class="post-title">'.get_the_title()."</a></div></div>\n";
+        $post_id = get_the_id();
+        $thumb_id = get_post_thumbnail_id($post_id);
+        $thumb_img = wp_get_attachment_image_src($thumb_id, 'medium');
+        setup_postdata($post); // get_the_title() などのテンプレートタグを使えるようにする
+        $output .= '<div id="post-'.get_the_ID().'" class="module__post-item">';
+        if (has_post_thumbnail($post_id)) {
+            $output .= '<div class="module__post-img"><img src="'.$thumb_img[0].'" alt="'.get_the_title().'"></div>';
+        }
+        $output .= '<div class="module__post-date">'.get_the_date().'</div><div class="module__post-title"><a href="'.get_permalink().'">'.get_the_title()."</a></div></div>\n";
         endforeach; // ループ終わり
         $output .= "</div>\n";
         //$output .= "</aside>\n";
@@ -139,17 +146,17 @@ function pagination($pages = '', $range = 2)
     $showitems = ($range * 2) + 1; //表示するページ数（５ページを表示）
 
     global $paged; //現在のページ値
-     if (empty($paged)) {
-         $paged = 1;
-     } //デフォルトのページ
+    if (empty($paged)) {
+        $paged = 1;
+    } //デフォルトのページ
 
-     if ($pages == '') {
-         global $wp_query;
-         $pages = $wp_query->max_num_pages; //全ページ数を取得
+    if ($pages == '') {
+        global $wp_query;
+        $pages = $wp_query->max_num_pages; //全ページ数を取得
          if (!$pages) {//全ページ数が空の場合は、１とする
              $pages = 1;
          }
-     }
+    }
 
     if (1 != $pages) {//全ページが１でない場合はページネーションを表示する
         echo "<div class=\"pagenation\">\n";
