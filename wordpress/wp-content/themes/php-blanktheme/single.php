@@ -1,18 +1,11 @@
 <?php get_header(); ?>
-<div class="blog_title">
-<div class="ta-c"><h2 class="title01 line-h5">ブログ</h2></div>
-</div>
-
-<div class="body_wrap">
-<div class="content_wrap">
 
 <?php if(have_posts()) : while (have_posts()) : the_post(); ?>
-<figure><?php the_post_thumbnail('medium'); ?></figure>
-<p class="data"><?php echo get_the_date(); ?></data>
-<h1 class="title"><?php the_title(); ?></h1>
-<div class="txt"><?php the_content(); ?></div>
+<figure class="single__post-img"><?php the_post_thumbnail('medium'); ?></figure>
+<time class="single__post-time" datetime="<?php the_time('Y-m-d'); ?>T<?php the_time('H:i:sP'); ?>"><?php the_time('Y.m.d'); ?></time>
+<h1 class="single__post-title"><?php the_title(); ?></h1>
+<div class="single__post-content"><?php the_content(); ?></div>
 <?php endwhile; endif; ?>
-	</div>
+
 <?php get_sidebar(); ?>
-</div>
 <?php get_footer(); ?>
