@@ -16,7 +16,7 @@ function editor_stylesheets_custom_demo($stylesheets)
     //$stylesheets配列の最後に読み込む順番でファイルパスを追加していく
     array_push($stylesheets,
     get_template_directory_uri().'/css/bootstrap-grid.css',
-    get_template_directory_uri().'/css/editor-style.css',
+    // get_template_directory_uri().'/css/editor-style.css',
     get_template_directory_uri().'/css/style.css',
     get_template_directory_uri().'/style.css'
   );
@@ -227,7 +227,7 @@ if (!(is_admin())) {
         if (false === strpos($url, '.js')) {
             return $url;
         }
-        if (strpos($url, 'jquery.js')) {
+        if (strpos($url, 'jquery')) {
             return $url;
         }
 
@@ -243,8 +243,8 @@ function plugin_mce_css($mce_css)
         $mce_css .= ',';
     }
 
-    $font_url = get_stylesheet_directory_uri().'/editor-style.css';
-    $mce_css .= str_replace(',', '%2C', $font_url);
+    // $font_url = get_stylesheet_directory_uri().'/editor-style.css';
+    // $mce_css .= str_replace(',', '%2C', $font_url);
 
     return $mce_css;
 }
@@ -440,7 +440,7 @@ add_filter('post_thumbnail_html', 'remove_image_attribute', 10);
 function remove_image_attribute($html)
 {
     $html = preg_replace('/(width|height)="\d*"\s/', '', $html);
-    $html = preg_replace('/class=[\'"]([^\'"]+)[\'"]/i', '', $html);
+    // $html = preg_replace('/class=[\'"]([^\'"]+)[\'"]/i', '', $html);
 
     return $html;
 }
@@ -484,6 +484,12 @@ function get_current_term()
     }
 
     return get_term($id, $tax_slug);
+}
+
+//woo commerce の機能を使う
+add_action( 'after_setup_theme', 'woocommerce_support' );
+function woocommerce_support() {
+    add_theme_support( 'woocommerce' );
 }
 
 //カスタム投稿追加

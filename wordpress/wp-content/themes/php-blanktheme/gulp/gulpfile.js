@@ -44,7 +44,7 @@ function browserSyncFunc(done) {
     //     })
     //   ]
     // },
-    proxy: 'http://st-ballet.wrr/',
+    proxy: 'http://wpdev.wise/',
     files: ['../**/*.css', '../**/*.js', '../**/*.php'],
     port: 4000,
     reloadOnRestart: true,
@@ -67,8 +67,8 @@ function sassFunc() {
     .pipe(
       sass({
         includePaths: require('node-reset-scss').includePath,
-        outputStyle: 'compressed',
-        // outputStyle: 'expanded'
+        // outputStyle: 'compressed',
+        outputStyle: 'expanded'
       })
     )
     .pipe(gulp.dest(paths.outCss), {
