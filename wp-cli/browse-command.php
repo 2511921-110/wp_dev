@@ -23,9 +23,9 @@ $browse_command = function( $_, $assoc_args ) {
 	$wp_admin = \WP_CLI\Utils\get_flag_value( $assoc_args, 'wp-admin' );
 
 	if ( true === $wp_admin ) {
-		$url = 'http://kaorigaoka-seikotsuin.wrr/wp-admin/';
+		$url = 'http://wpdev.wise/wp-admin/';
 	} else {
-		$url = 'http://kaorigaoka-seikotsuin.wrr/';
+		$url = 'http://wpdev.wise/';
 	}
 
 	passthru( $exec . ' ' . escapeshellarg( $url ) );

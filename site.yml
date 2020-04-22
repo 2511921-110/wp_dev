@@ -15,15 +15,15 @@ cpus: 1
 #
 # Network Settings
 #
-hostname: kaorigaoka-seikotsuin.wrr
-ip: 192.168.14.11
+hostname: wpdev.wise
+ip: 192.168.14.10
 
 #
 # Vagrant Hostsupdater Aliases
 # Manage additional entries in the /etc/hosts file using vagrant-hostsupdater
 #
 hostname_aliases:
-  - www.kaorigaoka-seikotsuin.wrr
+  - www.wpdev.wise
 #  - some.subdomain.vccw.test
 
 #
@@ -44,8 +44,8 @@ wp_home: "" # Path to the WP_HOME like "wp"
 #
 # WordPress User
 #
-admin_user: kaorigaoka
-admin_pass: 6bdQCnKR
+admin_user: wisedev
+admin_pass: wise-kanri-2511
 admin_email: kanri@tsa-grp.jp
 
 #
