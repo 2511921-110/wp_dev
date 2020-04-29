@@ -3,13 +3,14 @@
 *******************/
 
 if(document.getElementsByClassName('globalNav')[0]){
+  const wrap = document.querySelector('.menu__btnwrap')
   const nav_el = document.querySelector('.spmenu_btn')
   const nav_state_class = 'globalNav_state'
   const nav_target_class = '.globalNav'
   const nav_close_class = 'spmenu_btnClose'
   const nav_wrap = document.querySelector('.menu')
 
-  nav_el.addEventListener('click',()=>{
+  wrap.addEventListener('click',()=>{
     if(document.querySelector('.'+ nav_state_class) === null){
       document.querySelector(nav_target_class).classList.add(nav_state_class)
       nav_el.classList.add(nav_close_class)
