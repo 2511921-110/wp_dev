@@ -18,7 +18,9 @@
       wp_reset_postdata();
     ?>
 		<div class="navwrap">
-			<span class="spmenu_btn"><span></span></span>
+      <div class="menu__btnwrap">
+        <span class="spmenu_btn"><span></span></span>MENU
+      </div>
 			<nav class="globalNav">
 				<?php wp_nav_menu( array( 'menu' => 'globalNav' ) ); ?>
 			</nav>

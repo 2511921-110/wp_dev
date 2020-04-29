@@ -194,6 +194,14 @@ a:hover img {
 /*******************************
   nav
 *******************************/
+.menu__btnwrap {
+  position: fixed;
+  right: 10px;
+  top: 10px;
+  z-index: 6;
+  text-align: center;
+}
+
 .spmenu_btn {
   display: none;
 }
@@ -204,12 +212,9 @@ a:hover img {
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
+    position: relative;
     width: 45px;
     height: 45px;
-    position: fixed;
-    right: 10px;
-    top: 10px;
-    z-index: 6;
     padding: 5px;
     background-color: rgba(206, 6, 19, 0.7);
   }

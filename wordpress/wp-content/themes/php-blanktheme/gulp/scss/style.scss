@@ -202,6 +202,13 @@ a {
 /*******************************
   nav
 *******************************/
+.menu__btnwrap{
+  position: fixed;
+  right: 10px;
+  top: 10px;
+  z-index: 6;
+  text-align: center;
+}
 .spmenu_btn {
   display: none;
   @media screen and (max-width: 768px) {
@@ -209,12 +216,9 @@ a {
     align-items: center;
     justify-content: center;
     flex-wrap: wrap;
+    position: relative;
     width: 45px;
     height: 45px;
-    position: fixed;
-    right: 10px;
-    top: 10px;
-    z-index: 6;
     padding: 5px;
     background-color: rgba($color-theme, 0.7);
     &:hover {
