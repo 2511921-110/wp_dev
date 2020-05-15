@@ -1,3 +1,11 @@
+// import Inview from 'in-view'
+// import objectFitImages from 'object-fit-images';
+
+/*******************
+  object fit
+*******************/
+// objectFitImages('.single__img img', {watchMQ: true});
+
 /*******************
   Nav
 *******************/
@@ -94,5 +102,24 @@ if (document.getElementById('Map')) {
       })
     },
   })
+}
+
+
+/*******************
+  accordion
+*******************/
+
+var trigger = document.querySelectorAll('.accordion__title');
+for (var i = 0; i < trigger.length; i++) {
+  trigger[i].addEventListener('click', function() {
+    var body = this.nextElementSibling;
+    if (this.classList.contains('is-active')) {
+      this.classList.remove('is-active');
+      body.classList.remove('is-open');
+    } else {
+      this.classList.add('is-active');
+      body.classList.add('is-open');
+    }
+  });
 }
 
