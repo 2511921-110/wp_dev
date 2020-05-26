@@ -109,7 +109,7 @@ h6 {
   margin: 0;
 }
 
-b.strong {
+b, strong {
   font-weight: bold;
 }
 
