@@ -77,7 +77,7 @@ function show_Cat_Posts_func($atts)
     $output = '';
 
     extract(shortcode_atts(array(
-        'cat' => 1, // デフォルトカテゴリーID = 1
+        'cat' => 3, // デフォルトカテゴリーID = 3
         'show' => 3, // デフォルト表示件数 = 3
     ), $atts));
 

@@ -59,6 +59,14 @@ $mincho_fonts: 游明朝, 'Yu Mincho', YuMincho, 'Hiragino Mincho ProN', HGS明�
   }
 }
 
+@mixin text-shadow($v: #fff) {
+  text-shadow:
+    $v 1px 1px 0, $v -1px -1px 0,/*右下、左上*/
+    $v -1px 1px 0, $v 1px -1px 0,/*右上、左下*/
+    $v 0px 1px 0, $v  0-1px 0,/*右、左*/
+    $v -1px 0 0, $v 1px 0 0;/*上、下*/
+}
+
 .mont {
   font-family: 'Montserrat', sans-serif;
 }
@@ -104,7 +112,7 @@ h6 {
   margin: 0;
 }
 
-b.strong{
+b,strong{
   font-weight: bold;
 }
 
