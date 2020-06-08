@@ -1,0 +1,401 @@
+@charset "UTF-8";
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap");
+@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css");
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+body {
+  line-height: 1;
+}
+
+ol, ul {
+  list-style: none;
+}
+
+blockquote, q {
+  quotes: none;
+}
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/*color*/
+/*font*/
+/*font size*/
+/*font関連*/
+.mont {
+  font-family: 'Montserrat', sans-serif;
+}
+
+img {
+  max-width: 100%;
+}
+
+html {
+  font-size: 16px;
+}
+
+@media screen and (max-width: 768px) {
+  html {
+    font-size: 12px;
+  }
+}
+
+body {
+  font-size: 16px;
+  font-size: 1rem;
+  font-family: "NotoSans-R", YuGothic, "ヒラギノ角ゴ ProN W3", Hiragino Kaku Gothic ProN, Arial, "メイリオ", Meiryo, sans-serif;
+  line-height: 1.7;
+  color: #ce0613;
+  margin: 0;
+}
+
+p {
+  margin: 0 0 1em 0;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+}
+
+b, strong {
+  font-weight: bold;
+}
+
+em {
+  font-style: italic;
+}
+
+address {
+  font-style: normal;
+}
+
+/*汎用型*/
+table {
+  width: 100%;
+  font-size: 100%;
+  box-sizing: border-box;
+}
+
+table tbody tr th,
+table tbody tr td {
+  padding: 5px 3px;
+  border-bottom: solid 1px #ddd;
+}
+
+@media screen and (min-width: 769px) {
+  table tbody tr th {
+    white-space: nowrap;
+    padding-right: 2em;
+  }
+}
+
+figure {
+  margin: 0;
+  line-height: 0;
+}
+
+figcaption {
+  line-height: 1.7;
+}
+
+dd {
+  margin-left: 0;
+}
+
+/* iOSでのデフォルトスタイルをリセット */
+input[type='submit'],
+input[type='button'] {
+  border-radius: 0;
+  -webkit-box-sizing: content-box;
+  -webkit-appearance: button;
+  appearance: button;
+  border: none;
+  box-sizing: border-box;
+}
+
+input[type='submit']::-webkit-search-decoration,
+input[type='button']::-webkit-search-decoration {
+  display: none;
+}
+
+input[type='submit']::focus,
+input[type='button']::focus {
+  outline-offset: -2px;
+}
+
+a {
+  color: #000;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #c34723;
+}
+
+a:hover img {
+  opacity: 0.7;
+}
+
+/*******************************
+  コンテンツ幅
+*******************************/
+/*******************************
+  nav
+*******************************/
+.menu__btnwrap {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .menu__btnwrap {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    z-index: 6;
+    text-align: center;
+    background-color: rgba(206, 6, 19, 0.7);
+    color: white;
+    padding: 5px;
+    line-height: 1.3;
+  }
+}
+
+.spmenu_btn {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .spmenu_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+    width: 45px;
+    height: 25px;
+    margin-bottom: 5px;
+  }
+  .spmenu_btn:hover {
+    cursor: pointer;
+  }
+  .spmenu_btn::before, .spmenu_btn::after {
+    content: '';
+    display: block;
+    height: 1px;
+    width: 100%;
+    background-color: white;
+    transition: all 0.3s;
+    position: absolute;
+  }
+  .spmenu_btn::before {
+    left: 0px;
+    top: 0px;
+  }
+  .spmenu_btn::after {
+    left: 0px;
+    bottom: 0px;
+  }
+  .spmenu_btn span {
+    display: block;
+    height: 1px;
+    width: 100%;
+    background-color: white;
+    transition: all 0.3s;
+  }
+  .spmenu_btnClose span {
+    width: 0;
+  }
+  .spmenu_btnClose::before, .spmenu_btnClose::after {
+    transform-origin: center;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    position: absolute;
+    width: 100%;
+  }
+  .spmenu_btnClose::before {
+    transform: rotate(45deg);
+  }
+  .spmenu_btnClose::after {
+    transform: rotate(-45deg);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .globalNav {
+    display: flex;
+    position: fixed;
+    height: 100vh;
+    width: 100vw;
+    right: -100vw;
+    transition: all 0.4s;
+    z-index: 5;
+    top: 0;
+    background-color: white;
+  }
+  .globalNav_state {
+    right: 0;
+  }
+  .globalNav .menu {
+    width: 100%;
+  }
+  .globalNav .menu-item {
+    width: 100%;
+  }
+  .globalNav .menu a {
+    display: block;
+    padding: 1em;
+  }
+  .globalNav .menu li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  .globalNav .menu-globalnav-container {
+    width: 100%;
+    display: flex;
+    align-content: center;
+  }
+}
+
+/*******************************
+  title
+*******************************/
+/*******************************
+  text
+*******************************/
+/*******************************
+  btn
+*******************************/
+/*******************************
+  table
+*******************************/
+/*******************************
+  background
+*******************************/
+/*******************************
+  border
+*******************************/
+/*******************************
+  header
+*******************************/
+/*******************************
+  footer
+*******************************/
+/*******************************
+  slider
+*******************************/
+/*******************************
+  map
+*******************************/
+/*******************************
+  SNS関連
+*******************************/
+/*******************************
+  single
+*******************************/
+/*******************************
+  archive
+*******************************/
+/*******************************
+  aside
+*******************************/
+/*******************************
+  lightbox
+*******************************/
+/*******************************
+  accordion
+*******************************/
+.accordion__title {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+}
+
+.accordion__title::after {
+  content: "\f078";
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  transition: all .3s;
+}
+
+.accordion__title:hover {
+  cursor: pointer;
+}
+
+.accordion__title.open::after {
+  transform: rotate(180deg);
+}
+
+.accordion__content {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  line-height: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: padding .36s, opacity .36s;
+}
+
+.accordion__content.is-open {
+  padding: .6em 1em;
+  line-height: normal;
+  height: auto;
+  opacity: 1;
+}
+
+/*******************************
+  サイト固有
+*******************************/
