@@ -82,7 +82,7 @@ body {
   font-size: 1rem;
   font-family: "NotoSans-R", YuGothic, "ヒラギノ角ゴ ProN W3", Hiragino Kaku Gothic ProN, Arial, "メイリオ", Meiryo, sans-serif;
   line-height: 1.7;
-  color: #ce0613;
+  color: #000;
   margin: 0;
 }
 
@@ -311,6 +311,28 @@ a:hover img {
 }
 
 /*******************************
+  header
+*******************************/
+#header {
+  transition: all .4s;
+}
+
+#header.active {
+  position: fixed;
+  width: 100%;
+  top: -120px;
+  transition: all .4s;
+  z-index: 4;
+}
+
+#header.active.in-view {
+  top: 0;
+}
+
+/*******************************
+  footer
+*******************************/
+/*******************************
   title
 *******************************/
 /*******************************
@@ -327,12 +349,6 @@ a:hover img {
 *******************************/
 /*******************************
   border
-*******************************/
-/*******************************
-  header
-*******************************/
-/*******************************
-  footer
 *******************************/
 /*******************************
   slider
@@ -355,6 +371,171 @@ a:hover img {
 /*******************************
   lightbox
 *******************************/
+/*******************************
+  form
+*******************************/
+.mw_wp_form tr:first-child th, .mw_wp_form tr:first-child td {
+  border-top: none;
+}
+
+.mw_wp_form th, .mw_wp_form td {
+  border-bottom: 1px solid rgba(148, 120, 56, 0.6);
+  text-align: left;
+  vertical-align: top;
+  white-space: inherit;
+  position: relative;
+}
+
+@media screen and (max-width: 768px) {
+  .mw_wp_form th, .mw_wp_form td {
+    display: block;
+    width: 100%;
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .mw_wp_form th {
+    white-space: nowrap;
+    width: 320px;
+  }
+}
+
+.mw_wp_form .required {
+  font-size: 14px;
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: #000;
+  background-color: #ce0613;
+  display: inline-block;
+  margin-left: 1.5rem;
+  padding: 0 0.6rem;
+}
+
+.mw_wp_form input[type="text"], .mw_wp_form input[type="email"], .mw_wp_form input[type="number"], .mw_wp_form input[type="tel"] {
+  font-size: 16px;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.3rem;
+}
+
+@media screen and (max-width: 768px) {
+  .mw_wp_form input[type="text"], .mw_wp_form input[type="email"], .mw_wp_form input[type="number"], .mw_wp_form input[type="tel"] {
+    width: 100%;
+  }
+}
+
+.mw_wp_form input:last-child {
+  margin-bottom: 0;
+}
+
+.mw_wp_form select {
+  font-size: 16px;
+  padding: 0.4rem 0.6rem;
+  display: inline-block;
+  border-radius: 0;
+}
+
+@media screen and (min-width: 769px) {
+  .mw_wp_form select {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    padding: 0.6em 1.5em 0.6em 0.5em;
+    background-image: linear-gradient(45deg, transparent 50%, rgba(0, 0, 0, 0.4) 50%), linear-gradient(135deg, rgba(0, 0, 0, 0.4) 50%, transparent 50%);
+    background-size: 5px 5px, 5px 5px;
+    background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
+    background-repeat: no-repeat;
+  }
+  .mw_wp_form select:focus {
+    outline: 0;
+    border-color: #b0c5ff;
+    /* 枠線の色を変更 */
+  }
+  .mw_wp_form select::-ms-expand {
+    display: none;
+  }
+}
+
+.mw_wp_form textarea {
+  font-size: 16px;
+  padding: 0.4rem 0.6rem;
+  width: 100%;
+}
+
+.mw_wp_form .error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(-25px);
+  background-color: red;
+  color: white !important;
+  font-size: 10px;
+  font-size: 0.625rem;
+  display: inline-block;
+  padding: 0.3rem 0 0.3rem 0.4rem;
+  border-radius: 5px;
+  animation: float 2s ease 0s infinite;
+}
+
+.mw_wp_form .error::after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  content: "";
+  width: 14px;
+  display: block;
+  border-top: 5px solid red;
+  border-right: 7px solid transparent;
+  border-left: 7px solid transparent;
+  transform: translateY(5px);
+}
+
+.mw_wp_form .submit,
+.mw_wp_form .return {
+  display: inline-block;
+  border: none;
+  font-size: 18px;
+  font-size: 1.125rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.mw_wp_form .submit:focus,
+.mw_wp_form .return:focus {
+  outline: 0;
+  border-color: #b0c5ff;
+  /* 枠線の色を変更 */
+}
+
+.mw_wp_form .submit:hover,
+.mw_wp_form .return:hover {
+  cursor: pointer;
+}
+
+.mw_wp_form .submit {
+  background-color: #ce0613;
+  color: #000;
+}
+
+.mw_wp_form .return {
+  background-image: url("../assets/bg-pattern.png");
+  background-color: #160804;
+  color: #000;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(-25px);
+  }
+  50% {
+    transform: translateY(-30px);
+  }
+  100% {
+    transform: translateY(-25px);
+  }
+}
+
 /*******************************
   accordion
 *******************************/

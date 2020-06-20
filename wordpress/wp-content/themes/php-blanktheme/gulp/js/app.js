@@ -6,6 +6,29 @@
 *******************/
 // objectFitImages('.single__img img', {watchMQ: true});
 
+
+/*******************
+  sticky header
+*******************/
+function　scrollFunction() {
+  var this_y = window.pageYOffset;
+  console.log(this_y)
+  if (this_y > 130) {
+      document.getElementById("header").classList.add("active");
+      setTimeout(() => {
+        document.getElementById("header").classList.add("in-view");
+      }, 1000)
+  } else {
+      document.getElementById("header").classList.remove("active", "in-view");
+  }
+}
+window.onload = function() {
+  scrollFunction();
+}
+window.onscroll = function() {
+  scrollFunction();
+}
+
 /*******************
   Nav
 *******************/
