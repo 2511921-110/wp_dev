@@ -215,6 +215,7 @@ a {
 .menu__btnwrap{
   display: none;
   @media screen and (max-width: 768px) {
+    display: block;
     position: fixed;
     right: 10px;
     top: 10px;
@@ -329,19 +330,19 @@ a {
   header
 *******************************/
 
-#header{
-  transition: all .4s;
-  &.active{
-    position: fixed;
-    width: 100%;
-    top: -120px;
-    transition: all .4s;
-    z-index: 4;
-    &.in-view{
-      top: 0;
-    }
-  }
-}
+// #header{
+//   transition: all .4s;
+//   &.active{
+//     position: fixed;
+//     width: 100%;
+//     top: -120px;
+//     transition: all .4s;
+//     z-index: 4;
+//     &.in-view{
+//       top: 0;
+//     }
+//   }
+// }
 
 /*******************************
   footer
@@ -396,6 +397,25 @@ a {
 /*******************************
   archive
 *******************************/
+.pagination{
+  ul{
+    display: flex;
+  }
+  li{
+    @include font-size(16);
+    margin-right: 0.6rem;
+    &.active{
+      background-color: $color-theme;
+      color: $color-base;
+      padding: 0.3rem 0.7rem;
+    }
+    a{
+      display: block;
+      color: $color-text;
+      padding: 0.3rem 0.7rem;
+    }
+  }
+}
 
 /*******************************
   aside

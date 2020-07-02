@@ -140,7 +140,7 @@ remove_action('wp_head', 'wp_oembed_add_discovery_links');
 remove_action('wp_head', 'rest_output_link_wp_head');
 //add_filter( 'author_rewrite_rules', '__return_empty_arr
 
-//Pagenation
+//pagination
 function pagination($pages = '', $range = 2)
 {
     $showitems = ($range * 2) + 1; //表示するページ数（５ページを表示）
@@ -159,7 +159,7 @@ function pagination($pages = '', $range = 2)
     }
 
     if (1 != $pages) {//全ページが１でない場合はページネーションを表示する
-        echo "<div class=\"pagenation\">\n";
+        echo "<div class=\"pagination\">\n";
         echo "<ul>\n";
         //Prev：現在のページ値が１より大きい場合は表示
         if ($paged > 1) {

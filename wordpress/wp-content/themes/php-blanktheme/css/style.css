@@ -200,6 +200,7 @@ a:hover img {
 
 @media screen and (max-width: 768px) {
   .menu__btnwrap {
+    display: block;
     position: fixed;
     right: 10px;
     top: 10px;
@@ -313,22 +314,6 @@ a:hover img {
 /*******************************
   header
 *******************************/
-#header {
-  transition: all .4s;
-}
-
-#header.active {
-  position: fixed;
-  width: 100%;
-  top: -120px;
-  transition: all .4s;
-  z-index: 4;
-}
-
-#header.active.in-view {
-  top: 0;
-}
-
 /*******************************
   footer
 *******************************/
@@ -365,6 +350,28 @@ a:hover img {
 /*******************************
   archive
 *******************************/
+.pagination ul {
+  display: flex;
+}
+
+.pagination li {
+  font-size: 16px;
+  font-size: 1rem;
+  margin-right: 0.6rem;
+}
+
+.pagination li.active {
+  background-color: #ce0613;
+  color: white;
+  padding: 0.3rem 0.7rem;
+}
+
+.pagination li a {
+  display: block;
+  color: #000;
+  padding: 0.3rem 0.7rem;
+}
+
 /*******************************
   aside
 *******************************/
