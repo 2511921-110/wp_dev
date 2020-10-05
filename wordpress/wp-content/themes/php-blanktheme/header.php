@@ -27,7 +27,6 @@
 			</nav>
 		</div>
 	</header><!-- /header -->
-
   <?php
   if(is_front_page()|| is_home()):
     echo '<div class="main__img">';
@@ -76,7 +75,13 @@
     </div> -->
   <?php elseif(is_archive()): ?>
     <div class="maintitle">
-      <h2 class="maintitle__text"><?php echo get_current_term()->name; ?></h2>
+      <h2 class="maintitle__text">
+      <?php if(is_month()): ?>
+        <?php wp_title(); ?>
+      <?php else: ?>
+        <?php echo get_current_term()->name; ?>
+      <?php endif; ?>
+      </h2>
     </div>
   <?php endif; ?>
 

@@ -840,15 +840,16 @@ if ( ! function_exists( 'render_seo_column' ) ) {
 			}
 		}
 
+		$value = esc_html( trim( $value ) );
 		if ( empty( $value ) ) {
 			$value = sprintf( '<strong>%s</strong>', sprintf( __( 'No value', 'all-in-one-seo-pack' ), str_replace( '_', ' ', $name ) ) );
 		}
 
-		$span  = "<span id='aioseop_{$column_name}_{$post_id}_value'>" . trim( $value ) . '</span>';
+		$span  = "<span id='aioseop_{$column_name}_{$post_id}_value'>" . $value . '</span>';
 		$nonce = wp_create_nonce( "aioseop_meta_{$column_name}_{$post_id}" );
 
 		?>
-		<div id="<?php echo "aioseop_${column_name}_${post_id}"; ?>" class="aioseop_mpc_admin_meta_options aio_editing">
+		<div id="<?php echo "aioseop_${column_name}_${post_id}"; ?>" class="aioseop_mpc_admin_meta_options">
 			<a
 				class="dashicons dashicons-edit aioseop-quickedit-pencil" 
 				href="javascript:void(0);"
@@ -920,7 +921,7 @@ if ( ! function_exists( 'aioseop_ajax_save_meta' ) ) {
 			}
 		}
 
-		update_post_meta( $post_id, $key, $value );
+		update_post_meta( $post_id, $key, esc_html( $value ) );
 	}
 }
 
@@ -1498,7 +1499,11 @@ if ( ! function_exists( 'aioseop_get_utm_url' ) ) {
 	 *
 	 * @return  string  $href
 	 */
-	function aioseop_get_utm_url( $medium, $source = 'WordPress', $campaign = 'liteplugin' ) {
+	function aioseop_get_utm_url( $medium, $source = 'WordPress', $campaign = '' ) {
+
+		if( empty( $campaign ) ) {
+			$campaign = ( AIOSEOPPRO ) ? 'proplugin' : 'liteplugin';
+		}
 
 		$href = 'https://semperplugins.com/all-in-one-seo-pack-pro-version/';
 
@@ -1512,6 +1517,32 @@ if ( ! function_exists( 'aioseop_get_utm_url' ) ) {
 		);
 
 		return $href;
+	}
+}
+
+if ( ! function_exists('aioseop_add_url_utm') ) {
+
+	/**
+     * Adds UTM params to URL
+     *
+     * @since 3.5
+     *
+	 * @param  string $href Base URL to append UTM params.
+	 * @param  array  $args UTM params to apply to $href/URL.
+	 * @return string       Full URL with UTM params.
+	 */
+	function aioseop_add_url_utm( $href = '', $args = array() ) {
+		if ( empty( $href ) ) {
+			$href = 'https://semperplugins.com/all-in-one-seo-pack-pro-version/';
+		}
+
+	    $default_args = array(
+			'utm_source'   => 'WordPress',
+			'utm_medium'   => ( AIOSEOPPRO ) ? 'proplugin' : 'liteplugin'
+        );
+	    $args = wp_parse_args( $args, $default_args );
+
+		return add_query_arg( $args, $href );
 	}
 }
 
@@ -1543,5 +1574,78 @@ if ( ! function_exists( 'aioseop_filter_styles' ) ) {
 	function aioseop_filter_styles( $styles ) {
 		$styles[] = 'display';
 		return $styles;
+	}
+}
+
+if ( ! function_exists( 'aioseop_delete_rewrite_rules' ) ) {
+	/**
+	 * Deletes our sitemap rewrite rules to prevent conflicts with other sitemap plugins.
+	 *
+	 * @since 3.4.3
+	 */
+	function aioseop_delete_rewrite_rules() {
+		$rules = get_option( 'rewrite_rules' );
+		
+		if ( empty( $rules ) ) {
+			return;
+		}
+
+		$pattern = '#.*aiosp_.*#';
+		foreach ( $rules as $k => $v ) {
+			preg_match( $pattern, $v, $match );
+			if ( $match ) {
+				unset( $rules[ $k ] );
+			}
+		}
+
+		update_option( 'rewrite_rules', $rules );
+	}
+}
+
+if ( ! function_exists( 'aioseop_is_addon_allowed' ) ) {
+	function aioseop_is_addon_allowed( $addonName ) {
+		global $aioseop_options;
+		if (
+			! AIOSEOPPRO ||
+			! isset( $aioseop_options['addons'] ) ||
+			! is_array( $aioseop_options['addons'] ) ||
+			! in_array( $addonName, $aioseop_options['addons'], true )
+		) {
+			return false;
+		}
+		return true;
+	}
+}
+
+if ( ! function_exists( 'aioseop_last_modified_post' ) ) {
+	/**
+	 * Returns the last modified post.
+	 *
+	 * This function is also useful to check if there's at least 1 published post.
+	 *
+	 * @since 3.5.0
+	 *
+	 * @param  array $additionalArgs
+	 * @return mixed                 WP_Post or false.
+	 */
+	function aioseop_last_modified_post( $additionalArgs = array() ) {
+		$args = array(
+			'post_status'    => 'publish',
+			'posts_per_page' => 1,
+			'orderby '       => 'modified',
+			'order'          => 'DESC'
+		);
+
+		if ( $additionalArgs ) {
+			foreach ( $additionalArgs as $k => $v ) {
+				$args[ $k ] = $v;
+			}
+		}
+
+		$query = ( new WP_Query( $args ) );
+		if ( ! $query->post_count ) {
+			return false;
+		}
+		return $query->posts[0];
 	}
 }

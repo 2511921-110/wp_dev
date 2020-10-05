@@ -1,7 +1,11 @@
 <?php
 
 // wp_enqueue_script('jquery');
-add_filter('wp_default_editor', create_function('', 'return "tinymce";'));
+function change_editor_default( $editor ) {
+  $editor = 'tinymce';
+  return $editor;
+}
+add_filter( 'wp_default_editor', 'change_editor_default' );
 
 //画像のサイズ追加
 add_image_size('square__large', 600, 600, true);
@@ -68,6 +72,99 @@ add_action('the_content', 'urlpassshort');
 //ショートコードで投稿を取得する
 /*
 使い方は投稿の編集画面内で
+[showcatpostsfix cat="1" show="3"]
+とする。
+*/
+function show_Cat_Posts_fix_func($atts)
+{
+    global $post;
+    $output = '';
+
+    extract(shortcode_atts(array(
+        'cat' => 3, // デフォルトカテゴリーID = 3
+        'show' => 3, // デフォルト表示件数 = 3
+    ), $atts));
+
+    $cat = rtrim($cat, ',');
+    // get_postsで指定カテゴリーの記事を指定件数取得
+    $sticky = get_option('sticky_posts');
+    if ( !empty($sticky) ) $show -= count($sticky);
+    $sticky_args = array(
+      'cat' => $cat,
+      // 'posts_per_page' => $show,
+      'post__in' => $sticky,
+    );
+    $args = array(
+        'cat' => $cat,
+        'posts_per_page' => $show,
+    );
+    if ( count($sticky) > 0 ){
+      $sticky_posts = get_posts($sticky_args);
+    }
+    $my_posts = get_posts($args);
+
+    // 上記条件の投稿があるなら$outputに出力、マークアップはお好みで
+    if ($sticky) {
+      // カテゴリーを配列に
+      $cat2 = explode(',', $cat);
+      $catnames2 = '';
+      foreach ($cat2 as $catID) : // カテゴリー名取得ループ
+          $catnames2 .= get_the_category_by_ID($catID).', ';
+      endforeach;
+      $catnames2 = rtrim($catnames2, ', ');
+      $output .= '<div class="module__posts">'."\n";
+      foreach ($sticky_posts as $post) : // ループスタート
+      $post_id = get_the_id();
+      $thumb_id = get_post_thumbnail_id($post_id);
+      $thumb_img = wp_get_attachment_image_src($thumb_id, 'medium');
+      setup_postdata($post); // get_the_title() などのテンプレートタグを使えるようにする
+      $output .= '<div id="post-'.get_the_ID().'" class="module__post-item">';
+      if (has_post_thumbnail($post_id)) {
+          $output .= '<div class="module__post-img"><img src="'.$thumb_img[0].'" alt="'.get_the_title().'"></div>';
+      }
+      $output .= '<div class="module__post-date">'.get_the_date().'</div><div class="module__post-title"><a href="'.get_permalink().'">'.get_the_title()."</a></div><div>カテゴリー：".$catnames2 ."</div></div>\n";
+      endforeach; // ループ終わり
+      $output .= "</div>\n";
+      //$output .= "</aside>\n";
+    }
+    if($show > 0){
+      if ($my_posts) {
+          // カテゴリーを配列に
+          $cat = explode(',', $cat);
+          $catnames = '';
+          foreach ($cat as $catID) : // カテゴリー名取得ループ
+              $catnames .= get_the_category_by_ID($catID).', ';
+          endforeach;
+          $catnames = rtrim($catnames, ', ');
+
+          /*$output .= '<aside class="showcatposts">'."\n";
+          $output .= '<h2 class="showcatposts-title">カテゴリー「'.$catnames.'」'."の最新記事（".$show."件）</h2>\n";*/
+          $output .= '<div class="module__posts">'."\n";
+          foreach ($my_posts as $post) : // ループスタート
+          $post_id = get_the_id();
+          $thumb_id = get_post_thumbnail_id($post_id);
+          $thumb_img = wp_get_attachment_image_src($thumb_id, 'medium');
+          setup_postdata($post); // get_the_title() などのテンプレートタグを使えるようにする
+          $output .= '<div id="post-'.get_the_ID().'" class="module__post-item">';
+          if (has_post_thumbnail($post_id)) {
+              $output .= '<div class="module__post-img"><img src="'.$thumb_img[0].'" alt="'.get_the_title().'"></div>';
+          }
+          $output .= '<div class="module__post-date">'.get_the_date().'</div><div class="module__post-title"><a href="'.get_permalink().'">'.get_the_title()."</a></div><div>カテゴリー：".$catnames ."</div></div>\n";
+          endforeach; // ループ終わり
+          $output .= "</div>\n";
+          //$output .= "</aside>\n";
+      }
+    }
+    // クエリのリセット
+    wp_reset_postdata();
+
+    return $output;
+}
+add_shortcode('showcatpostsfix', 'show_Cat_Posts_fix_func');
+
+//ショートコードで投稿を取得する
+/*
+使い方は投稿の編集画面内で
 [showcatposts cat="1" show="3"]
 とする。
 */
@@ -122,6 +219,24 @@ function show_Cat_Posts_func($atts)
     return $output;
 }
 add_shortcode('showcatposts', 'show_Cat_Posts_func');
+
+
+// 日付アーカイブ title 変更
+function jp_date_archive_wp_title( $title ) {
+	if ( is_date() ) {
+		$title = '';
+		if ( $y = intval(get_query_var('year')) )
+			$title .= sprintf('%4d年', $y);
+		if ( $m = intval(get_query_var('monthnum')) )
+			$title .= sprintf('%02d月', $m);
+		if ( $d = intval(get_query_var('day')) )
+			$title .= sprintf('%02d日', $d);
+		$title .= ' | ';
+	}
+	return $title;
+}
+add_filter( 'wp_title', 'jp_date_archive_wp_title', 1 );
+
 
 //headerの不要なタグを消す
 remove_action('wp_head', 'feed_links', 2);
@@ -481,6 +596,9 @@ function get_current_term()
         $term_slug = get_query_var('term');
         $term = get_term_by('slug', $term_slug, $tax_slug);
         $id = $term->term_id;
+    } elseif (is_month()) {
+      $id = "";
+      $tax_slug = "";
     }
 
     return get_term($id, $tax_slug);
