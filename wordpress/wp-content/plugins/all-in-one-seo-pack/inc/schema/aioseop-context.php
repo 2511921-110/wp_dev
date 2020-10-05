@@ -115,6 +115,51 @@ class AIOSEOP_Context {
 	}
 
 	/**
+	 * Logs Error when General Settings > 'Log important events' is Enabled.
+	 *
+	 * @since 3.5.2
+	 *
+	 * @param string $message Message to prepend at the beginning of a Stack Trace.
+	 */
+	public function log_error( $message = 'An error has occurred.' ) {
+		global $aioseop_options;
+		if ( 'on' === $aioseop_options['aiosp_do_log'] ) {
+			$e = new Exception;
+			error_log( $message . "\n" . $e->getTraceAsString() );
+		}
+	}
+
+	/**
+	 * Internationalize
+	 *
+	 * Dev Note: Could refactor this & \All_in_One_SEO_Pack::internationalize() to a static class.
+	 *
+	 * @since 3.4.3
+	 *
+	 * @param string $text
+	 * @return mixed|string
+	 */
+	public function internationalize( $text ) {
+		if ( function_exists( 'langswitch_filter_langs_with_message' ) ) {
+			$text = langswitch_filter_langs_with_message( $text );
+		}
+
+		if ( function_exists( 'polyglot_filter' ) ) {
+			$text = polyglot_filter( $text );
+		}
+
+		if ( function_exists( 'qtrans_useCurrentLanguageIfNotFoundUseDefaultLanguage' ) ) {
+			$text = qtrans_useCurrentLanguageIfNotFoundUseDefaultLanguage( $text );
+		} elseif ( function_exists( 'ppqtrans_useCurrentLanguageIfNotFoundUseDefaultLanguage' ) ) {
+			$text = ppqtrans_useCurrentLanguageIfNotFoundUseDefaultLanguage( $text );
+		} elseif ( function_exists( 'qtranxf_useCurrentLanguageIfNotFoundUseDefaultLanguage' ) ) {
+			$text = qtranxf_useCurrentLanguageIfNotFoundUseDefaultLanguage( $text );
+		}
+
+		return $text;
+	}
+
+	/**
 	 * Get current is_*() state.
 	 *
 	 * @since 3.4.0
@@ -131,6 +176,7 @@ class AIOSEOP_Context {
 			} elseif ( $wp_query->is_posts_page ) {
 				$state_is = 'posts_page';
 			} else {
+				// is_page().
 				$state_is = 'home'; // Static front page.
 			}
 		} elseif ( is_archive() ) {
@@ -318,11 +364,22 @@ class AIOSEOP_Context {
 					}
 				}
 				$key = $context->ID;
+				if ( empty( $key ) ) {
+					$key = get_queried_object_id();
+				}
+
+				break;
+
+			case 'WP_Post_Type':
+				if ( ! $context instanceof WP_Post_Type ) {
+					$context = get_queried_object();
+				}
+				$key = $context->name;
 				break;
 
 			case 'WP_Taxonomy':
 				if ( ! $context instanceof WP_Taxonomy ) {
-					get_queried_object();
+					$context = get_queried_object();
 				}
 				$key = $context->name;
 				break;
@@ -392,10 +449,6 @@ class AIOSEOP_Context {
 
 		$object = new stdClass();
 		switch ( $type ) {
-			case 'WP_Taxonomy':
-				$object                  = self::get_object( $type, $key, $wp_props );
-				$wp_props['object_type'] = $object->object_type;
-				break;
 			case 'WP_Term':
 				// $object = self::get_object( $type, $key, $wp_props );
 				// $wp_props['taxonomy'] = $object->taxonomy;
@@ -431,6 +484,7 @@ class AIOSEOP_Context {
 		$object = false;
 		switch ( $type ) {
 			case 'var_site':
+			case 'var_search':
 			case 'var_date':
 			case 'var_date_year':
 			case 'var_date_month':
@@ -456,9 +510,15 @@ class AIOSEOP_Context {
 				$object = WP_Post::get_instance( $key );
 				break;
 
+			case 'WP_Post_Type':
+				$object = get_post_type_object( $key );
+				if ( is_null( $object ) ) {
+					$object = false;
+				}
+				break;
+
 			case 'WP_Taxonomy':
-				$object_type = isset( $args['object_type'] ) ? $args['object_type'] : 'post';
-				$object      = new WP_Taxonomy( $key, $object_type );
+				$object = get_taxonomy( $key );
 				break;
 
 			case 'WP_Term':
@@ -486,6 +546,10 @@ class AIOSEOP_Context {
 	public function get_slug() {
 		$slug   = '';
 		$wp_obj = self::get_object( $this->context_type, $this->context_key, $this->wp_props );
+		if ( ! $wp_obj ) {
+			$this->log_error();
+			return $slug;
+		}
 		switch ( $this->context_type ) {
 			case 'var_site':
 				break;
@@ -517,28 +581,52 @@ class AIOSEOP_Context {
 	 */
 	public function get_display_name() {
 		$display_name = '';
+
+		// Set object, and validate WP types.
+		$wp_obj          = false;
+		$wp_object_types = array(
+			'WP_Site',
+			'WP_Post',
+			'WP_Post_Type',
+			'WP_Taxonomy',
+			'WP_Term',
+			'WP_User',
+		);
+		if ( in_array( $this->context_type, $wp_object_types ) ) {
+			// Get object, and check if it exists (false value if it does not).
+			$wp_obj = self::get_object( $this->context_type, $this->context_key, $this->wp_props );
+			if ( ! $wp_obj ) {
+				$this->log_error( "AIOSEOP_Context: Object '" . $this->context_type . "' Key '" . $this->context_key . "' doesn't exist." );
+				return $display_name;
+			}
+		}
+
 		switch ( $this->context_type ) {
 			case 'var_site':
 				$display_name = get_bloginfo( 'name' );
 				break;
 
 			case 'WP_Site':
-				$wp_obj       = self::get_object( $this->context_type, $this->context_key );
 				$display_name = $wp_obj->blogname;
 				break;
 
 			case 'WP_Post':
-				$wp_obj       = self::get_object( $this->context_type, $this->context_key );
 				$display_name = $wp_obj->post_title;
 				break;
 
+			case 'WP_Post_Type':
+				$display_name = $wp_obj->label;
+				break;
+
+			case 'WP_Taxonomy':
+				$display_name = $wp_obj->label;
+				break;
+
 			case 'WP_Term':
-				$wp_obj       = self::get_object( $this->context_type, $this->context_key, $this->wp_props );
 				$display_name = $wp_obj->name;
 				break;
 
 			case 'WP_User':
-				$wp_obj       = self::get_object( $this->context_type, $this->context_key, $this->wp_props );
 				$display_name = $wp_obj->display_name;
 				break;
 
@@ -585,6 +673,22 @@ class AIOSEOP_Context {
 		}
 
 		$url = '';
+
+		// Set object, and validate WP types.
+		$wp_obj          = false;
+		$wp_object_types = array(
+			'WP_Post',
+			'WP_Term',
+		);
+		if ( in_array( $this->context_type, $wp_object_types ) ) {
+			// Get object, and check if it exists (false value if it does not).
+			$wp_obj = self::get_object( $this->context_type, $this->context_key, $this->wp_props );
+			if ( ! $wp_obj ) {
+				$this->log_error( "AIOSEOP_Context: Object '" . $this->context_type . "' Key '" . $this->context_key . "' doesn't exist." );
+				return $url;
+			}
+		}
+
 		switch ( $this->context_type ) {
 			case 'var_site':
 				$url = home_url();
@@ -595,8 +699,6 @@ class AIOSEOP_Context {
 				break;
 
 			case 'WP_Post':
-				$wp_obj = self::get_object( $this->context_type, $this->context_key );
-
 				if ( 'attachment' === $wp_obj->post_type ) {
 					// Source URL.
 					// May need to check setting for attachment redirect.
@@ -615,13 +717,17 @@ class AIOSEOP_Context {
 				$s_url[ $this->context_type ][ $this->context_key ] = $url;
 				break;
 
+			case 'WP_Post_Type':
+				$url    = get_post_type_archive_link( $this->context_key );
+				break;
+
 			case 'WP_Taxonomy':
 				// Does not exist.
 				break;
 
 			case 'WP_Term':
 				$taxonomy = isset( $this->wp_props['taxonomy'] ) ? $this->wp_props['taxonomy'] : '';
-				$url      = get_term_link( $this->context_key, $taxonomy );
+				$url      = get_term_link( $wp_obj, $taxonomy );
 
 				$s_url[ $this->context_type ][ $this->context_key ] = $url;
 				break;
@@ -634,16 +740,19 @@ class AIOSEOP_Context {
 				break;
 
 			case 'var_date_year':
-				$url = get_year_link( false );
+				global $wp_query;
+				$url = get_year_link( $wp_query->query_vars['year'] );
 				break;
 
 			case 'var_date_month':
-				$url = get_month_link( false, false );
+				global $wp_query;
+				$url = get_month_link( $wp_query->query_vars['year'], $wp_query->query_vars['monthnum'] );
 				break;
 
 			case 'var_date_day':
 			case 'var_date':
-				$url = get_day_link( false, false, false );
+				global $wp_query;
+				$url = get_day_link( $wp_query->query_vars['year'], $wp_query->query_vars['monthnum'], $wp_query->query_vars['day'] );
 				break;
 		}
 
@@ -659,16 +768,101 @@ class AIOSEOP_Context {
 	 */
 	public function get_description() {
 		$desc = '';
+		global $aioseop_options;
+
+		// Set object, and validate WP types.
+		$wp_obj          = false;
+		$wp_object_types = array(
+			'WP_Post',
+			'WP_Post_Type',
+			'WP_Taxonomy',
+			'WP_Term',
+		);
+		if ( in_array( $this->context_type, $wp_object_types ) ) {
+			// Get object, and check if it exists (false value if it does not).
+			$wp_obj = self::get_object( $this->context_type, $this->context_key, $this->wp_props );
+			if ( ! $wp_obj ) {
+				$this->log_error( "AIOSEOP_Context: Object '" . $this->context_type . "' Key '" . $this->context_key . "' doesn't exist." );
+				return $desc;
+			}
+		}
 
 		switch ( $this->context_type ) {
 			case 'var_site':
-				$desc = get_bloginfo( 'description' );
+				if ( ! empty( $aioseop_options['aiosp_home_description'] ) ) {
+					$desc = $aioseop_options['aiosp_home_description'];
+				} else {
+					$desc = get_bloginfo( 'description' );
+				}
 				break;
+
+			case 'WP_Site':
+				$desc = get_blog_details( array( 'blog_id' => $this->context_key ) );
+				if ( ! empty( $aioseop_options['aiosp_home_description'] ) ) {
+					$desc = $aioseop_options['aiosp_home_description'];
+				} else {
+					$desc = get_bloginfo( 'description' );
+				}
+
+				break;
+
+			case 'WP_Post':
+				$wp_obj = self::get_object( $this->context_type, $this->context_key );
+				if ( ! $wp_obj ) {
+					$this->log_error();
+					return $desc;
+				}
+
+				// Using AIOSEOP's description is limited in content. With Schema's descriptions,
+				// there is no cap limit.
+				$post_description = get_post_meta( $wp_obj->ID, '_aioseop_description', true );
+				if ( is_string( $post_description ) ) {
+					$post_description = trim( $this->internationalize( $post_description ) );
+				}
+
+				// If there is no AIOSEOP description, and the post isn't password protected,
+				// then use post excerpt or content.
+				if (
+						! $post_description &&
+						! post_password_required( $wp_obj ) &&
+						! empty( $wp_obj->post_excerpt )
+				) {
+					$post_description = $wp_obj->post_excerpt;
+				}
+
+				if ( ! empty( $post_description ) && is_string( $post_description ) ) {
+					$desc = $post_description;
+				}
+				break;
+
+			case 'WP_Post_Type':
+				$wp_obj = self::get_object( $this->context_type, $this->context_key );
+				$desc   = $wp_obj->description;
+				break;
+
+			case 'WP_Taxonomy':
+				$wp_obj = self::get_object( $this->context_type, $this->context_key, $this->wp_props );
+				$desc = $wp_obj->description;
+				break;
+
 			case 'WP_Term':
-			case 'WP_User':
 				$wp_obj = self::get_object( $this->context_type, $this->context_key, $this->wp_props );
 				$desc   = $wp_obj->description;
 				break;
+
+			case 'WP_User':
+				break;
+			case 'var_search':
+				break;
+			case 'var_date_year':
+				break;
+			case 'var_date_month':
+				break;
+			case 'var_date_day':
+				break;
+			case 'var_date':
+				break;
+
 		}
 
 		return $desc;
@@ -696,6 +890,11 @@ class AIOSEOP_Context {
 		switch ( $this->context_type ) {
 			case 'WP_Post':
 				$wp_obj = self::get_object( $this->context_type, $this->context_key );
+				if ( ! $wp_obj ) {
+					$this->log_error();
+					return $image;
+				}
+
 				if ( 'attachment' === $wp_obj->post_type ) {
 					$images['attachments'][] = array(
 						'id'  => $wp_obj->ID,
@@ -734,7 +933,12 @@ class AIOSEOP_Context {
 
 			case 'WP_Post':
 				$object = self::get_object( $this->context_type, $this->context_key );
-				while ( ! empty( $object->post_parent ) ) {
+				if ( ! $object ) {
+					$this->log_error();
+					break;
+				}
+
+				do {
 					array_unshift(
 						$rtn_list,
 						array(
@@ -743,13 +947,12 @@ class AIOSEOP_Context {
 						)
 					);
 
-					$context = array(
-						'context_type' => $context->context_type,
-						'context_key'  => $object->post_parent, // Create get_parent().
-					);
-					$context = self::get_instance( $context );
-					$object  = self::get_object( $context->context_type, $context->context_key );
-				}
+					$object  = self::get_object( $context->context_type, $object->post_parent );
+					$context = self::get_instance( $object );
+				} while ( $object );
+				break;
+
+			case 'WP_Post_Type':
 				array_unshift(
 					$rtn_list,
 					array(
@@ -765,7 +968,7 @@ class AIOSEOP_Context {
 
 			case 'WP_Term':
 				$object = self::get_object( $context->context_type, $context->context_key, $context->wp_props );
-				while ( ! empty( $object->parent ) ) {
+				do {
 					array_unshift(
 						$rtn_list,
 						array(
@@ -774,21 +977,11 @@ class AIOSEOP_Context {
 						)
 					);
 
-					$context = array(
-						'context_type' => $context->context_type,
-						'context_key'  => $object->parent, // Create get_parent().
-						'wp_props'     => $context->wp_props,
-					);
-					$context = self::get_instance( $context );
-					$object  = self::get_object( $context->context_type, $context->context_key, $context->wp_props );
-				}
-				array_unshift(
-					$rtn_list,
-					array(
-						'name' => $context->get_display_name(),
-						'url'  => $context->get_url(),
-					)
-				);
+					$object  = self::get_object( $context->context_type, $object->parent, $context->wp_props );
+					if ( $object ) {
+						$context->context_key = $object->term_id;
+					}
+				} while ( $object );
 				break;
 
 			case 'var_date':
@@ -851,7 +1044,7 @@ class AIOSEOP_Context {
 		}
 		if ( empty( $title ) ) {
 			preg_match(
-				'/^(?:https|http)(?:\:\/\/)(?:www\.)?([a-zA-Z0-9-]+\.)?([a-zA-Z0-9-]+)(?:\.[a-z]+\/|\.[a-z]+)$/',
+				'/^(?:https|http)(?:\:\/\/)(?:www\.)?([a-zA-Z0-9-]+\.)?([a-zA-Z0-9-]+)(?:\.[a-z]+)(?:\/)?(?:[a-z]+\/?)?$/',
 				$site_context->get_url(),
 				$matches
 			);

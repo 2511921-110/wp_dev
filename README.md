@@ -40,3 +40,26 @@ wp post create --post_title="テスト投稿" --post_content="テスト投稿で
 
 - wp db export /vagrant/wordpress.sql
 - wp db import /vagrant/wordpress.sql
+
+### PHP バージョン変更
+
+- curl https://raw.githubusercontent.com/vccw-team/change-php-version/master/run.sh | bash -s -- 7.4
+
+- sudo vi /etc/php/7.4/apache2/php.ini
+
+#### Viコマンド
+
+> 行数移動
+>> 846G
+
+> 文字検索
+>> /文字列
+
+> 書き込みして終了
+>> :wq
+
+> 再起動
+>> sudo service apache2 restart
+
+> phpの関係性
+>> memory_limit >= post_max_size >= upload_max_filesize
