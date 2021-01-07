@@ -3,8 +3,8 @@
    v2.0 | 20110126
    License: none (public domain)
 */
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap");
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100;400;700&display=swap");
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -65,22 +65,29 @@ table {
 
 img {
   max-width: 100%;
+  height: auto;
 }
 
 html {
   font-size: 16px;
 }
 
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  html {
+    font-size: 11px;
+  }
+}
+
 @media screen and (max-width: 768px) {
   html {
-    font-size: 12px;
+    font-size: 16px;
   }
 }
 
 body {
   font-size: 16px;
   font-size: 1rem;
-  font-family: "NotoSans-R", YuGothic, "ヒラギノ角ゴ ProN W3", Hiragino Kaku Gothic ProN, Arial, "メイリオ", Meiryo, sans-serif;
+  font-family: "Noto Sans JP", "Gadugi", "Arial", "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic Pro", "メイリオ", Meiryo, "Meiryo UI", Verdana, Roboto, "ＭＳ Ｐゴシック", "MS PGothic", sans-serif;
   line-height: 1.7;
   color: #000;
   margin: 0;
@@ -100,16 +107,38 @@ ul {
   list-style: none;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1 {
   margin: 0;
+  font-weight: bold;
 }
 
-b, strong {
+h2 {
+  margin: 0;
+  font-weight: bold;
+}
+
+h3 {
+  margin: 0;
+  font-weight: bold;
+}
+
+h4 {
+  margin: 0;
+  font-weight: bold;
+}
+
+h5 {
+  margin: 0;
+  font-weight: bold;
+}
+
+h6 {
+  margin: 0;
+  font-weight: bold;
+}
+
+b,
+strong {
   font-weight: bold;
 }
 
@@ -132,6 +161,14 @@ table tbody tr th,
 table tbody tr td {
   padding: 5px 3px;
   border-bottom: solid 1px #ddd;
+}
+
+@media screen and (max-width: 375px) {
+  table tbody tr th,
+  table tbody tr td {
+    display: block;
+    width: 100px;
+  }
 }
 
 @media screen and (min-width: 769px) {
@@ -302,7 +339,7 @@ a:hover img {
     padding: 1em;
   }
   .globalNav .menu li {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid rgba(22, 8, 4, 0.25);
   }
   .globalNav .menu-globalnav-container {
     width: 100%;
@@ -381,11 +418,13 @@ a:hover img {
 /*******************************
   form
 *******************************/
-.mw_wp_form tr:first-child th, .mw_wp_form tr:first-child td {
+.mw_wp_form tr:first-child th,
+.mw_wp_form tr:first-child td {
   border-top: none;
 }
 
-.mw_wp_form th, .mw_wp_form td {
+.mw_wp_form th,
+.mw_wp_form td {
   border-bottom: 1px solid rgba(148, 120, 56, 0.6);
   text-align: left;
   vertical-align: top;
@@ -394,7 +433,8 @@ a:hover img {
 }
 
 @media screen and (max-width: 768px) {
-  .mw_wp_form th, .mw_wp_form td {
+  .mw_wp_form th,
+  .mw_wp_form td {
     display: block;
     width: 100%;
   }
@@ -418,14 +458,14 @@ a:hover img {
   padding: 0 0.6rem;
 }
 
-.mw_wp_form input[type="text"], .mw_wp_form input[type="email"], .mw_wp_form input[type="number"], .mw_wp_form input[type="tel"] {
+.mw_wp_form input[type='text'], .mw_wp_form input[type='email'], .mw_wp_form input[type='number'], .mw_wp_form input[type='tel'] {
   font-size: 16px;
   padding: 0.4rem 0.6rem;
   margin-bottom: 0.3rem;
 }
 
 @media screen and (max-width: 768px) {
-  .mw_wp_form input[type="text"], .mw_wp_form input[type="email"], .mw_wp_form input[type="number"], .mw_wp_form input[type="tel"] {
+  .mw_wp_form input[type='text'], .mw_wp_form input[type='email'], .mw_wp_form input[type='number'], .mw_wp_form input[type='tel'] {
     width: 100%;
   }
 }
@@ -490,7 +530,7 @@ a:hover img {
   left: 0;
   right: 0;
   margin: auto;
-  content: "";
+  content: '';
   width: 14px;
   display: block;
   border-top: 5px solid red;
@@ -553,10 +593,10 @@ a:hover img {
 }
 
 .accordion__title::after {
-  content: "\f078";
-  font-family: "Font Awesome 5 Free";
+  content: '\f078';
+  font-family: 'Font Awesome 5 Free';
   font-weight: 900;
-  transition: all .3s;
+  transition: all 0.3s;
 }
 
 .accordion__title:hover {
@@ -574,11 +614,11 @@ a:hover img {
   height: 0;
   overflow: hidden;
   opacity: 0;
-  transition: padding .36s, opacity .36s;
+  transition: padding 0.36s, opacity 0.36s;
 }
 
 .accordion__content.is-open {
-  padding: .6em 1em;
+  padding: 0.6em 1em;
   line-height: normal;
   height: auto;
   opacity: 1;

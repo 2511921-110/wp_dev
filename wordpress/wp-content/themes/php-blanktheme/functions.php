@@ -336,20 +336,20 @@ function custom_attribute($html)
 }
 
 //scriptにasyncを追加
-if (!(is_admin())) {
-    function add_async_to_enqueue_script($url)
-    {
-        if (false === strpos($url, '.js')) {
-            return $url;
-        }
-        if (strpos($url, 'jquery')) {
-            return $url;
-        }
+// if (!(is_admin())) {
+//     function add_async_to_enqueue_script($url)
+//     {
+//         if (false === strpos($url, '.js')) {
+//             return $url;
+//         }
+//         if (strpos($url, 'jquery')) {
+//             return $url;
+//         }
 
-        return "$url' async charset='UTF-8";
-    }
-    add_filter('clean_url', 'add_async_to_enqueue_script', 11, 1);
-}
+//         return "$url' async charset='UTF-8";
+//     }
+//     add_filter('clean_url', 'add_async_to_enqueue_script', 11, 1);
+// }
 
 //TinyMCE Advanceにスタイルを追加
 function plugin_mce_css($mce_css)
@@ -609,6 +609,101 @@ add_action( 'after_setup_theme', 'woocommerce_support' );
 function woocommerce_support() {
     add_theme_support( 'woocommerce' );
 }
+
+//管理画面の一般に項目追加
+// function add_my_option_field() {
+//   add_settings_field( 'logo_img', 'ロゴ画像', 'display_my_option', 'general' );
+//   register_setting( 'general', 'logo_img' );
+// }
+// add_filter( 'admin_init', 'add_my_option_field' );
+
+// function display_my_option() {
+//   $logo_img = get_option( 'logo_img' );
+//   wp_register_script(
+//     'mediauploader',
+//     plugin_dir_url( __FILE__ ) . '/js/mediauploader.js',
+//     array( 'jquery' ),
+//     false,
+//     true
+//   );
+
+  /* メディアアップローダの javascript API */
+  // wp_enqueue_media();
+    ?>
+      <!-- <input name="mediaid" type="text" value="" />
+      <input type="button" name="media" value="選択" />
+      <input type="button" name="media-clear" value="クリア" />
+      <div id="media"></div>
+      <script>
+      (function ($) {
+
+  var custom_uploader;
+
+  $("input:button[name=media]").click(function(e) {
+
+      e.preventDefault();
+
+      if (custom_uploader) {
+
+          custom_uploader.open();
+          return;
+
+      }
+
+      custom_uploader = wp.media({
+
+          title: "Choose Image",
+
+          /* ライブラリの一覧は画像のみにする */
+          library: {
+              type: "image"
+          },
+
+          button: {
+              text: "Choose Image"
+          },
+
+          /* 選択できる画像は 1 つだけにする */
+          multiple: false
+
+      });
+
+      custom_uploader.on("select", function() {
+
+          var images = custom_uploader.state().get("selection");
+
+          /* file の中に選択された画像の各種情報が入っている */
+          images.each(function(file){
+
+              /* テキストフォームと表示されたサムネイル画像があればクリア */
+              $("input:text[name=mediaid]").val("");
+              $("#media").empty();
+
+              /* テキストフォームに画像の ID を表示 */
+              $("input:text[name=mediaid]").val(file.id);
+
+              /* プレビュー用に選択されたサムネイル画像を表示 */
+              $("#media").append('<img src="'+file.attributes.sizes.thumbnail.url+'" />');
+
+          });
+      });
+
+      custom_uploader.open();
+
+  });
+
+  /* クリアボタンを押した時の処理 */
+  $("input:button[name=media-clear]").click(function() {
+
+      $("input:text[name=mediaid]").val("");
+      $("#media").empty();
+
+  });
+
+  })(jQuery);
+    </script> -->
+  <?php
+// }
 
 //カスタム投稿追加
 // add_action( 'init', 'create_post_type' );
