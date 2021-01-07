@@ -4,7 +4,7 @@
 /*******************
   object fit
 *******************/
-// objectFitImages('.single__img img', {watchMQ: true});
+// objectFitImages('.module__img img', {watchMQ: true});
 
 
 /*******************
@@ -12,7 +12,7 @@
 *******************/
 function　scrollFunction() {
   var this_y = window.pageYOffset;
-  console.log(this_y)
+  // console.log(this_y)
   if (this_y > 130) {
       document.getElementById("header").classList.add("active");
       setTimeout(() => {
