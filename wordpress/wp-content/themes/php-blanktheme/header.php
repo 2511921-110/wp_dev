@@ -3,11 +3,21 @@
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>" />
 <meta name="viewport" content="width=device-width" />
+<?php
+  if(get_option('home_image_url')){
+    echo '<link rel="icon" type="image/png" href="' . get_option('home_image_url') . '">';
+  }
+?>
 <title><?php wp_title('｜',true,'right'); ?><?php bloginfo('name'); ?></title>
 <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
 
+<?php
+  if(get_option('home_image_url')){
+    echo '<div id="js-loader" class="loader"><img src="' . get_option('home_image_url') . '" ></div>';
+  }
+?>
 	<header id="header">
     <?php
       $args = array( 'pagename' => 'home/header' );

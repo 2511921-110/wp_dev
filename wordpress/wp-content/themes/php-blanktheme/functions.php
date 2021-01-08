@@ -9,6 +9,7 @@ add_filter( 'wp_default_editor', 'change_editor_default' );
 
 //画像のサイズ追加
 add_image_size('square__large', 600, 600, true);
+add_image_size('favicon', 72, 72, true);
 
 // add_editor_style('css/style.css');
 // add_editor_style('style.css');
@@ -610,101 +611,6 @@ function woocommerce_support() {
     add_theme_support( 'woocommerce' );
 }
 
-//管理画面の一般に項目追加
-// function add_my_option_field() {
-//   add_settings_field( 'logo_img', 'ロゴ画像', 'display_my_option', 'general' );
-//   register_setting( 'general', 'logo_img' );
-// }
-// add_filter( 'admin_init', 'add_my_option_field' );
-
-// function display_my_option() {
-//   $logo_img = get_option( 'logo_img' );
-//   wp_register_script(
-//     'mediauploader',
-//     plugin_dir_url( __FILE__ ) . '/js/mediauploader.js',
-//     array( 'jquery' ),
-//     false,
-//     true
-//   );
-
-  /* メディアアップローダの javascript API */
-  // wp_enqueue_media();
-    ?>
-      <!-- <input name="mediaid" type="text" value="" />
-      <input type="button" name="media" value="選択" />
-      <input type="button" name="media-clear" value="クリア" />
-      <div id="media"></div>
-      <script>
-      (function ($) {
-
-  var custom_uploader;
-
-  $("input:button[name=media]").click(function(e) {
-
-      e.preventDefault();
-
-      if (custom_uploader) {
-
-          custom_uploader.open();
-          return;
-
-      }
-
-      custom_uploader = wp.media({
-
-          title: "Choose Image",
-
-          /* ライブラリの一覧は画像のみにする */
-          library: {
-              type: "image"
-          },
-
-          button: {
-              text: "Choose Image"
-          },
-
-          /* 選択できる画像は 1 つだけにする */
-          multiple: false
-
-      });
-
-      custom_uploader.on("select", function() {
-
-          var images = custom_uploader.state().get("selection");
-
-          /* file の中に選択された画像の各種情報が入っている */
-          images.each(function(file){
-
-              /* テキストフォームと表示されたサムネイル画像があればクリア */
-              $("input:text[name=mediaid]").val("");
-              $("#media").empty();
-
-              /* テキストフォームに画像の ID を表示 */
-              $("input:text[name=mediaid]").val(file.id);
-
-              /* プレビュー用に選択されたサムネイル画像を表示 */
-              $("#media").append('<img src="'+file.attributes.sizes.thumbnail.url+'" />');
-
-          });
-      });
-
-      custom_uploader.open();
-
-  });
-
-  /* クリアボタンを押した時の処理 */
-  $("input:button[name=media-clear]").click(function() {
-
-      $("input:text[name=mediaid]").val("");
-      $("#media").empty();
-
-  });
-
-  })(jQuery);
-    </script> -->
-  <?php
-// }
-
 //カスタム投稿追加
 // add_action( 'init', 'create_post_type' );
 // function create_post_type() {
@@ -747,3 +653,145 @@ function woocommerce_support() {
 //   ));
 
 // }
+
+
+function generate_upload_image_tag($name, $value){?>
+  <h3>ロゴ</h3>
+  <p>※ファビコンとローディング画面へ表示されます</p>
+  <div id="<?php echo $name; ?>_thumbnail" class="uploded-thumbnail">
+    <?php if ($value): ?>
+      <img src="<?php echo $value; ?>" alt="選択中の画像" width="250px">
+    <?php endif ?>
+  </div>
+  <input name="<?php echo $name; ?>" type="text" value="<?php echo $value; ?>" />
+  <input type="button" name="<?php echo $name; ?>_slect" value="選択" />
+  <input type="button" name="<?php echo $name; ?>_clear" value="クリア" />
+
+
+  <script type="text/javascript">
+  (function ($) {
+
+      var custom_uploader;
+
+      $("input:button[name=<?php echo $name; ?>_slect]").click(function(e) {
+
+          e.preventDefault();
+
+          if (custom_uploader) {
+
+              custom_uploader.open();
+              return;
+
+          }
+
+          custom_uploader = wp.media({
+
+              title: "画像を選択してください",
+
+              /* ライブラリの一覧は画像のみにする */
+              library: {
+                  type: "image"
+              },
+
+              button: {
+                  text: "画像の選択"
+              },
+
+              /* 選択できる画像は 1 つだけにする */
+              multiple: false
+
+          });
+
+          custom_uploader.on("select", function() {
+
+              var images = custom_uploader.state().get("selection");
+
+              /* file の中に選択された画像の各種情報が入っている */
+              images.each(function(file){
+
+                  /* テキストフォームと表示されたサムネイル画像があればクリア */
+                  $("input:text[name=<?php echo $name; ?>]").val("");
+                  $("#<?php echo $name; ?>_thumbnail").empty();
+
+                  /* テキストフォームに画像の URL を表示 */
+                  $("input:text[name=<?php echo $name; ?>]").val(file.attributes.sizes.full.url);
+
+                  /* プレビュー用に選択されたサムネイル画像を表示 */
+                  $("#<?php echo $name; ?>_thumbnail").append('<img src="'+file.attributes.sizes.thumbnail.url+'" />');
+
+              });
+          });
+
+          custom_uploader.open();
+
+      });
+
+      /* クリアボタンを押した時の処理 */
+      $("input:button[name=<?php echo $name; ?>_clear]").click(function() {
+
+          $("input:text[name=<?php echo $name; ?>]").val("");
+          $("#<?php echo $name; ?>_thumbnail").empty();
+
+      });
+
+  })(jQuery);
+  </script>
+  <?php
+}
+
+
+//管理画面にメニュー追加
+function add_site_settings_menu() {
+	add_menu_page('サイト設定ページ', 'サイトの設定', 'manage_options', 'site_settings.php', 'site_settings_page' );
+}
+add_action('admin_menu', 'add_site_settings_menu');
+
+//データの保存
+function site_settings_page() {
+	if (isset($_POST['siteoption_keyword'])) {
+		update_option('siteoption_keyword', wp_unslash($_POST['siteoption_keyword']));
+
+  }
+  if (isset($_POST['home_image_url'])) {
+		update_option('home_image_url', wp_unslash($_POST['home_image_url']));
+
+	}
+?>
+
+<?php //管理画面の表示 ?>
+<div class="wrap">
+<h2>サイトの設定</h2>
+<?php
+	if (isset($_POST['siteoption_keyword'])) {
+		echo '<div id="setting-error-settings_updated" class="updated settings-error notice is-dismissible">
+			<p><strong>設定を保存しました。</strong></p></div>';
+	}
+?>
+<form method="post" action="">
+<?php submit_button(); ?>
+<!-- <table class="form-table setting-table">
+	<tr>
+		<th><label for="siteoption_keyword">サイトキーワード(keyword)</label></th>
+		<td><input name="siteoption_keyword" type="text" id="siteoption_keyword" value="<?php form_option('siteoption_keyword'); ?>" class="regular-text" /></td>
+	</tr>
+</table> -->
+<?php
+  generate_upload_image_tag('home_image_url', get_option('home_image_url'));
+?>
+<?php submit_button(); ?>
+</form>
+</div>
+
+<?php //関数 ?>
+<?php
+}
+function siteoption_keyword() {
+	echo esc_attr(get_option('siteoption_keyword'));
+	echo esc_attr(get_option('home_image_url'));
+}
+function my_admin_scripts() {
+  //メディアアップローダの javascript API
+  wp_enqueue_media();
+}
+add_action( 'admin_print_scripts', 'my_admin_scripts' );
+
