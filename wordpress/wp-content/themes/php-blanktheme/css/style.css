@@ -226,6 +226,32 @@ a:hover img {
 }
 
 /*******************************
+  ローディング画面
+*******************************/
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: #ce0613;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.loader img {
+  max-width: 30vw;
+}
+
+@media screen and (min-width: 769px) {
+  .loader img {
+    max-width: 10vw;
+  }
+}
+
+/*******************************
   コンテンツ幅
 *******************************/
 /*******************************

@@ -193,6 +193,28 @@ a {
 }
 
 /*******************************
+  ローディング画面
+*******************************/
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: $color-theme;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  img {
+    max-width: 30vw;
+    @media screen and (min-width: 769px) {
+      max-width: 10vw;
+    }
+  }
+}
+
+/*******************************
   コンテンツ幅
 *******************************/
 .container {
