@@ -70,7 +70,7 @@ html {
     font-size: 11px;
   }
   @media screen and (max-width: 768px) {
-    font-size: 16px;
+    font-size: 13px;
   }
 }
 
@@ -135,10 +135,10 @@ table {
       th,
       td {
         padding: 5px 3px;
-        border-bottom: solid 1px #ddd;
+        @include border(b);
         @media screen and (max-width: 375px) {
           display: block;
-          width: 100px;
+          width: 100%;
         }
       }
       th {
@@ -185,7 +185,7 @@ a {
   color: $color-text;
   text-decoration: none;
   &:hover {
-    color: lighten($color-sub, 40);
+    color: lighten($color-sub, 15);
     img {
       opacity: 0.7;
     }
@@ -374,6 +374,10 @@ a {
 // }
 
 /*******************************
+  slider
+*******************************/
+
+/*******************************
   footer
 *******************************/
 .footer {
@@ -406,20 +410,21 @@ a {
 *******************************/
 
 /*******************************
-  slider
-*******************************/
-
-/*******************************
   map
-*******************************/
-
-/*******************************
-  SNS関連
 *******************************/
 
 /*******************************
   single
 *******************************/
+.single {
+  &__post {
+    &-op {
+      @include border(t);
+      @include border(b);
+      padding: 0.4rem 0;
+    }
+  }
+}
 
 /*******************************
   archive
@@ -447,6 +452,22 @@ a {
 /*******************************
   aside
 *******************************/
+.widget {
+  margin-bottom: 3rem;
+  &title {
+    background-color: $color-theme;
+    padding: 0.4rem;
+  }
+  ul {
+    & > li {
+      a {
+        display: block;
+        padding: 0.3rem 0.6rem;
+        @include border(b, $color-base);
+      }
+    }
+  }
+}
 
 /*******************************
   lightbox

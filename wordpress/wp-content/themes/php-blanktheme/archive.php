@@ -2,7 +2,7 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-120">
+    <div class="col-lg-90 col-120">
       <main>
         <article id="post-<?php the_ID(); ?>" <?php post_class('row'); ?>>
           <?php if ( have_posts() ) : while ( have_posts() ) : the_post(); ?>
@@ -25,7 +25,7 @@
         </article>
       </main>
     </div>
-    <div class="col-120">
+    <div class="offset-lg-3 col-lg-27 col-120">
       <aside>
         <?php get_sidebar(); ?>
       </aside>

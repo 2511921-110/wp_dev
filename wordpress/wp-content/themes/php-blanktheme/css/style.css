@@ -80,7 +80,7 @@ html {
 
 @media screen and (max-width: 768px) {
   html {
-    font-size: 16px;
+    font-size: 13px;
   }
 }
 
@@ -160,14 +160,14 @@ table {
 table tbody tr th,
 table tbody tr td {
   padding: 5px 3px;
-  border-bottom: solid 1px #ddd;
+  border-bottom: 1px solid rgba(22, 8, 4, 0.25);
 }
 
 @media screen and (max-width: 375px) {
   table tbody tr th,
   table tbody tr td {
     display: block;
-    width: 100px;
+    width: 100%;
   }
 }
 
@@ -218,7 +218,7 @@ a {
 }
 
 a:hover {
-  color: #c34723;
+  color: #572010;
 }
 
 a:hover img {
@@ -378,6 +378,9 @@ a:hover img {
   header
 *******************************/
 /*******************************
+  slider
+*******************************/
+/*******************************
   footer
 *******************************/
 /*******************************
@@ -399,17 +402,17 @@ a:hover img {
   border
 *******************************/
 /*******************************
-  slider
-*******************************/
-/*******************************
   map
-*******************************/
-/*******************************
-  SNS関連
 *******************************/
 /*******************************
   single
 *******************************/
+.single__post-op {
+  border-top: 1px solid rgba(22, 8, 4, 0.25);
+  border-bottom: 1px solid rgba(22, 8, 4, 0.25);
+  padding: 0.4rem 0;
+}
+
 /*******************************
   archive
 *******************************/
@@ -438,6 +441,21 @@ a:hover img {
 /*******************************
   aside
 *******************************/
+.widget {
+  margin-bottom: 3rem;
+}
+
+.widgettitle {
+  background-color: #ce0613;
+  padding: 0.4rem;
+}
+
+.widget ul > li a {
+  display: block;
+  padding: 0.3rem 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+}
+
 /*******************************
   lightbox
 *******************************/
