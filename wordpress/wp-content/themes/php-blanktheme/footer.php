@@ -61,8 +61,27 @@
 					return false;
 				});
 			});
-		}, false);
-	var THEME_URL = '<?php echo home_url(); ?>';
+    }, false);
+    var THEME_URL = "<?php echo get_template_directory_uri() ?>";
+    var BASEURL = "<?php echo home_url('/wp-json/wp/v2/') ?>";
+    var HOMEURL = "<?php echo home_url() ?>";
+    var dateFormat = "<?php echo get_option( 'date_format' ) ?>";
+    <?php if(is_front_page() && is_home()): ?>
+      var rest = "posts/"
+      var id = "<?php echo get_the_ID(); ?>";
+    <?php elseif (is_front_page()): ?>
+      var rest = "pages/"
+      var id = "<?php echo get_the_ID(); ?>";
+    <?php elseif (is_home()): ?>
+      var rest = "posts/"
+      var id = "<?php echo get_the_ID(); ?>";
+    <?php elseif (is_page()): ?>
+      var rest = "pages/"
+      var id = "<?php echo get_the_ID(); ?>";
+    <?php else: ?>
+      var rest = "posts/"
+      var id = "<?php echo get_the_ID(); ?>";
+    <?php endif; ?>
 	</script>
 	<?php wp_footer(); ?>
 </body>
