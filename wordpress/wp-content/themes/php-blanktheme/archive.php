@@ -23,6 +23,7 @@
             ?>
           </div>
         </article>
+        <!-- <?php get_template_part('post-vue'); ?> -->
       </main>
     </div>
     <div class="offset-lg-3 col-lg-27 col-120">

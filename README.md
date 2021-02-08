@@ -30,7 +30,7 @@ http://
 
 ### 投稿データ 20 追加
 
-- wp post generate --count=20 --post_type=post --post_status=publish
+- wp post generate --count=3 --post_type=post --post_status=publish --post_author=wisedev --post_title="fuga"
 
 ### 投稿データ作成
 
@@ -47,19 +47,24 @@ wp post create --post_title="テスト投稿" --post_content="テスト投稿で
 
 - sudo vi /etc/php/7.4/apache2/php.ini
 
-#### Viコマンド
+#### Vi コマンド
 
 > 行数移動
->> 846G
+>
+> > 846G
 
 > 文字検索
->> /文字列
+>
+> > /文字列
 
 > 書き込みして終了
->> :wq
+>
+> > :wq
 
 > 再起動
->> sudo service apache2 restart
+>
+> > sudo service apache2 restart
 
-> phpの関係性
->> memory_limit >= post_max_size >= upload_max_filesize
+> php の関係性
+>
+> > memory_limit >= post_max_size >= upload_max_filesize

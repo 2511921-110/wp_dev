@@ -1,3 +1,5 @@
+import Vue from 'vue'
+import axios from 'axios'
 // import Inview from 'in-view'
 // import objectFitImages from 'object-fit-images';
 
@@ -168,4 +170,63 @@ for (var i = 0; i < trigger.length; i++) {
     }
   });
 }
+
+
+
+
+/*******************
+  posts
+*******************/
+
+if (document.getElementById('Posts')) {
+  const postsInstance = new Vue({
+    el: "#Posts",
+    data() {
+      return {
+        cats: [],
+        posts: [],
+        eventObject: '',
+      }
+    },
+    mounted(){
+      axios(BASEURL+'posts')
+      .then( (res) =>{
+        this.posts = res.data
+      })
+      axios(BASEURL+'categories')
+      .then( (res) =>{
+        this.cats = res.data.filter(item => item.slug != 'uncategorized')
+      })
+    },
+    methods:  {
+      btnClicked(e) {
+        axios(BASEURL+'posts')
+        .then( (res) =>{
+          this.posts = res.data.filter(item => item.categories.includes(e))
+        })
+      }
+    },
+  })
+}
+
+/*******************
+  posts
+*******************/
+
+// if (document.getElementById('Cat')) {
+//   const postsInstance = new Vue({
+//     el: "#Cat",
+//     data() {
+//       return {
+//         cats: [],
+//       }
+//     },
+//     mounted(){
+//       axios(BASEURL+'categories')
+//       .then( (res) =>{
+//         this.cats = res.data.filter(item => item.slug != 'uncategorized')
+//       })
+//     },
+//   })
+// }
 
