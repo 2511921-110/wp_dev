@@ -25,7 +25,7 @@ const paths = {
   rootDir: '../',
   scssSrc: 'scss/**/*.scss',
   jsSrc: 'js/**/*.js',
-  imgSrc: 'src/**/*',
+  imgSrc: 'assets/**/*',
   outCss: '../css',
   outJs: '../js',
   outImg: '../assets/',
