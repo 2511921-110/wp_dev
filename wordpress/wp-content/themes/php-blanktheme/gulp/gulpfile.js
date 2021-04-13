@@ -1,8 +1,8 @@
 //プラグインの読み込み
 const gulp = require('gulp');
 const sass = require('gulp-sass');
-const autoprefixer = require('gulp-autoprefixer');
-const sourcemaps = require('gulp-sourcemaps');
+const autoprefixer = require("autoprefixer");
+const postcss = require('gulp-postcss');
 const glob = require('gulp-sass-glob');
 const plumber = require('gulp-plumber');
 const changed = require('gulp-changed');
@@ -69,13 +69,26 @@ function sassFunc() {
         includePaths: require('node-reset-scss').includePath,
         // outputStyle: 'compressed',
         outputStyle: 'expanded'
-      })
+      }).on('error', sass.logError),
+    )
+    .pipe(
+      postcss([
+        require('autoprefixer')({
+          grid: 'autoplace',
+          cascade: false
+        }),
+        require('css-mqpacker')
+      ]),
     )
     .pipe(gulp.dest(paths.outCss), {
-      sourcemaps: './sourcemaps',
+      // sourcemaps: './sourcemaps',
+      // sourcemaps: true,
+      sourcemaps: '.',
     })
     .pipe(gulp.dest(paths.outCss), {
-      sourcemaps: './sourcemaps',
+      // sourcemaps: './sourcemaps',
+      // sourcemaps: true,
+      sourcemaps: '.',
     })
     .pipe(browserSync.stream());
 }

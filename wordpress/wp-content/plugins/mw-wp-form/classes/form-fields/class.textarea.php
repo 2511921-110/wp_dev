@@ -1,28 +1,28 @@
 <?php
 /**
- * Name       : MW WP Form Field TextArea
- * Version    : 2.0.0
- * Author     : Takashi Kitajima
- * Author URI : https://2inc.org
- * Created    : December 14, 2012
- * Modified   : May 30, 2017
- * License    : GPLv2 or later
- * License URI: http://www.gnu.org/licenses/gpl-2.0.html
+ * @package mw-wp-form
+ * @author inc2734
+ * @license GPL-2.0+
+ */
+
+/**
+ * MW_WP_Form_Field_Textarea
  */
 class MW_WP_Form_Field_Textarea extends MW_WP_Form_Abstract_Form_Field {
 
 	/**
 	 * Types of form type.
-	 * input|select|button|input_button|error|other
+	 * input|select|button|input_button|error|other.
+	 *
 	 * @var string
 	 */
 	public $type = 'input';
 
 	/**
-	 * Set shortcode_name and display_name
-	 * Overwrite required for each child class
+	 * Set shortcode_name and display_name.
+	 * Overwrite required for each child class.
 	 *
-	 * @return array(shortcode_name, display_name)
+	 * @return array
 	 */
 	protected function set_names() {
 		return array(
@@ -32,15 +32,16 @@ class MW_WP_Form_Field_Textarea extends MW_WP_Form_Abstract_Form_Field {
 	}
 
 	/**
-	 * Set default attributes
+	 * Set default attributes.
 	 *
-	 * @return array defaults
+	 * @return array
 	 */
 	protected function set_defaults() {
 		return array(
 			'name'        => '',
 			'id'          => null,
 			'class'       => null,
+			'maxlength'   => null,
 			'cols'        => 50,
 			'rows'        => 5,
 			'value'       => '',
@@ -50,11 +51,9 @@ class MW_WP_Form_Field_Textarea extends MW_WP_Form_Abstract_Form_Field {
 	}
 
 	/**
-	 * Callback of add shortcode for input page
+	 * Callback of add shortcode for input page.
 	 *
-	 * @param array $atts
-	 * @param string $element_content
-	 * @return string HTML
+	 * @return string
 	 */
 	protected function input_page() {
 		$value = $this->Data->get_raw( $this->atts['name'] );
@@ -62,14 +61,18 @@ class MW_WP_Form_Field_Textarea extends MW_WP_Form_Abstract_Form_Field {
 			$value = $this->atts['value'];
 		}
 
-		$_ret = $this->Form->textarea( $this->atts['name'], array(
-			'id'          => $this->atts['id'],
-			'class'       => $this->atts['class'],
-			'cols'        => $this->atts['cols'],
-			'rows'        => $this->atts['rows'],
-			'value'       => $value,
-			'placeholder' => $this->atts['placeholder'],
-		) );
+		$_ret = $this->Form->textarea(
+			$this->atts['name'],
+			array(
+				'id'          => $this->atts['id'],
+				'class'       => $this->atts['class'],
+				'maxlength'   => $this->atts['maxlength'],
+				'cols'        => $this->atts['cols'],
+				'rows'        => $this->atts['rows'],
+				'value'       => $value,
+				'placeholder' => $this->atts['placeholder'],
+			)
+		);
 		if ( 'false' !== $this->atts['show_error'] ) {
 			$_ret .= $this->get_error( $this->atts['name'] );
 		}
@@ -77,11 +80,9 @@ class MW_WP_Form_Field_Textarea extends MW_WP_Form_Abstract_Form_Field {
 	}
 
 	/**
-	 * Callback of add shortcode for confirm page
+	 * Callback of add shortcode for confirm page.
 	 *
-	 * @param array $atts
-	 * @param string $element_content
-	 * @return string HTML
+	 * @return string
 	 */
 	protected function confirm_page() {
 		$value = $this->Data->get_raw( $this->atts['name'] );
@@ -91,11 +92,10 @@ class MW_WP_Form_Field_Textarea extends MW_WP_Form_Abstract_Form_Field {
 	}
 
 	/**
-	 * Display tag generator dialog
-	 * Overwrite required for each child class
+	 * Display tag generator dialog.
+	 * Overwrite required for each child class.
 	 *
-	 * @param array $options
-	 * @return void
+	 * @param array $options Options.
 	 */
 	public function mwform_tag_generator_dialog( array $options = array() ) {
 		?>
@@ -113,6 +113,11 @@ class MW_WP_Form_Field_Textarea extends MW_WP_Form_Abstract_Form_Field {
 			<strong>class</strong>
 			<?php $class = $this->get_value_for_generator( 'class', $options ); ?>
 			<input type="text" name="class" value="<?php echo esc_attr( $class ); ?>" />
+		</p>
+		<p>
+			<strong>maxlength</strong>
+			<?php $maxlength = $this->get_value_for_generator( 'maxlength', $options ); ?>
+			<input type="text" name="maxlength" value="<?php echo esc_attr( $maxlength ); ?>" />
 		</p>
 		<p>
 			<strong>cols</strong>

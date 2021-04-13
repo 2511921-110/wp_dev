@@ -57,7 +57,6 @@
         return false;
     };
 
-    var autonameEnabled = true;
     var Color = function(input) {
         if(!(this instanceof Color)) {
             return new Color(input);
@@ -143,7 +142,7 @@
 
     $.extend(Color, {
         autoname: function(color, force) {
-            if(force || (autonameEnabled && color.autonameEnabled())) {
+            if(force || color.autonameEnabled()) {
                 var name = ntc.name(color._hex);
                 if(name === false) {
                     return '';
@@ -151,12 +150,6 @@
                 return name;
             }
             return false;
-        },
-        autonameEnabled: function() {
-            return autonameEnabled;
-        },
-        enableAutoname: function(state) {
-            autonameEnabled = !!state;
         }
     });
     Color.Update = function(color, property) {

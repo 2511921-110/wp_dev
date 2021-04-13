@@ -14,12 +14,21 @@
         status: 1
     };
 
+    var sanitizeVariableName = function(string, fallback) {
+        var sanitized = string.replace(/%[a-fA-F0-9_-]/, '');
+        sanitized = sanitized.replace(/[^A-Za-z0-9_-]/, '');
+        if (sanitized === '' && fallback) {
+            return sanitizeVariableName(fallback);
+        }
+        return sanitized;
+    };
+
     var Entry = function(container, options) {
-        if(!(this instanceof Entry)) {
+        if (!(this instanceof Entry)) {
             return new Entry(container, options);
         }
 
-        if(!entryTemplate) {
+        if (!entryTemplate) {
             entryTemplate = wp.template('kt_color_entry');
             pickerTemplate = $('#tmpl-kt_color_picker').html();
             typeSelectTemplate = $('#tmpl-kt_color_type_select').html();
@@ -35,30 +44,29 @@
         this.$picker = $(pickerTemplate).appendTo(document.body);
         this.$type = $(typeSelectTemplate).appendTo(document.body);
         this.$type.children('[data-type=' + init.type + ']').addClass('active');
-        this.$el = $(entryTemplate({
-            index: init.index,
-            status: init.status
-        })).appendTo(container);
+        this.$el = $(entryTemplate(init)).appendTo(container);
         var background = kt_Color('#FF0000');
         var set = 'sl';
+        var autoVariable = init.variable == '';
 
         this.el = {
-            $colorBtn: self.$el.children('.color'),
+            $colorBtn: self.$el.find('.color-btn'),
             $rgbSample: self.$el.find('.sample .rgb'),
             $rgbaSample: self.$el.find('.sample .rgba'),
-            $colorInput: self.$el.children('.color-input'),
-            $alphaInput: self.$el.children('.alpha-input'),
-            $hex: self.$el.children('.color-hex'),
-            $type: self.$el.children('.color-type'),
-            $typeSelect: self.$el.children('.type-select'),
-            $status: self.$el.children('.color-status'),
+            $colorInput: self.$el.find('.color-input'),
+            $alphaInput: self.$el.find('.alpha-input'),
+            $hex: self.$el.find('.color-hex'),
+            $type: self.$el.find('.color-type'),
+            $typeSelect: self.$el.find('.type-select'),
+            $status: self.$el.find('.color-status'),
             $activateBtn: self.$el.find('.buttons .activate'),
             $deactivateBtn: self.$el.find('.buttons .deactivate'),
             $removeBtn: self.$el.find('.buttons .remove'),
-            $nameInput: self.$el.children('.name'),
-            $autonameBtn: self.$el.children('button.autoname'),
+            $nameInput: self.$el.find('.name-input'),
+            $variableInput: self.$el.find('.variable-input'),
+            $autonameBtn: self.$el.find('button.autoname'),
             keyboard: function(e) {
-                switch(e.which) {
+                switch (e.which) {
                     case kt.key.ENTER:
                         self.el.$colorBtn.trigger('focus');
                         return false;
@@ -75,6 +83,10 @@
                 self.el.$nameInput.val(self.color.getName()).toggleClass('autoname', self.color.autonameEnabled());
                 self.el.$type.val(self.color._type);
                 self.el.$hex.val(self.color.getHEX());
+                if (autoVariable) {
+                    var varName = sanitizeVariableName(self.color.getName());
+                    self.el.$variableInput.val(varName);
+                }
             }
         };
 
@@ -89,7 +101,7 @@
             $color: self.$picker.children('.color'),
             keyboard: function(e) {
                 var f = kt.key.ctrl(e) ? 5 : 2.5, more = '+' + f, less = '-' + f;
-                switch(e.which) {
+                switch (e.which) {
                     case kt.key.MINUS:
                     case kt.key.MINUS_NUM:
                         self.color.setHue(less);
@@ -116,7 +128,7 @@
                         }));
                         return false;
                     case kt.key.ESC:
-                        if(self.picker.isHidden()) {
+                        if (self.picker.isHidden()) {
                             self.$el.trigger('focus');
                         } else {
                             self.picker.hide();
@@ -147,18 +159,18 @@
                 };
             },
             mousedown: function(e) {
-                if(e.which != kt.mouse.LEFT) {
+                if (e.which != kt.mouse.LEFT) {
                     return false;
                 }
-                if(!dragging) {
+                if (!dragging) {
                     $document.on(self.picker.mouse);
                     dragging = true;
                 }
                 var pos = self.picker.coords(e);
                 set = 'sl';
-                if(pos.x > shift + 1) {
+                if (pos.x > shift + 1) {
                     set = 'alpha';
-                } else if(Math.max(Math.abs(pos.x), Math.abs(pos.y)) * 2 > square) {
+                } else if (Math.max(Math.abs(pos.x), Math.abs(pos.y)) * 2 > square) {
                     set = 'hue';
                 }
                 self.picker.mousemove(e);
@@ -166,7 +178,7 @@
             },
             mousemove: function(e) {
                 var pos = self.picker.coords(e);
-                switch(set) {
+                switch (set) {
                     case 'hue':
                         self.color.setHue(Math.atan2(pos.x, -pos.y) * 360 / 6.28);
                         break;
@@ -190,18 +202,18 @@
                 $document.off('mousedown', self.picker.autohide);
             },
             autohide: function(e) {
-                if(!$(e.target).closest(self.el.$colorBtn).length) {
+                if (!$(e.target).closest(self.el.$colorBtn).length) {
                     self.picker.hide();
                 }
             },
             toggle: function(e) {
-                if(kt.mouse.LEFT == e.which) {
-                    if(self.picker.isHidden()) {
+                if (kt.mouse.LEFT == e.which) {
+                    if (self.picker.isHidden()) {
                         $document.on('mousedown', self.picker.autohide);
                         self.$picker.removeClass('hidden').position({
                             of: this,
-                            at: 'left bottom',
-                            my: 'left top-1px'
+                            at: 'right top',
+                            my: 'left top'
                         });
                     } else {
                         self.picker.hide();
@@ -223,13 +235,13 @@
                 $document.off('mousedown', self.type.autohide);
             },
             autohide: function(e) {
-                if(!$(e.target).closest([self.$type[0], self.el.$typeSelect[0]]).length) {
+                if (!$(e.target).closest([self.$type[0], self.el.$typeSelect[0]]).length) {
                     self.type.hide();
                 }
             },
             toggle: function(e) {
-                if(kt.mouse.LEFT == e.which) {
-                    if(self.type.isHidden()) {
+                if (kt.mouse.LEFT == e.which) {
+                    if (self.type.isHidden()) {
                         $document.on('mousedown', self.type.autohide);
                         self.el.$typeSelect.addClass('active');
                         self.$type.removeClass('hidden').position({
@@ -254,7 +266,7 @@
 
         // add or remove keyboard events when an entry gets or loses focus
         this.$el.on('focus blur', function(e) {
-            if(e.type == 'focus' || e.type == 'focusin') {
+            if (e.type == 'focus' || e.type == 'focusin') {
                 self.$el.attr('aria-grabbed', 'true').on('keydown', self.el.keyboard);
             } else {
                 self.$el.attr('aria-grabbed', 'false').off('keydown', self.el.keyboard);
@@ -273,7 +285,7 @@
 
         // add or remove keyboard events when the color preview putton gets or looses focus
         this.el.$colorBtn.on('focus blur', function(e) {
-            if(e.type == 'focus' || e.type == 'focusin') {
+            if (e.type == 'focus' || e.type == 'focusin') {
                 self.el.$colorBtn.on('keydown', self.picker.keyboard);
             } else {
                 self.picker.hide();
@@ -298,6 +310,11 @@
             var name = $.trim(this.value);
             self.color.enableAutoname(name == '');
             self.color.setName(name);
+        });
+
+        // when the variable name input changes toggle variable autonaming
+        this.el.$variableInput.on('change', function() {
+            autoVariable = this.value == '';
         });
 
         // toggle the type select then the type button is pressed
