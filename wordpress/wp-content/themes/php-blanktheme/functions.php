@@ -795,3 +795,18 @@ function my_admin_scripts() {
 }
 add_action( 'admin_print_scripts', 'my_admin_scripts' );
 
+add_filter('gettext', 'change_admin_cpt_text_filter', 20, 3);
+
+function change_admin_cpt_text_filter( $translated_text, $untranslated_text, $domain )
+{
+    switch ($untranslated_text) {
+      case 'Website'://変更したい文言の元テキストを入れる
+        $translated_text = 'サイトURL';//変更後のテキストを入れる
+        break;
+      // case 'Website'://変更したい文言の元テキストを入れる
+      //   $translated_text = 'サイトURL';//変更後のテキストを入れる
+      //   break;
+    }
+    return $translated_text;
+}
+

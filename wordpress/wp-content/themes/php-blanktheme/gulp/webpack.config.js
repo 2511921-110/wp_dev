@@ -14,11 +14,27 @@ module.exports = {
   module:{
     rules:[{
       test: /\.js$/,
-      exclude: /node_modules/,
+      exclude: /node_modules\/(?!(dom7|ssr-window|swiper)\/).*/,
       loader: [
         'babel-loader',
         // 'vue-loader'
-      ]
+      ],
+      options: {
+        presets: [
+          [
+            "@babel/preset-env", {
+              modules: false,
+              "targets": {
+                "browsers": "> 1%",
+                "ie": 10,
+                // "forceAllTransforms": true
+              },
+              useBuiltIns: "entry",
+              corejs: 3,
+            }
+          ]
+        ],
+      },
     },
     {
       test: /\.vue$/,
@@ -31,7 +47,7 @@ module.exports = {
       loader: 'style-loader!css-loader!'
     },
     {
-      test: /\.(eot|svg|woff|ttf|gif)$/,
+      test: /\.(eot|svg|woff|ttf|gif|png|jpg)$/,
       loader: 'url-loader'
     }
     ]

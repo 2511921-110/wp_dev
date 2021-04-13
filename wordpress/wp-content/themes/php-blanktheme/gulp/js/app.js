@@ -230,3 +230,88 @@ if (document.getElementById('Posts')) {
 //   })
 // }
 
+/*******************
+  tab
+*******************/
+if (document.getElementById('tab')) {
+  //-- タブ切り替え --------------------------------------------------------------------
+  // 対象クラスのついているDOM全てを取得
+  var btn = document.getElementsByClassName('tab__btn');
+
+  // btn.length で 対象ボタンの個数全部を取得し、条件式が0になるまで回す。
+  // 要素indexは0から割り振られているので-1することで、個数を、indexに合わせる。
+  for (var i = btn.length - 1; i >= 0; i--) {
+    // 各ボタン、イベントリスナーでクリックしたら発動
+    btn[i].addEventListener('click', function () {
+
+      // btn.length で 対象ボタンの個数全部を取得し、条件式が0になるまで回す。
+      for (var x = btn.length - 1; x >= 0; x--) {
+        // contains で対象クラス有無をチェックし、あれば削除
+        if (btn[x].classList.contains('active')) {
+          btn[x].classList.remove('active');
+        }
+      }
+
+      // this はクリックされたオブジェクト。parentNode でその親。
+      // classList でクラス操作。active クラスの追加と削除。
+      this.classList.add('active');
+
+      // 対象クラスのついているDOM全てを取得
+      var box = document.getElementsByClassName('tab__container');
+      for (var y = box.length - 1; y >= 0; y--) {
+        // contains で対象クラス有無をチェックし、あれば削除
+        if (box[y].classList.contains('open')) {
+          box[y].classList.remove('open');
+        }
+      }
+
+      //data属性の値を取得して、同じidの要素にクラス付加。
+      var tab_id = this.getAttribute('data-tab');
+      document.getElementById(tab_id).classList.add('open');
+    });
+  }
+}
+
+
+/*******************
+  見積もり機能
+*******************/
+if (document.getElementById('estimate')) {
+  const form = document.querySelectorAll('input[name=合計金額]')
+  const setu01 = document.querySelectorAll('input[name=メニュー01]')
+  const setu02 = document.querySelectorAll('input[name=オプション01]');
+  const radio = document.querySelectorAll("input[type='radio']")
+  console.log(radio)
+  for(i=0;i<setu01.length;i++){
+    setu01[i].addEventListener('click', function(e){
+      price_sum();
+    });
+  }
+  //optionのクリックを監視
+  for(i=0;i<setu02.length;i++){
+    setu02[i].addEventListener('click', function(e){
+      price_sum();
+    });
+  }
+  //合計計算
+  function price_sum(){
+    var sum = 0;
+    for (var i = 0; i < setu01.length; i++){
+      if(setu01[i].checked){
+        sum += parseInt(setu01[i].value);
+      }
+    }
+    for(var i = 0; i < setu02.length; i ++){
+      if(setu02[i].checked){
+        sum += parseInt(setu02[i].value);
+      }
+    }
+    // console.log(form[0].value)
+    form[0].value = sum;
+  }
+  // for (let i = 0; i < setu01.length; i++) {
+  //   element.addEventListener('change',function(){})
+  //   const e = setu01[i];
+  //   e =
+  // }
+}

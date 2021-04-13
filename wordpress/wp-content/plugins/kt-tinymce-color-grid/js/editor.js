@@ -33,7 +33,7 @@
         },
         sortUp = function() {
             var $this = getPicker(this);
-            if($this.prev().length) {
+            if ($this.prev().length) {
                 $this.after($this.prev());
                 updateView();
                 return false;
@@ -41,19 +41,19 @@
         },
         sortDown = function() {
             var $this = getPicker(this);
-            if($this.next().length) {
+            if ($this.next().length) {
                 $this.before($this.next());
                 updateView();
                 return false;
             }
         },
         focusPicker = function(e) {
-            if($(e.target).is('.picker')) {
+            if ($(e.target).is('.picker')) {
                 $(this).trigger('focus');
             }
         },
         focusParent = function(e) {
-            switch(e.which) {
+            switch (e.which) {
                 case kt.key.ESC:
                     $(this.parentNode).trigger('focus');
                     break;
@@ -84,22 +84,12 @@
             switchToTab(this.id);
         });
 
-        $('#kt_autoname').on('change', function() {
-            kt_Color.enableAutoname(this.checked);
-            $Editor.toggleClass('autoname', this.checked);
-            if(window.wpCookies) {
-                var show = this.checked ? 1 : 0;
-                window.wpCookies.set('kt_color_grid_autoname', show, MONTH_IN_SECONDS);
-            }
-        });
-        kt_Color.enableAutoname($Editor.hasClass('autoname'));
-
         $Editor.on('click', '.sort-up', sortUp)
         .on('click', '.sort-down', sortDown)
         .on('mousedown', '.picker', focusPicker)
         .on('keydown', 'input', focusParent);
 
-        if(!$(document.body).hasClass('mobile')) {
+        if (!$(document.body).hasClass('mobile')) {
             $Editor.sortable({
                 placeholder: 'picker-placeholder',
                 items: '.picker',
@@ -112,18 +102,21 @@
             });
         }
 
-
+        var $Type = $('#kt_type');
         $('#kt_visual, #kt_customizer').on('change', function() {
-            if(this.id == 'kt_visual' && !this.checked && _('kt_type_palette').checked) {
-                $('#kt_type_default').prop('checked', true).trigger('change');
+            if (this.id == 'kt_visual' && !this.checked && $Type.val() == 'palette') {
+                $Type.val('default').trigger('change');
             }
         });
 
-        $('input[name="kt_type"]').on('change', function() {
-            if(this.value == 'palette') {
+        $Type.on('change', function() {
+            if (this.value == 'palette') {
                 _('kt_visual').checked = true;
             }
             $('#kt_customizer').trigger('change');
+
+            $('#kt_grid_metabox .kt-grid-type-option').addClass('hide-if-js')
+            .filter('.kt-grid-type-' + this.value + '-option').removeClass('hide-if-js');
         });
 
         $('#kt_clamp, #kt_clamps').on('mousedown', function() {
@@ -138,15 +131,15 @@
         $('#kt_export_format').on('change', function() {
             $ExportForms.addClass('hide-if-js');
             var type = $('#kt_export_format [value=' + this.value + ']').data('form');
-            if(type) {
+            if (type) {
                 $('#kt_export_' + type + '_form').removeClass('hide-if-js');
             }
         });
 
-        if(window.wpCookies) {
+        if (window.wpCookies) {
             $('#kt_backup_metabox').on('change', 'input,select', function() {
                 var value = this.value;
-                if(this.type == 'checkbox') {
+                if (this.type == 'checkbox') {
                     value = this.checked ? 1 : 0;
                 }
                 window.wpCookies.set(this.id, value, MONTH_IN_SECONDS);
@@ -162,21 +155,32 @@
             var base = 'kt_export_' + this;
             var color = new kt_Color(randomPreviewColor);
             color.setAlpha(randomPreviewAlpha);
-            var template = wp.template(base + '_preview');
-            var compat = wp.template(base + '_compat_preview');
+            var preview = wp.template(base + '_preview');
+            var compatPreview = wp.template(base + '_compat_preview');
             var $pre = $('#' + base + '_preview pre');
             var $format = $('#' + base + '_color_format');
             var $compat = $('#' + base + '_color_compat');
+            var $selector = $('#' + base + '_selector');
             var render = function() {
-                $pre.text(($compat.length && $compat.attr('checked') ? compat : template)({
+                var format = $format.val();
+                var data = {
                     key: randomPreviewName,
                     prefix: _(base + '_prefix').value,
                     suffix: _(base + '_suffix').value,
-                    color: color.setType($format.val()).toString(),
+                    color: color.setType(format).toString(),
                     hex: color.getHEX()
-                }));
+                };
+                if ($selector.length) {
+                    var value = $selector.val().trim();
+                    if (value === '') {
+                        value = ':root';
+                    }
+                    data.selector = value;
+                }
+                var useCompat = format != 'hex' && $compat.attr('checked');
+                $pre.text((useCompat ? compatPreview : preview)(data));
             };
-            $('#' + base + '_form').on('change', 'input,select', render);
+            $('#' + base + '_form').on('input', 'input,select', render);
             render();
         });
 

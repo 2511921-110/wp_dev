@@ -91,26 +91,6 @@ function ai1wm_archive_path( $params ) {
 }
 
 /**
- * Get export log absolute path
- *
- * @param  array  $params Request parameters
- * @return string
- */
-function ai1wm_export_path( $params ) {
-	return ai1wm_storage_path( $params ) . DIRECTORY_SEPARATOR . AI1WM_EXPORT_NAME;
-}
-
-/**
- * Get import log absolute path
- *
- * @param  array  $params Request parameters
- * @return string
- */
-function ai1wm_import_path( $params ) {
-	return ai1wm_storage_path( $params ) . DIRECTORY_SEPARATOR . AI1WM_IMPORT_NAME;
-}
-
-/**
  * Get multipart.list absolute path
  *
  * @param  array  $params Request parameters
@@ -138,6 +118,16 @@ function ai1wm_content_list_path( $params ) {
  */
 function ai1wm_media_list_path( $params ) {
 	return ai1wm_storage_path( $params ) . DIRECTORY_SEPARATOR . AI1WM_MEDIA_LIST_NAME;
+}
+
+/**
+ * Get tables.list absolute path
+ *
+ * @param  array  $params Request parameters
+ * @return string
+ */
+function ai1wm_tables_list_path( $params ) {
+	return ai1wm_storage_path( $params ) . DIRECTORY_SEPARATOR . AI1WM_TABLES_LIST_NAME;
 }
 
 /**
@@ -783,6 +773,13 @@ function ai1wm_plugin_filters( $filters = array() ) {
 		$filters[] = 'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-b2-extension';
 	}
 
+	// Backup Plugin
+	if ( defined( 'AI1WMVE_PLUGIN_BASENAME' ) ) {
+		$filters[] = 'plugins' . DIRECTORY_SEPARATOR . dirname( AI1WMVE_PLUGIN_BASENAME );
+	} else {
+		$filters[] = 'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-backup';
+	}
+
 	// Box Extension
 	if ( defined( 'AI1WMBE_PLUGIN_BASENAME' ) ) {
 		$filters[] = 'plugins' . DIRECTORY_SEPARATOR . dirname( AI1WMBE_PLUGIN_BASENAME );
@@ -874,6 +871,13 @@ function ai1wm_plugin_filters( $filters = array() ) {
 		$filters[] = 'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-pcloud-extension';
 	}
 
+	// Pro Plugin
+	if ( defined( 'AI1WMKE_PLUGIN_BASENAME' ) ) {
+		$filters[] = 'plugins' . DIRECTORY_SEPARATOR . dirname( AI1WMKE_PLUGIN_BASENAME );
+	} else {
+		$filters[] = 'plugins' . DIRECTORY_SEPARATOR . 'all-in-one-wp-migration-pro';
+	}
+
 	// S3 Client Extension
 	if ( defined( 'AI1WNE_PLUGIN_BASENAME' ) ) {
 		$filters[] = 'plugins' . DIRECTORY_SEPARATOR . dirname( AI1WMNE_PLUGIN_BASENAME );
@@ -931,6 +935,11 @@ function ai1wm_active_servmask_plugins( $plugins = array() ) {
 	// Backblaze B2 Extension
 	if ( defined( 'AI1WMAE_PLUGIN_BASENAME' ) ) {
 		$plugins[] = AI1WMAE_PLUGIN_BASENAME;
+	}
+
+	// Backup Plugin
+	if ( defined( 'AI1WMVE_PLUGIN_BASENAME' ) ) {
+		$plugins[] = AI1WMVE_PLUGIN_BASENAME;
 	}
 
 	// Box Extension
@@ -996,6 +1005,11 @@ function ai1wm_active_servmask_plugins( $plugins = array() ) {
 	// pCloud Extension
 	if ( defined( 'AI1WMPE_PLUGIN_BASENAME' ) ) {
 		$plugins[] = AI1WMPE_PLUGIN_BASENAME;
+	}
+
+	// Pro Plugin
+	if ( defined( 'AI1WMKE_PLUGIN_BASENAME' ) ) {
+		$plugins[] = AI1WMKE_PLUGIN_BASENAME;
 	}
 
 	// S3 Client Extension
@@ -1179,20 +1193,29 @@ function ai1wm_deactivate_jetpack_modules( $modules ) {
 }
 
 /**
+ * Deactivate Swift Optimizer rules
+ *
+ * @param  array   $rules List of rules
+ * @return boolean
+ */
+function ai1wm_deactivate_swift_optimizer_rules( $rules ) {
+	$current = get_option( AI1WM_SWIFT_OPTIMIZER_PLUGIN_ORGANIZER, array() );
+
+	// Remove rules
+	foreach ( $rules as $rule ) {
+		unset( $current['rules'][ $rule ] );
+	}
+
+	return update_option( AI1WM_SWIFT_OPTIMIZER_PLUGIN_ORGANIZER, $current );
+}
+
+/**
  * Deactivate sitewide Revolution Slider
  *
  * @param  string  $basename Plugin basename
  * @return boolean
  */
 function ai1wm_deactivate_sitewide_revolution_slider( $basename ) {
-	global $wp_version;
-
-	// Do not deactivate Revolution Slider (WordPress >= 5.2)
-	if ( version_compare( $wp_version, '5.2', '>=' ) ) {
-		return false;
-	}
-
-	// Deactivate Revolution Slider
 	if ( ( $plugins = get_plugins() ) ) {
 		if ( isset( $plugins[ $basename ]['Version'] ) && ( $version = $plugins[ $basename ]['Version'] ) ) {
 			if ( version_compare( PHP_VERSION, '7.3', '>=' ) && version_compare( $version, '5.4.8.3', '<' ) ) {
@@ -1223,14 +1246,6 @@ function ai1wm_deactivate_sitewide_revolution_slider( $basename ) {
  * @return boolean
  */
 function ai1wm_deactivate_revolution_slider( $basename ) {
-	global $wp_version;
-
-	// Do not deactivate Revolution Slider (WordPress >= 5.2)
-	if ( version_compare( $wp_version, '5.2', '>=' ) ) {
-		return false;
-	}
-
-	// Deactivate Revolution Slider
 	if ( ( $plugins = get_plugins() ) ) {
 		if ( isset( $plugins[ $basename ]['Version'] ) && ( $version = $plugins[ $basename ]['Version'] ) ) {
 			if ( version_compare( PHP_VERSION, '7.3', '>=' ) && version_compare( $version, '5.4.8.3', '<' ) ) {
@@ -1766,4 +1781,49 @@ function ai1wm_replace_directory_separator_with_forward_slash( $path ) {
  */
 function ai1wm_escape_windows_directory_separator( $path ) {
 	return preg_replace( '/[\\\\]+/', '\\\\\\\\', $path );
+}
+
+/**
+ * Should reset WordPress permalinks?
+ *
+ * @param  array   $params Request parameters
+ * @return boolean
+ */
+function ai1wm_should_reset_permalinks( $params ) {
+	global $wp_rewrite, $is_apache;
+
+	// Permalinks are not supported
+	if ( empty( $params['using_permalinks'] ) ) {
+		if ( $wp_rewrite->using_permalinks() ) {
+			if ( $is_apache ) {
+				if ( ! apache_mod_loaded( 'mod_rewrite', false ) ) {
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Get .htaccess file content
+ *
+ * @return string
+ */
+function ai1wm_get_htaccess() {
+	if ( is_file( AI1WM_WORDPRESS_HTACCESS ) ) {
+		return @file_get_contents( AI1WM_WORDPRESS_HTACCESS );
+	}
+}
+
+/**
+ * Get web.config file content
+ *
+ * @return string
+ */
+function ai1wm_get_webconfig() {
+	if ( is_file( AI1WM_WORDPRESS_WEBCONFIG ) ) {
+		return @file_get_contents( AI1WM_WORDPRESS_WEBCONFIG );
+	}
 }

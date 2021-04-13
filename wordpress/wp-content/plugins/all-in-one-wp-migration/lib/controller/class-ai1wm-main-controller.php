@@ -78,6 +78,9 @@ class Ai1wm_Main_Controller {
 		// Router
 		add_action( 'admin_init', array( $this, 'router' ) );
 
+		// Enable WP importing
+		add_action( 'admin_init', array( $this, 'wp_importing' ), 5 );
+
 		// Setup backups folder
 		add_action( 'admin_init', array( $this, 'setup_backups_folder' ) );
 
@@ -154,6 +157,7 @@ class Ai1wm_Main_Controller {
 		add_filter( 'ai1wm_export', 'Ai1wm_Export_Config_File::execute', 60 );
 		add_filter( 'ai1wm_export', 'Ai1wm_Export_Enumerate_Content::execute', 100 );
 		add_filter( 'ai1wm_export', 'Ai1wm_Export_Enumerate_Media::execute', 110 );
+		add_filter( 'ai1wm_export', 'Ai1wm_Export_Enumerate_Tables::execute', 120 );
 		add_filter( 'ai1wm_export', 'Ai1wm_Export_Content::execute', 150 );
 		add_filter( 'ai1wm_export', 'Ai1wm_Export_Media::execute', 160 );
 		add_filter( 'ai1wm_export', 'Ai1wm_Export_Database::execute', 200 );
@@ -167,6 +171,7 @@ class Ai1wm_Main_Controller {
 		add_filter( 'ai1wm_import', 'Ai1wm_Import_Validate::execute', 50 );
 		add_filter( 'ai1wm_import', 'Ai1wm_Import_Confirm::execute', 100 );
 		add_filter( 'ai1wm_import', 'Ai1wm_Import_Blogs::execute', 150 );
+		add_filter( 'ai1wm_import', 'Ai1wm_Import_Permalinks::execute', 170 );
 		add_filter( 'ai1wm_import', 'Ai1wm_Import_Enumerate::execute', 200 );
 		add_filter( 'ai1wm_import', 'Ai1wm_Import_Content::execute', 250 );
 		add_filter( 'ai1wm_import', 'Ai1wm_Import_Mu_Plugins::execute', 270 );
@@ -562,6 +567,7 @@ class Ai1wm_Main_Controller {
 	public function plugin_row_meta( $links, $file ) {
 		if ( $file === AI1WM_PLUGIN_BASENAME ) {
 			$links[] = Ai1wm_Template::get_content( 'main/get-support' );
+			$links[] = Ai1wm_Template::get_content( 'main/translate' );
 		}
 
 		return $links;
@@ -719,10 +725,10 @@ class Ai1wm_Main_Controller {
 			'ai1wm_export',
 			array(
 				'ajax'       => array(
-					'url' => wp_make_link_relative( admin_url( 'admin-ajax.php?action=ai1wm_export' ) ),
+					'url' => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1 ), admin_url( 'admin-ajax.php?action=ai1wm_export' ) ) ),
 				),
 				'status'     => array(
-					'url' => wp_make_link_relative( add_query_arg( array( 'secret_key' => get_option( AI1WM_SECRET_KEY ) ), admin_url( 'admin-ajax.php?action=ai1wm_status' ) ) ),
+					'url' => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1, 'secret_key' => get_option( AI1WM_SECRET_KEY ) ), admin_url( 'admin-ajax.php?action=ai1wm_status' ) ) ),
 				),
 				'secret_key' => get_option( AI1WM_SECRET_KEY ),
 			)
@@ -811,7 +817,7 @@ class Ai1wm_Main_Controller {
 			'ai1wm_uploader',
 			array(
 				'max_file_size' => wp_max_upload_size(),
-				'url'           => wp_make_link_relative( admin_url( 'admin-ajax.php?action=ai1wm_import' ) ),
+				'url'           => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1 ), admin_url( 'admin-ajax.php?action=ai1wm_import' ) ) ),
 				'params'        => array(
 					'priority'   => 5,
 					'secret_key' => get_option( AI1WM_SECRET_KEY ),
@@ -824,10 +830,10 @@ class Ai1wm_Main_Controller {
 			'ai1wm_import',
 			array(
 				'ajax'       => array(
-					'url' => wp_make_link_relative( admin_url( 'admin-ajax.php?action=ai1wm_import' ) ),
+					'url' => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1 ), admin_url( 'admin-ajax.php?action=ai1wm_import' ) ) ),
 				),
 				'status'     => array(
-					'url' => wp_make_link_relative( add_query_arg( array( 'secret_key' => get_option( AI1WM_SECRET_KEY ) ), admin_url( 'admin-ajax.php?action=ai1wm_status' ) ) ),
+					'url' => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1, 'secret_key' => get_option( AI1WM_SECRET_KEY ) ), admin_url( 'admin-ajax.php?action=ai1wm_status' ) ) ),
 				),
 				'secret_key' => get_option( AI1WM_SECRET_KEY ),
 			)
@@ -975,10 +981,10 @@ class Ai1wm_Main_Controller {
 			'ai1wm_import',
 			array(
 				'ajax'       => array(
-					'url' => wp_make_link_relative( admin_url( 'admin-ajax.php?action=ai1wm_import' ) ),
+					'url' => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1 ), admin_url( 'admin-ajax.php?action=ai1wm_import' ) ) ),
 				),
 				'status'     => array(
-					'url' => wp_make_link_relative( add_query_arg( array( 'secret_key' => get_option( AI1WM_SECRET_KEY ) ), admin_url( 'admin-ajax.php?action=ai1wm_status' ) ) ),
+					'url' => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1, 'secret_key' => get_option( AI1WM_SECRET_KEY ) ), admin_url( 'admin-ajax.php?action=ai1wm_status' ) ) ),
 				),
 				'secret_key' => get_option( AI1WM_SECRET_KEY ),
 			)
@@ -989,10 +995,10 @@ class Ai1wm_Main_Controller {
 			'ai1wm_export',
 			array(
 				'ajax'       => array(
-					'url' => wp_make_link_relative( admin_url( 'admin-ajax.php?action=ai1wm_export' ) ),
+					'url' => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1 ), admin_url( 'admin-ajax.php?action=ai1wm_export' ) ) ),
 				),
 				'status'     => array(
-					'url' => wp_make_link_relative( add_query_arg( array( 'secret_key' => get_option( AI1WM_SECRET_KEY ) ), admin_url( 'admin-ajax.php?action=ai1wm_status' ) ) ),
+					'url' => wp_make_link_relative( add_query_arg( array( 'ai1wm_import' => 1, 'secret_key' => get_option( AI1WM_SECRET_KEY ) ), admin_url( 'admin-ajax.php?action=ai1wm_status' ) ) ),
 				),
 				'secret_key' => get_option( AI1WM_SECRET_KEY ),
 			)
@@ -1187,6 +1193,19 @@ class Ai1wm_Main_Controller {
 		// Update actions
 		if ( current_user_can( 'update_plugins' ) ) {
 			add_action( 'wp_ajax_ai1wm_updater', 'Ai1wm_Updater_Controller::updater' );
+		}
+	}
+
+	/**
+	 * Enable WP importing
+	 *
+	 * @return void
+	 */
+	public function wp_importing() {
+		if ( isset( $_GET['ai1wm_import'] ) ) {
+			if ( ! defined( 'WP_IMPORTING' ) ) {
+				define( 'WP_IMPORTING', true );
+			}
 		}
 	}
 

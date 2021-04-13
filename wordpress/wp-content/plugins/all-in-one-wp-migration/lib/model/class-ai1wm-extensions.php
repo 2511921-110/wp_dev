@@ -63,6 +63,19 @@ class Ai1wm_Extensions {
 			);
 		}
 
+		// Add Backup Plugin
+		if ( defined( 'AI1WMVE_PLUGIN_NAME' ) ) {
+			$extensions[ AI1WMVE_PLUGIN_NAME ] = array(
+				'key'      => AI1WMVE_PLUGIN_KEY,
+				'title'    => AI1WMVE_PLUGIN_TITLE,
+				'about'    => AI1WMVE_PLUGIN_ABOUT,
+				'basename' => AI1WMVE_PLUGIN_BASENAME,
+				'version'  => AI1WMVE_VERSION,
+				'requires' => '1.0',
+				'short'    => AI1WMVE_PLUGIN_SHORT,
+			);
+		}
+
 		// Add Box Extension
 		if ( defined( 'AI1WMBE_PLUGIN_NAME' ) ) {
 			$extensions[ AI1WMBE_PLUGIN_NAME ] = array(
@@ -201,7 +214,7 @@ class Ai1wm_Extensions {
 				'about'    => AI1WMME_PLUGIN_ABOUT,
 				'basename' => AI1WMME_PLUGIN_BASENAME,
 				'version'  => AI1WMME_VERSION,
-				'requires' => '3.92',
+				'requires' => '4.4',
 				'short'    => AI1WMME_PLUGIN_SHORT,
 			);
 		}
@@ -229,6 +242,19 @@ class Ai1wm_Extensions {
 				'version'  => AI1WMPE_VERSION,
 				'requires' => '1.17',
 				'short'    => AI1WMPE_PLUGIN_SHORT,
+			);
+		}
+
+		// Add Pro Plugin
+		if ( defined( 'AI1WMKE_PLUGIN_NAME' ) ) {
+			$extensions[ AI1WMKE_PLUGIN_NAME ] = array(
+				'key'      => AI1WMKE_PLUGIN_KEY,
+				'title'    => AI1WMKE_PLUGIN_TITLE,
+				'about'    => AI1WMKE_PLUGIN_ABOUT,
+				'basename' => AI1WMKE_PLUGIN_BASENAME,
+				'version'  => AI1WMKE_VERSION,
+				'requires' => '1.0',
+				'short'    => AI1WMKE_PLUGIN_SHORT,
 			);
 		}
 
