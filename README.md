@@ -68,3 +68,7 @@ wp post create --post_title="テスト投稿" --post_content="テスト投稿で
 > php の関係性
 >
 > > memory_limit >= post_max_size >= upload_max_filesize
+
+#### migration export
+
+themes/$$$$$/gulp,themes/$$$$$/0,themes/$$$$$/README.md,themes/$$$$$/.editorconfig,themes/$$$$$/.gitignore,themes/$$$$$/.prettierrc
