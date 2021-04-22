@@ -8,17 +8,17 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  */
 class Wp_Twitter_Api {
 
-	private $bearer_token;
+	public $bearer_token=null;
 
 	// Default credentials
 	private $args = array(
-		'consumer_key'			=>	'default_consumer_key',
-		'consumer_secret'		=>	'default_consumer_secret'
+		'consumer_key'=>'',
+		'consumer_secret'=>''
 	);
 
 	// Default type of the resource
 	private $query_args = array(
-		'type'				=>	'statuses/user_timeline'
+		'type'=>'statuses/user_timeline'
 	);
 
 	private $has_error = false;
@@ -47,7 +47,9 @@ class Wp_Twitter_Api {
 	 * @return string Oauth Token
 	 */
 	private function get_bearer_token() {
-
+		if(empty($this->args['consumer_key']) || empty($this->args['consumer_secret'])){
+			return $this->bail( apply_filters( 'themify_twitter_missing_key_message', sprintf( __( 'Error: access keys missing in <a href="%s">Themify > Settings > Twitter Settings</a>', 'themify' ), admin_url( 'admin.php?page=themify#setting-twitter_settings' ) ) ));
+		}
 		$bearer_token_credentials = $this->args['consumer_key'] . ':' . $this->args['consumer_secret'];
 		/**
 		 * Encode token credentials since Twitter requires it that way.
@@ -56,19 +58,20 @@ class Wp_Twitter_Api {
 		$bearer_token_credentials_64 = base64_encode( $bearer_token_credentials );
 
 		$args = array(
-			'method'		=> 	'POST',
-			'timeout'		=> 	5,
-			'redirection'	=> 	5,
-			'httpversion'	=> 	'1.0',
-			'blocking'		=> 	true,
-			'headers'		=> 	array(
-				'Authorization'		=>	'Basic ' . $bearer_token_credentials_64,
-				'Content-Type'		=> 	'application/x-www-form-urlencoded;charset=UTF-8',
-				'Accept-Encoding'	=>	'gzip'
+			'method'=>'POST',
+			'timeout'=>5,
+			'redirection'=>5,
+			'httpversion'=>'1.0',
+			'blocking'=> true,
+			'compress'=>true,
+			'headers'=>array(
+				'Authorization'=>'Basic ' . $bearer_token_credentials_64,
+				'Content-Type'=>'application/x-www-form-urlencoded;charset=UTF-8',
+				'Accept-Encoding'=>'gzip'
 			),
-			'body' 			=>  array( 'grant_type'		=>	'client_credentials' ),
-			'cookies' 		=> 	array(),
-			'sslverify' 	=> false
+			'body'=>array( 'grant_type'=>'client_credentials' ),
+			'cookies' => array(),
+			'sslverify' => false
 		);
 
 		$response = wp_remote_post( 'https://api.twitter.com/oauth2/token', $args );
@@ -77,6 +80,7 @@ class Wp_Twitter_Api {
 			return $this->bail( apply_filters( 'themify_twitter_missing_key_message', sprintf( __( 'Error: access keys missing in <a href="%s">Themify > Settings > Twitter Settings</a>', 'themify' ), admin_url( 'admin.php?page=themify#setting-twitter_settings' ) ) ), $response );
 
 		$result = json_decode( $response['body'] );
+		
 		delete_option($this->bearer_token_option);
 		add_option($this->bearer_token_option,$result->access_token , '', false );
 		return $result->access_token;
@@ -95,7 +99,9 @@ class Wp_Twitter_Api {
 	 * @return bool|object Return an object containing the result
 	 */
 	public function query( $query, $query_args = array(), $stop = false ) {
-
+		if(empty($this->args['consumer_key']) || empty($this->args['consumer_secret'])){
+			return false;
+		}
 		if ( $this->has_error )
 			return array( 'error_message' => $this->error_message );
 
@@ -156,5 +162,4 @@ class Wp_Twitter_Api {
 		//trigger_error( $error_text , E_USER_NOTICE );
 
 	}
-
 }

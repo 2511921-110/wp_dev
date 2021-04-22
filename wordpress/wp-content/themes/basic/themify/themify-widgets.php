@@ -11,7 +11,7 @@
  *
  ***************************************************************************/
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
 
 ///////////////////////////////////////////
 // Social links Class
@@ -54,11 +54,10 @@ class Themify_Social_Links extends WP_Widget {
 		$field_ids = isset( $data[$pre.'field_ids'] ) ? json_decode( $data[$pre.'field_ids'] ) : '';
 		
 		if ( is_array( $field_ids ) || is_object( $field_ids ) ) {
-
 			$show_link_name  = !empty( $instance['show_link_name'] );
 			$open_new_window = !empty( $instance['open_new_window'] );
-			$new_window_attr = $open_new_window ? 'target="_blank"' : '';
-			$icon_type = themify_check( $pre . 'icon_type' )? themify_get( $pre . 'icon_type' ) : 'image-icon';
+			$new_window_attr = $open_new_window ? 'target="_blank" rel="noopener"' : '';
+			$icon_type = themify_get( $pre . 'icon_type','image-icon',true );
 
 			// Icon Size
 			$icon_size = !empty($instance['icon_size']) ? $instance['icon_size'] : 'icon-medium';
@@ -67,10 +66,10 @@ class Themify_Social_Links extends WP_Widget {
 			$orientation = !empty($instance['orientation'])? $instance['orientation'] : 'horizontal';
 
 			echo '<ul class="social-links ' . esc_attr( $orientation ) . '">';
-				foreach($field_ids as $key => $fid){
+				foreach($field_ids as $fid){
 
 					$type_val = isset($data[$pre.'type_'.$fid])? $data[$pre.'type_'.$fid] : '';
-					if ( $type_val != $icon_type ) {
+					if ( $type_val !== $icon_type ) {
 						continue;
 					}
 					
@@ -89,35 +88,37 @@ class Themify_Social_Links extends WP_Widget {
 
 					// Image Icon
 					$img_name = $pre.'img_'.$fid;
-					$img_val = empty( $data[$img_name] )? '' : '<img src="' . esc_url( $data[ $img_name ] ) . '" alt="'. esc_attr( $show_link_name ? '' : $title_val ) .'" />';
+					$img_val = empty( $data[$img_name] )? '' : '<img src="' . esc_url( $data[ $img_name ] ) . '" alt="'. esc_attr( $title_val ) .'" />';
 
 					// Font Icon
 					$font_icon = '';
-					if ( $font_icon_class = themify_get( $pre.'ficon_'.$fid ) ) {
-						$fi_style = '';
-						$font_icon_class = themify_get_icon( $font_icon_class );
-						if ( $font_icon_color = themify_get_color( $pre.'ficolor_'.$fid ) ) {
-							$fi_style .= 'color: ' . $font_icon_color . ';';
-						}
-						if ( $font_icon_bgcolor = themify_get_color( $pre.'fibgcolor_'.$fid ) ) {
-							$fi_style .= 'background-color: ' . $font_icon_bgcolor . ';';
-						}
-						if ( '' != $fi_style ) {
-							$fi_style = 'style="' . esc_attr( $fi_style ) . '"';
-						}
-						$font_icon = '<i class="' . esc_attr( $font_icon_class ) . '" ' . $fi_style . '></i>';
+					if(!empty($data[$pre.'ficon_'.$fid])){
+					    $font_icon_class=$data[$pre.'ficon_'.$fid];
+					    $fi_style = '';
+                        $font_icon_class = themify_get_icon( $font_icon_class,false,false,false,array('aria-label'=>esc_attr($title_val)) );
+					    if ( $font_icon_color = themify_get_color( $pre.'ficolor_'.$fid,false,true ) ) {
+						    $fi_style .= 'color: ' . $font_icon_color . ';';
+					    }
+					    if ( $font_icon_bgcolor = themify_get_color( $pre.'fibgcolor_'.$fid,false,true ) ) {
+						    $fi_style .= 'background-color: ' . $font_icon_bgcolor . ';';
+					    }
+					    if ( '' !== $fi_style ) {
+						    $fi_style = ' style="' . esc_attr( $fi_style ) . '"';
+					    }
+					    $font_icon = '<i'.$fi_style . '>'.$font_icon_class.'</i>';
 					}
 
 					if('' != $link_val){
 						echo sprintf('
 							<li class="social-link-item %s %s %s">
-								<a href="%s" %s>%s %s %s</a>
+								<a href="%s" aria-label="%s" %s>%s %s %s</a>
 							</li>
 							<!-- /themify-link-item -->',
 							sanitize_title($title_val),
 							esc_attr( $icon_type ),
 							esc_attr( $icon_size ),
 							esc_url( $link_val ),
+							sanitize_title($title_val),
 							$new_window_attr,
 							$font_icon,
 							$img_val,
@@ -237,7 +238,19 @@ class Themify_Feature_Posts extends WP_Widget {
 		/* Create the widget. */
 		parent::__construct( 'themify-feature-posts', __('Themify - Feature Posts', 'themify'), $widget_ops, $control_ops );
 	}
-	
+	/**
+	 * Adds aria-hidden attribute if $condition is set
+	 *
+	 * @return string|null
+	 */
+	private static function aria_hidden( $condition, $echo = true ) {
+		if( $condition ) {
+			if( $echo ) {
+				echo ' aria-hidden="true"';
+			}
+			return ' aria-hidden="true"';
+		}
+	}
 	///////////////////////////////////////////
 	// Widget
 	///////////////////////////////////////////
@@ -259,7 +272,6 @@ class Themify_Feature_Posts extends WP_Widget {
 		$read_more_text = empty( $instance['read_more_text'] ) ? '' : $instance['read_more_text'] ;
 		$orderby 		= isset( $instance['orderby'] ) ? $instance['orderby'] : 'date';
 		$order 			= isset( $instance['order'] ) ? $instance['order'] : 'DESC';
-
 		$query_opts = apply_filters( 'themify_query', array(
 			'posts_per_page' => $show_count,
 			'post_type' => 'post',
@@ -273,7 +285,6 @@ class Themify_Feature_Posts extends WP_Widget {
 		if ( $category ) $query_opts['cat'] = $category;
 		
 		$loop = get_posts($query_opts);
-		
 		if($loop) {
 			
 			/* Before widget (defined by themes). */
@@ -287,9 +298,22 @@ class Themify_Feature_Posts extends WP_Widget {
 			echo '<ul class="feature-posts-list">';
 
 			// Save current post
-			global $post;
+			global $post,$themify;
 			$saved_post = $post;
-
+			$layout = $themify->post_layout;
+			$themify->post_layout='list-post';
+			if($show_thumb===true ){
+			    $_params=array(
+				'f_image'=>true,
+				'w'=>$instance['thumb_width'],
+				'h'=>$instance['thumb_height'],
+				'class'=>'post-img'
+			    );
+			}
+			if($show_date===true){
+				$date=apply_filters( 'themify_filter_widget_date', '' );
+			}
+			
 			foreach ($loop as $post) {
 				setup_postdata($post);
 				echo '<li>';
@@ -299,17 +323,16 @@ class Themify_Feature_Posts extends WP_Widget {
 						$link = get_permalink();
 					}
 
-					if ( $show_thumb ) {
-						themify_image('f_image=true&ignore=true&w='.$instance['thumb_width'].'&h='.$instance['thumb_height'].'&before=<a'. themify_aria_hidden( $show_title, false ) . ' href="' . esc_url( $link ) . '">&after=</a>&class=post-img' );
+					if ( $show_thumb===true ) {
+					    echo '<a href="' . esc_url( $link ) . '">',themify_get_image($_params),'</a>';
 					}
+					if ( $show_title===true ) echo '<a href="' . esc_url( $link ) . '" class="feature-posts-title">' . get_the_title() . '</a> <br />';
 
-					if ( $show_title ) echo '<a href="' . esc_url( $link ) . '" class="feature-posts-title">' . get_the_title() . '</a> <br />';
+					if ( $show_date===true) echo '<small>' . get_the_date( $date ) . '</small> <br />';
 
-					if ( $show_date ) echo '<small>' . get_the_date( apply_filters( 'themify_filter_widget_date', '' ) ) . '</small> <br />';
-
-					if ( $show_excerpt || 'excerpt' === $display ) {
+					if ( $show_excerpt===true || 'excerpt' === $display ) {
 						$the_excerpt = get_the_excerpt();
-						if($excerpt_length != '') {
+						if($excerpt_length !== '') {
 							// cut to character limit
 							$the_excerpt = substr( $the_excerpt, 0, $excerpt_length );
 							// cut to last space
@@ -321,8 +344,7 @@ class Themify_Feature_Posts extends WP_Widget {
 						the_content();
 						echo '</div>';
 					}
-				    if ( $show_read_more ) echo '<p><a href="' . esc_url( $link ) . '">' . esc_html($read_more_text) . '</a></p>';
-
+				    if ( $show_read_more===true ) echo '<p><a href="' . esc_url( $link ) . '">' . esc_html($read_more_text) . '</a></p>';
 				echo '</li>';
 			} //end for each
 
@@ -331,6 +353,7 @@ class Themify_Feature_Posts extends WP_Widget {
 			setup_postdata( $saved_post );
 
 			echo '</ul>',$after_widget;
+			$themify->post_layout=$layout;
 			
 		}//end if $loop
 		
@@ -1145,92 +1168,68 @@ class Themify_Twitter extends WP_Widget {
 
 		/* Create the widget. */
 		parent::__construct( 'themify-twitter', __('Themify - Twitter', 'themify'), $widget_ops, $control_ops );
+
+		if ( is_admin() ) {
+			add_action( 'save_post', array( $this, 'themify_twitter_flush_transient' ) );
+		}
 	}
 	
 	///////////////////////////////////////////
 	// Widget
 	///////////////////////////////////////////
 	function widget( $args, $instance ) {
-		extract( $args );
 
 		/* User-selected settings. */
 		$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'], $instance, $this->id_base );
-		$username = isset( $instance['username'] ) ? $instance['username'] : '';
-		$type = isset( $instance['type'] ) ? $instance['type'] : '';
-		$timeline_height = isset( $instance['timeline_height'] ) ? $instance['timeline_height'] : '';
-		$timeline_width = isset( $instance['timeline_width'] ) ? $instance['timeline_width'] : '';
-		$show_count = isset( $instance['show_count'] ) ? $instance['show_count'] : 5;
-		$embed_code = isset( $instance['grid_embed_code'] ) ? $instance['grid_embed_code'] : '';
-		$hide_timestamp = isset( $instance['hide_timestamp'] ) ? 'false' : 'true';
-		$hide_footer = isset( $instance['hide_footer'] );
-		$show_follow = isset( $instance['show_follow'] ) ? ''.$instance['show_follow'] : 'false';
-		$follow_text = isset( $instance['follow_text'] ) ? $instance['follow_text'] : '';
-		$include_retweets = isset( $instance['include_retweets'] ) ? 'true' : 'false';
-		$exclude_replies = isset( $instance['exclude_replies'] ) ? 'true' : 'false';
+		
 		$widget_id = $this->id;
 
 		/* Before widget (defined by themes). */
-		echo $before_widget;
+		echo $args['before_widget'];
 
 		/* Title of widget (before and after defined by themes). */
 		if ( $title ) {
 			echo $args['before_title'] , $title , $args['after_title'];
 		}
 
-		/* remove twitter.com from Twitter ID */
-		$username = preg_replace( '/^(https?:\/\/)?twitter.com\//', '', $username );
-
-		/* ensure themify_shortcode_twitter is available */
-		if( ! function_exists( 'themify_shortcode_twitter' ) ) {
-			require_once THEMIFY_DIR . '/themify-shortcodes.php';
-		}
-		
-		if(isset($_POST['action']) && $_POST['action']==='tb_load_module_partial'){
-			global $themify_twitter_instance;
-			$themify_twitter_instance++;
-		}
-
-		echo themify_shortcode_twitter(array(
-				'username'         => $username,
-				'type'             => $type,
-				'timeline_height'  => $timeline_height,
-				'timeline_width'   => $timeline_width,	
-				'show_count'       => $show_count,
-				'show_timestamp'   => $hide_timestamp,
-				'hide_footer'      => $hide_footer,
-				'show_follow'      => $show_follow,
-				'follow_text'      => $follow_text,
-				'embed_code'       => $embed_code,
-				'include_retweets' => $include_retweets,
-				'exclude_replies'  => $exclude_replies,
+		echo $this->themify_shortcode_twitter(array(
+				'username'         =>  isset( $instance['username'] ) ? preg_replace( '/^(https?:\/\/)?twitter.com\//', '', $instance['username'] ) : ''/* remove twitter.com from Twitter ID */,
+				'type'             => isset( $instance['type'] ) ? $instance['type'] : '',
+				'timeline_height'  => isset( $instance['timeline_height'] ) ? $instance['timeline_height'] : '',
+				'timeline_width'   => isset( $instance['timeline_width'] ) ? $instance['timeline_width'] : '',	
+				'show_count'       => isset( $instance['show_count'] ) ? $instance['show_count'] : 5,
+				'show_timestamp'   => isset( $instance['hide_timestamp'] ) ? 'false' : 'true',
+				'hide_footer'      => isset( $instance['hide_footer'] ),
+				'show_follow'      => isset( $instance['show_follow'] ) ? ''.$instance['show_follow'] : 'false',
+				'follow_text'      => isset( $instance['follow_text'] ) ? $instance['follow_text'] : '',
+				'embed_code'       => isset( $instance['grid_embed_code'] ) ? $instance['grid_embed_code'] : '',
+				'include_retweets' => isset( $instance['include_retweets'] ) ? 'true' : 'false',
+				'exclude_replies'  => isset( $instance['exclude_replies'] ) ? 'true' : 'false',
 				'is_widget'        => 'true',
 				'widget_id'        => $widget_id
-		)),$after_widget;
+		));
+
+		echo $args['after_widget'];
 	}
 	
 	///////////////////////////////////////////
 	// Update
 	///////////////////////////////////////////
 	function update( $new_instance, $old_instance ) {
-		$instance = $old_instance;
-
-		/* Strip tags (if needed) and update the widget settings. */
-		$instance['title'] = strip_tags( $new_instance['title'] );
-		$instance['username'] = $new_instance['username'];
-		$instance['type'] = $new_instance['type'];
-		$instance['timeline_height'] = $new_instance['timeline_height'];
-		$instance['timeline_width'] = $new_instance['timeline_width'];
-		$instance['show_count'] = $new_instance['show_count'];
-		$instance['hide_timestamp'] = $new_instance['hide_timestamp'];
-		$instance['grid_embed_code'] = $new_instance['grid_embed_code'];
-		$instance['hide_footer'] = $new_instance['hide_footer'];
-		$instance['show_follow'] = $new_instance['show_follow'];
-		$instance['follow_text'] = $new_instance['follow_text'];
-		$instance['include_retweets'] = $new_instance['include_retweets'];
-		$instance['exclude_replies'] = $new_instance['exclude_replies'];
-
+        $instance = $old_instance;
+        /* Strip tags (if needed) and update the widget settings. */
+        if(isset($new_instance['title'])){
+            $instance['title'] = strip_tags( $new_instance['title'] );
+        }
+        $opt = array('username','type','timeline_height','timeline_width','show_count','hide_timestamp','grid_embed_code','hide_footer','show_follow','follow_text','include_retweets','exclude_replies');
+        foreach($opt as $v){
+            if(isset($new_instance[$v])){
+                $instance[$v] = $new_instance[$v];
+            }
+        }
 		// delete transient
-		delete_transient( $this->id . '_themify_tweets' );
+		global $wpdb;
+		$wpdb->get_results( "DELETE FROM $wpdb->options WHERE `option_name` LIKE ('_transient_tf_tweets_%')" );
 
 		return $instance;
 	}
@@ -1378,114 +1377,203 @@ class Themify_Twitter extends WP_Widget {
 		</script>
 		<?php
 	}
-}
 
-///////////////////////////////////////////
-// Flickr Class
-///////////////////////////////////////////
-class Themify_Flickr extends WP_Widget {
-	
-	///////////////////////////////////////////
-	// Flickr
-	///////////////////////////////////////////
-	function __construct() {
-		/* Widget settings. */
-		$widget_ops = array( 'classname' => 'flickr', 'description' => __('A reel of latest photos from Flickr', 'themify') );
-
-		/* Widget control settings. */
-		$control_ops = array( 'id_base' => 'themify-flickr' );
-
-		/* Create the widget. */
-		parent::__construct( 'themify-flickr', __('Themify - Flickr', 'themify'), $widget_ops, $control_ops );
-	}
-	
-	///////////////////////////////////////////
-	// Widget
-	///////////////////////////////////////////
-	function widget( $args, $instance ) {
-		extract( $args );
-
-		/* User-selected settings. */
-		$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'], $instance, $this->id_base );
-		$username = isset( $instance['username'] ) ? $instance['username'] : '';
-		$show_count = isset( $instance['show_count'] ) ? $instance['show_count'] : '10';
-		$show_link = isset( $instance['show_link'] ) ? $instance['show_link'] : false;
-
-		/* Before widget (defined by themes). */
-		echo $before_widget;
-
-		/* Title of widget (before and after defined by themes). */
-		if ( $title ) {
-			echo $args['before_title'] , $title , $args['after_title'];
-		}	
-		
-		echo '<div id="flickr_badge_wrapper" class="clearfix">
-				<script type="text/javascript" src="' . esc_url( themify_https_esc( 'http://www.flickr.com/badge_code_v2.gne' ) . '?count=' . $show_count . '.&amp;display=latest&amp;size=s&amp;layout=x&amp;source=user&amp;user=' . $username ) . '"></script>
-			</div>';
-		if( $show_link )
-			echo '<a href="' . esc_url( 'http://www.flickr.com/photos/' . $username . '/' ) . '">' , __( 'View my Flickr photostream', 'themify' ) , '</a>';
-
-		/* After widget (defined by themes). */
-		echo $after_widget;
-	}
-	
-	///////////////////////////////////////////
-	// Update
-	///////////////////////////////////////////
-	function update( $new_instance, $old_instance ) {
-		
-		$instance = $old_instance;
-
-		/* Strip tags (if needed) and update the widget settings. */
-		$instance['title'] = strip_tags( $new_instance['title'] );
-		$instance['username'] = $new_instance['username'];
-		$instance['show_count'] = $new_instance['show_count'];
-		$instance['show_link'] = $new_instance['show_link'];
-		return $instance;
-	}
-	
-	///////////////////////////////////////////
-	// Form
-	///////////////////////////////////////////
-	function form( $instance ) {
-
-		/* Set up some default widget settings. */
-		$defaults = array(
-			'title' => __('Recent Photos', 'themify'),
+	/**
+	 * Display tweets by user
+	 * @param array $atts
+	 * @param String $content
+	 * @return String
+	 */
+	function themify_shortcode_twitter( $atts, $content = null ) {
+		 $atts=shortcode_atts( array(
 			'username' => '',
-			'show_count' => 10,
-			'show_link' => false,
+			'type' => '',
+			'timeline_height' => 400,
+			'timeline_width' => 300,
+			'show_count' => 5,
+			'show_timestamp' => 'true',
+			'hide_footer' => false,
+			'show_follow' => 'false',
+			'embed_code' => '',
+			'follow_text' => __('&rarr; Follow me', 'themify'),
+			'include_retweets' => 'false',
+			'exclude_replies' => 'false',
+			'is_widget' => 'false'
+		), $atts, 'themify_twitter' );
+		
+		$is_shortcode =  'false' == $atts['is_widget']?'shortcode':'';
+		$screen_name = sanitize_user( $atts['username'] );
+		if ( ! empty( $atts['type'] ) ) {
+			if(  $atts['type'] === 'type-timeline') {
+				
+				$data_chrome = $atts['hide_footer']?'data-chrome="nofooter"':'';
+				$show_replies = $atts['exclude_replies'] == 'false';
+				
+				$out = "<a class='twitter-timeline' {$data_chrome} data-show-count='{$atts['show_count']}' data-show-replies='$show_replies' data-height='{$atts['timeline_height']}' data-width='{$atts['timeline_width']}'
+							href='https://twitter.com/{$screen_name}'>
+								Tweets by @{$screen_name}
+						</a>
+						<script async src='//platform.twitter.com/widgets.js' charset='utf-8'></script>";
+				
+				return $out;
+			}
+			
+			return  $atts['embed_code'];
+		}
+
+		$args = array(
+			'username' => $screen_name,
+			'limit' => (int)$atts['show_count'],
+			'include_retweets' => $atts['include_retweets'],
+			'exclude_replies' => $atts['exclude_replies']
 		);
-		$instance = wp_parse_args( (array) $instance, $defaults );
-                $field = esc_attr($this->get_field_id( 'title' ));
-                ?>
-		<p>
-			<label for="<?php echo $field; ?>"><?php _e('Title:', 'themify'); ?></label><br />
-			<input id="<?php echo $field; ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" value="<?php echo esc_attr( $instance['title'] ); ?>" width="100%" />
-		</p>
-                <?php $field = esc_attr($this->get_field_id( 'username' ));?>
-		<p>
-			<label for="<?php echo $field; ?>"><?php _e('Flickr ID:', 'themify'); ?></label>
-			<input id="<?php echo $field; ?>" name="<?php echo esc_attr( $this->get_field_name( 'username' ) ); ?>" value="<?php echo esc_attr( $instance['username'] ); ?>" /><br />
-			<small><?php printf( __( '* Find your Flickr ID: <a href="%s" target="_blank">idGettr</a>', 'themify' ), 'http://www.idgettr.com' ); ?></small>
-		</p>
-		<?php $field = esc_attr($this->get_field_id( 'show_count' ));?>
-		<p>
-			<label for="<?php echo $field; ?>"><?php _e('Show:', 'themify'); ?></label>
-			<input id="<?php echo $field; ?>" name="<?php echo esc_attr( $this->get_field_name( 'show_count' ) ); ?>" value="<?php echo esc_attr( $instance['show_count'] ); ?>" size="2" /> <?php _e('photos', 'themify'); ?>
-		</p>
-		<?php $field = esc_attr($this->get_field_id( 'show_link' ));?>
-		<p>
-			<input class="checkbox" type="checkbox" <?php checked( $instance['show_link'], 'on' ); ?> id="<?php echo $field; ?>" name="<?php echo esc_attr( $this->get_field_name( 'show_link' ) ); ?>" />
-			<label for="<?php echo $field; ?>"><?php _e('Show link to account', 'themify'); ?></label>
-		</p>
-		<?php
+
+		$tweets = $this->themify_twitter_get_data( $args );
+		if( is_array( $tweets ) && isset( $tweets['error_message'] ) && current_user_can('administrator') ) {
+			return $tweets['error_message'];
+		}
+
+		// enqueue stylesheet
+		Themify_Enqueue_Assets::add_css( 'tf_twitter', THEMIFY_URI . '/css/widgets/twitter.css', null, THEMIFY_VERSION );
+
+		$out = '<div class="twitter-list '.$is_shortcode.'">
+				<div class="twitter-block">';
+
+		if ( is_array( $tweets ) && !empty( $tweets ) && !isset( $tweets['error_message'] )) {
+			$out .= '<ul class="twitter-list">';
+
+			foreach( $tweets as $tweet ) {
+				$text = $tweet->text;
+				foreach ( $tweet->entities as $entity ) {
+					if( 'urls' ===  $atts['type'] ) {
+						foreach($entity as  $url) {
+							$update_with = '<a href="' . esc_url( $url->url ) . '" target="_blank" title="' . esc_attr( $url->expanded_url ) . '" class="twitter-user">' . $url->display_url . '</a>';
+							$text = str_replace($url->url, $update_with, $text);
+						}
+					} elseif ( 'hashtags' === $atts['type'] ) {
+						foreach($entity as $hashtag) {
+							$update_with = '<a href="' . esc_url( '//twitter.com/search?q=%23' . $hashtag->text . '&src=hash' ) . '" target="_blank" title="' . esc_attr( $hashtag->text ) . '" class="twitter-user">#' . $hashtag->text . '</a>';
+							$text = str_replace('#'.$hashtag->text, $update_with, $text);
+						}
+					} elseif ( 'user_mentions' ===  $atts['type'] ) {
+						foreach($entity as $user) {
+							$user->screen_name = str_replace( '@', '', $user->screen_name );
+							$update_with = '<a href="' . esc_url( '//twitter.com/' . $user->screen_name ) . '" target="_blank" title="' . esc_attr( $user->name ) . '" class="twitter-user">@' . $user->screen_name . '</a>';
+							$text = str_replace('@'.$user->screen_name, $update_with, $text);
+						}
+					} elseif ( 'media' ===  $atts['type'] ) {
+						foreach ( $entity as $media ) {
+							$update_with = '<a href="' . esc_url( $media->url ) . '" target="_blank" title="' . esc_attr( $media->expanded_url ) . '" class="twitter-media">' . $media->display_url . '</a>';
+							$text = str_replace( $media->url, $update_with, $text );
+						}
+					}
+				}
+				$out .= '<li class="twitter-item">'.$text;
+				if ( 'false' != $atts['show_timestamp'] ) {
+					// hour ago time format
+					$time = sprintf( __('%s ago', 'themify'), human_time_diff( strtotime( $tweet->created_at ) ) );
+					$out .= '<br /><em class="twitter-timestamp"><small>' . $time. '</small></em>';
+				}
+				$out .= '</li>';
+			}
+			$out .= '</ul>';
+		}
+		$out .= '</div>';
+		if ( 'false' != $atts['show_follow'] ) {
+			$out .= '<div class="follow-user"><a href="' . esc_url( '//twitter.com/' .  $atts['username'] ) . '">' .  $atts['follow_text'] . '</a></div>';
+		}
+
+		$out .= '</div>';
+
+		return $out;
+	}
+
+	/**
+	 * Get twitter data store from cache
+	 * @param $args
+	 * @return array|mixed
+	 */
+	function themify_twitter_get_data (  $args ) {
+		$data = array();
+		$transient_id=md5(implode('',$args));
+		$transient_key = 'tf_tweets_'.$transient_id;
+		
+		$transient = get_transient( $transient_key );
+
+		if ( false === $transient || (class_exists('Themify_Builder') && Themify_Builder::$frontedit_active===true)){
+			$response = $this->themify_request_tweets( $args );
+			if ( ! is_wp_error( $response ) && is_array( $response ) && ( isset( $response[0]->user->id ) || isset( $response['error_message'] ) ) ) {
+				$data = $response;
+				if(!isset( $response['error_message'] )){
+					set_transient( $transient_key, $data, 10 * 60 ); // 10 min cache
+                }
+			}
+		} else {
+			$data = $transient;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Get request tweets from service api
+	 * @param $args
+	 * @return bool|object|array
+	 */
+	function themify_request_tweets($args) {
+		$screen_name = urlencode(strip_tags( sanitize_user( str_replace( '@', '', $args['username'] ) ) ));
+		$count = 0;
+		if ( $args['limit'] != '' ) {
+			$count =(int) $args['limit'];
+		}
+		$include_rts = $args['include_retweets'] == 'true'?'1':'0';
+		$exclude_replies = $args['exclude_replies'];
+
+		if ( ! class_exists( 'Wp_Twitter_Api' ) ) {
+			// Require twitter oauth class
+			require 'twitteroauth/class-wp-twitter-api.php';
+		}
+		$data = themify_get_data();
+		$prefix = 'setting-twitter_settings_';
+
+		$credentials = array(
+			'consumer_key' => isset( $data[ $prefix.'consumer_key' ] ) ? $data[ $prefix . 'consumer_key' ] : '',
+			'consumer_secret' => isset( $data[ $prefix . 'consumer_secret' ] ) ? $data[ $prefix . 'consumer_secret' ] : '',
+		);
+		if(empty($credentials['consumer_key']) || empty($credentials['consumer_secret'])){
+			return array( 'error_message' => sprintf('<a href="%s" target="_blank">%s</a> %s',admin_url('admin.php?page=themify#setting-integration-api'),__('Twitter API key', 'themify'),__('is missing.', 'themify')));
+		}
+		$query = 'screen_name='.$screen_name.'&count='.$count.'&include_rts='.$include_rts.'&exclude_replies='.$exclude_replies.'&include_entities=true';
+		
+		$twitterConnection = new Wp_Twitter_Api( $credentials );
+		return  $twitterConnection->query($query);
+	}
+
+	/**
+	 * Flush transient when post is saved.
+	 * @param $post_id
+	 */
+	function themify_twitter_flush_transient( $post_id ) {
+		//verify post is not a revision
+		if (isset( $_POST['content'] ) && ! wp_is_post_revision( $post_id ) ) {
+			// Count unprefixed and/or prefixed shortcode instances
+			$post_content = $_POST['content'];
+			$count = substr_count($post_content, '[twitter');
+			if($count===0){
+				$count = substr_count($post_content, '[themify-twitter');
+			}
+			if ( $count > 0 ) {
+				// delete transient
+				global $wpdb;
+				$wpdb->get_results( "DELETE FROM $wpdb->options WHERE `option_name` LIKE ('_transient_tf_tweets_%')" );
+			}
+		}
 	}
 }
 
 /**
  * @package themify
- * @subpackage shortcodes
+ * @subpackage Widgets
  * @access public
  * @since 1.1.2
  */
@@ -1539,7 +1627,7 @@ class Themify_Most_Commented extends WP_Widget{
 				echo '<li>';
 				
 				if ( $show_thumb ) {
-					echo themify_get_image( 'ignore=true&w=' . $instance['thumb_width'] . '&h=' . $instance['thumb_height'] . '&before=<a href="' . esc_url( get_permalink() ) . '">&after=</a>&class=post-img' );
+					echo themify_get_image( 'w=' . $instance['thumb_width'] . '&h=' . $instance['thumb_height'] . '&before=<a href="' . esc_url( get_permalink() ) . '">&after=</a>&class=post-img' );
 				}
 
 				if( !$hide_title ){
@@ -1706,7 +1794,7 @@ class Themify_Google_Maps extends WP_Widget {
 			echo $args['before_title'] , $title , $args['after_title'];
 		}	
 		
-		echo '<div id="themify_google_map_wrapper" class="clearfix">';
+		echo '<div class="themify_google_map_wrapper" class="tf_clearfix">';
 
             if ($instance['map_display_type'] === 'static'){
                 $args = '';
@@ -1720,7 +1808,7 @@ class Themify_Google_Maps extends WP_Widget {
                 $args .= '&size=' . (( $instance['width']!=='') ? filter_var( $instance['width'], FILTER_SANITIZE_NUMBER_INT ) : '500' ) . 'x' .  $instance['height'];
                 $style = isset($instance['style']) ? esc_attr($instance['style']) : '';
             ?>
-            <img style="<?php echo $style; ?>" src="//maps.googleapis.com/maps/api/staticmap?<?php echo $args; ?>" />
+            <img style="<?php echo $style; ?>" src="https://maps.googleapis.com/maps/api/staticmap?<?php echo $args; ?>" />
         <?php }
             elseif ($instance['address_map']!=='' || $instance['latlong_map']!==''){
                 $data = array();
@@ -1739,7 +1827,8 @@ class Themify_Google_Maps extends WP_Widget {
                 $style .= 'height:' .$instance['height'] . 'px;';
             ?>
                 <div
-					class="themify_map map-container"
+					class="themify_map"
+					data-lazy="1"
 					style="<?php echo esc_attr($style); ?>"
 					data-address="<?php echo esc_attr( $instance['address_map'] !== '' ? $instance['address_map'] : $instance['latlong_map'] ) ?>"
 					data-type="<?php echo esc_attr($instance['type_map']); ?>"
@@ -1891,8 +1980,30 @@ function themify_register_widgets() {
 	}
 	register_widget('Themify_Social_Links');
 	register_widget('Themify_Twitter');
-	register_widget('Themify_Flickr');
 	register_widget('Themify_Most_Commented');
 	register_widget('Themify_Google_Maps');
+	themify_register_grouped_widgets();
+	$sidebars = array(
+		array(
+			'name' => __( 'Sidebar', 'themify' ),
+			'id' => 'sidebar-main',
+			'before_widget' => '<div id="%1$s" class="widget %2$s">',
+			'after_widget' => '</div>',
+			'before_title' => '<h4 class="widgettitle">',
+			'after_title' => '</h4>'
+		),
+		array(
+			'name' => __( 'Social Widget', 'themify' ),
+			'id' => 'social-widget',
+			'before_widget' => '<div id="%1$s" class="widget %2$s">',
+			'after_widget' => '</div>',
+			'before_title' => '<strong class="widgettitle">',
+			'after_title' => '</strong>'
+		)
+	);
+	$sidebars=apply_filters('themify_register_sidebars',$sidebars);
+	foreach ( $sidebars as $sidebar ) {
+	    register_sidebar( $sidebar );
+	}
 }
 add_action('widgets_init', 'themify_register_widgets', 1);

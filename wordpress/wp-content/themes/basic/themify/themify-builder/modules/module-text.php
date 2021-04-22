@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Text
  * Description: Display text content
@@ -19,7 +20,11 @@ class TB_Text_Module extends Themify_Builder_Component_Module {
     public function get_title($module) {
 	return isset($module['mod_settings']['content_text']) ? wp_trim_words($module['mod_settings']['content_text'], 100) : '';
     }
-
+	public function get_assets() {
+		return array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+    }
     public function get_options() {
 	return array(
 	    array(
@@ -47,7 +52,7 @@ class TB_Text_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
 	    'content_text' => self::$texts['content_text']
 	);
@@ -243,7 +248,9 @@ class TB_Text_Module extends Themify_Builder_Component_Module {
 			)
 		),
 		// Position
-		self::get_expand('po', array( self::get_css_position()))
+		self::get_expand('po', array( self::get_css_position())),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 
 	$heading = array();
@@ -255,7 +262,7 @@ class TB_Text_Module extends Themify_Builder_Component_Module {
 		$selector.=':not(.module-title)';
 	    }
 	    $heading = array_merge($heading, array(
-		self::get_expand(sprintf(__('Heading %s Font', 'themify'), $i), array(
+		self::get_expand($h.'_f', array(
 		    self::get_tab(array(
 			'n' => array(
 			    'options' => array(

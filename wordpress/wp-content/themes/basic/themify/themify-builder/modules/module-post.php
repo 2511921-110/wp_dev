@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Post
  * Description: Display Posts
@@ -15,6 +15,10 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 	    'slug' => 'post'
 	));
     }
+    
+    public function get_icon(){
+	return 'layers';
+    }
 
     public function get_title($module) {
 	$type = isset($module['mod_settings']['type_query_post']) ? $module['mod_settings']['type_query_post'] : 'category';
@@ -27,6 +31,11 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 	    return sprintf('%s : %s', __('Slugs', 'themify'), $slug_query);
 	}
     }
+	public function get_assets() {
+		return array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+	}
 
     public function get_options() {
 	return array(
@@ -40,6 +49,7 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 			'tax_id'=>'type_query_post',
 			'term_id'=>'#tmp_id#_post',//backward compatibility
 			'slug_id'=>'query_slug_post',
+			'sticky_id' => 'sticky_post',
 		),
 	    array(
 		'id' => 'layout_post',
@@ -54,6 +64,8 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 		    array('img' => 'grid2', 'value' => 'grid2', 'label' => __('Grid 2', 'themify')),
 		    array('img' => 'grid3', 'value' => 'grid3', 'label' => __('Grid 3', 'themify')),
 		    array('img' => 'grid4', 'value' => 'grid4', 'label' => __('Grid 4', 'themify')),
+			array('img' => 'grid5', 'value' => 'grid5', 'label' => __('Grid 5', 'themify')),
+			array('img' => 'grid6', 'value' => 'grid6', 'label' => __('Grid 6', 'themify')),
 		    array('img' => 'list_thumb_image', 'value' => 'list-thumb-image', 'label' => __('List Thumb Image', 'themify')),
 		    array('img' => 'grid2_thumb', 'value' => 'grid2-thumb', 'label' => __('Grid 2 Thumb', 'themify'))
 		)
@@ -83,9 +95,9 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 		'label' => __('Order By', 'themify'),
 		'orderBy'=>true,
 		'binding' => array(
-		    'select' => array('hide' => array('meta_key_post')),
-		    'meta_value' => array('show' => array('meta_key_post')),
-		    'meta_value_num' => array('show' => array('meta_key_post')),
+		    'select' => array('hide' => 'meta_key_post'),
+		    'meta_value' => array('show' =>'meta_key_post'),
+		    'meta_value_num' => array('show' =>'meta_key_post')
 		)
 	    ),
 	    array(
@@ -152,13 +164,20 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 		'label' => __('Post Title', 'themify'),
 		'binding' => array(
 		    'checked' => array(
-			    'show' => array('unlink_post_title_post')
+			    'show' => array('unlink_post_title_post','title_tag_post')
 		    ),
 		    'not_checked' => array(
-			    'hide' => array('unlink_post_title_post')
+			    'hide' =>array('unlink_post_title_post','title_tag_post')
 		    )
 		)
 	    ),
+        array(
+            'id' => 'title_tag_post',
+            'type' => 'select',
+            'label' => __('Title Tag', 'themify'),
+            'h_tags' => true,
+            'default' => 'h2'
+        ),
 	    array(
 		'id' => 'unlink_post_title_post',
 		'type' => 'toggle_switch',
@@ -188,7 +207,7 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
 	    'layout_post' => 'grid4',
 	    'post_per_page_post' => 4,
@@ -456,7 +475,7 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 			'options' => array(
 			    self::get_font_family(array('.module .post-title', '.module .post-title a'), 'font_family_title'),
 			    self::get_color(array('.module .post-title', '.module .post-title a'), 'font_color_title'),
-			    self::get_font_size('.module .post-title', 'font_size_title'),
+			    self::get_font_size(array('.module .post-title', '.module .post-title a'), 'font_size_title'),
 				self::get_line_height('.module .post-title', 'line_height_title'),
 				self::get_letter_spacing('.module .post-title', 'letter_spacing_title'),
 			    self::get_text_transform('.module .post-title', 'text_transform_title'),
@@ -469,7 +488,7 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 			'options' => array(
 			    self::get_font_family(array('.module .post-title', '.module .post-title a'), 'f_f_t', 'h'),
 			    self::get_color(array('.module .post-title', '.module .post-title a'), 'font_color_title', null, null, 'hover'),
-			    self::get_font_size('.module .post-title', 'f_s_t', '', 'h'),
+			    self::get_font_size(array('.module .post-title', '.module .post-title a'), 'f_s_t', '', 'h'),
 				self::get_line_height('.module .post-title', 'l_h_t', 'h'),
 				self::get_letter_spacing('.module .post-title', 'l_s_t', 'h'),
 			    self::get_text_transform('.module .post-title', 't_t_t', 'h'),
@@ -1289,6 +1308,173 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 			))
 		);
 
+		$pt_filter = array(
+			// Background
+			self::get_expand('bg', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_color(' .post-filter li a', 'b_c_pt_f', 'bg_c', 'background-color')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_color(' .post-filter li a', 'b_c_pt_f', 'bg_c', 'background-color', 'h')
+					)
+					)
+				))
+			)),
+			// Font
+			self::get_expand('f', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_font_family(' .post-filter li a', 'f_f_pt_f'),
+						self::get_color(' .post-filter li a', 'f_c_pt_f'),
+						self::get_font_size(' .post-filter li a', 'f_s_pt_f'),
+						self::get_line_height(' .post-filter li a', 'l_h_pt_f'),
+						self::get_letter_spacing(' .post-filter li a', 'l_s_pt_f'),
+						self::get_font_style(' .post-filter li a', 'f_st_pt_f', 'f_b_pt_f'),
+						self::get_text_align(' .post-filter','t_a_pt_f'),
+						self::get_text_shadow(' .post-filter li a','t_sh_pt_f'),
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_font_family(' .post-filter li a', 'f_f_pt_f', 'h'),
+						self::get_color(' .post-filter li a:hover', 'f_c_pt_f_h',null,null,'h'),
+						self::get_font_size(' .post-filter li a', 'f_s_pt_f', '', 'h'),
+						self::get_line_height(' .post-filter li a', 'l_h_pt_f', 'h'),
+						self::get_letter_spacing(' .post-filter li a', 'l_s_pt_f', 'h'),
+						self::get_font_style(' .post-filter li a', 'f_st_pt_f', 'f_b_pt_f', 'h'),
+						self::get_text_align(' .post-filter','t_a_pt_f','h'),
+						self::get_text_shadow(' .post-filter li a','t_sh_pt_f','h'),
+					)
+					)
+				))
+			)),
+			// Padding
+			self::get_expand('p', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_padding(' .post-filter li a', 'p_pt_f')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_padding(' .post-filter li a', 'p_pt_f', 'h')
+					)
+					)
+				))
+			)),
+			// Margin
+			self::get_expand('m', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_margin(' .post-filter li a', 'm_pt_f')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_margin(' .post-filter li a', 'm_pt_f', 'h')
+					)
+					)
+				)),
+			)),
+			// Border
+			self::get_expand('b', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_border(' .post-filter li a', 'b_pt_f')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_border(' .post-filter li a', 'b_pt_f', 'h')
+					)
+					)
+				))
+			)),
+			// Rounded Corners
+			self::get_expand('r_c', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_border_radius(' .post-filter li a', 'r_c_pt_f')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_border_radius(' .post-filter li a', 'r_c_pt_f', 'h')
+						)
+					)
+				))
+			)),
+			// Shadow
+			self::get_expand('sh', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_box_shadow(' .post-filter li a', 'sh_pt_f')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_box_shadow(' .post-filter li a', 'sh_pt_f', 'h')
+						)
+					)
+				))
+			))
+		);
+
+		$pta_filter = array(
+			// Background
+			self::get_expand('bg', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_color(' .post-filter li.active a', 'b_c_pta_f', 'bg_c', 'background-color')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_color(' .post-filter li.active a', 'b_c_pta_f', 'bg_c', 'background-color', 'h')
+					)
+					)
+				))
+			)),
+			// Font
+			self::get_expand('f', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_font_family(' .post-filter li.active a', 'f_f_pta_f'),
+						self::get_color(' .post-filter li.active a', 'f_c_pta_f'),
+						self::get_font_size(' .post-filter li.active a', 'f_s_pta_f'),
+						self::get_line_height(' .post-filter li.active a', 'l_h_pta_f'),
+						self::get_letter_spacing(' .post-filter li.active a', 'l_s_pta_f'),
+						self::get_font_style(' .post-filter li.active a', 'f_st_pta_f', 'f_b_pta_f'),
+						self::get_text_shadow(' .post-filter li.active a','t_sh_pta_f'),
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_font_family(' .post-filter li.active a', 'f_f_pta_f', 'h'),
+						self::get_color(' .post-filter li.active a:hover', 'f_c_pta_f_h',null,null,'h'),
+						self::get_font_size(' .post-filter li.active a', 'f_s_pta_f', '', 'h'),
+						self::get_line_height(' .post-filter li.active a', 'l_h_pta_f', 'h'),
+						self::get_letter_spacing(' .post-filter li.active a', 'l_s_pta_f', 'h'),
+						self::get_font_style(' .post-filter li.active a', 'f_st_pta_f', 'f_b_pta_f', 'h'),
+						self::get_text_shadow(' .post-filter li.active a','t_sh_pta_f','h'),
+					)
+					)
+				))
+			)),
+		);
+
 	return array(
 	    'type' => 'tabs',
 	    'options' => array(
@@ -1337,6 +1523,14 @@ class TB_Post_Module extends Themify_Builder_Component_Module {
 		'pg_a_n' => array(
 			'label' => __('Pagination Active', 'themify'),
 			'options' => $pg_a_numbers
+		),
+		'p_f' => array(
+			'label' => __('Post Filter', 'themify'),
+			'options' => $pt_filter
+		),
+		'p_f_a' => array(
+			'label' => __('Post Filter Active', 'themify'),
+			'options' => $pta_filter
 		)
 
 	    )

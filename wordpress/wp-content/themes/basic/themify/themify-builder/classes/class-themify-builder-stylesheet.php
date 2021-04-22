@@ -1,12 +1,10 @@
 <?php
 
-class Themify_Builder_Stylesheet {
+final class Themify_Builder_Stylesheet {
 
     public static $generateStyles = array();
     private static  $ids = array();
-    private static $activeBuilderHandler=null;
     private static $isLoaded = array();
-    public static $isLoadedFonts=array();
     /**
      * Constructor
      * 
@@ -14,20 +12,20 @@ class Themify_Builder_Stylesheet {
      * @param object Themify_Builder $builder 
      */
     public static function init() {
-        if (defined('DOING_AJAX')) {
+        if (themify_is_ajax()) {
             add_action('wp_ajax_tb_slider_live_styling', array(__CLASS__, 'slider_live_styling'), 10);
-	    add_action('wp_ajax_nopriv_tb_generate_on_fly', array(__CLASS__, 'save_builder_css'), 10);
-	    add_action('wp_ajax_tb_generate_on_fly', array(__CLASS__, 'save_builder_css'), 10);
-        } else if(!is_admin()){
-	    if(!Themify_Builder_Model::is_front_builder_activate()){
-		add_action('wp_enqueue_scripts', array(__CLASS__, 'enqueue_stylesheet'), 14);
-	    }
-	    else{
-		add_filter('style_loader_tag', array(__CLASS__, 'set_active_builder_style_position'), 15, 4);
-	    }
-        }
+			add_action('wp_ajax_nopriv_tb_generate_on_fly', array(__CLASS__, 'save_builder_css'), 10);
+			add_action('wp_ajax_tb_generate_on_fly', array(__CLASS__, 'save_builder_css'), 10);
+			// Regenerate CSS Files
+			add_action( 'wp_ajax_themify_regenerate_css_files_ajax', array( __CLASS__, 'regenerate_css_files_ajax' ) );
+		}
+		elseif (defined('THEMIFY_BUILDER_REGENERATE_CSS') && THEMIFY_BUILDER_REGENERATE_CSS!==false && current_user_can( 'manage_options' ) ) {
+			add_action( 'admin_head', array( __CLASS__, 'auto_regenerate_css' ) );
+		}
+		if (  ! is_admin() && ! Themify_Builder_Model::is_front_builder_activate() ) {
+			add_action( 'tf_load_styles', array(__CLASS__, 'load_styles'), 9 );//10 is customizer
+		}
     }
-    
 
 
     /**
@@ -37,133 +35,107 @@ class Themify_Builder_Stylesheet {
      * 
      * @return bool True if enqueue was successful, false otherwise.
      */
-    public static function enqueue_stylesheet( $return = false, $post_id = null ) {
-		$isActive=Themify_Builder_Model::is_front_builder_activate();
-		if(($isActive===false && isset(self::$isLoaded[$post_id])) || (defined( 'REST_REQUEST' ) && REST_REQUEST )){
-			return false;
-		}
-		$stylesheet_path = self::get_stylesheet( 'bydir', $post_id );
-		if(!empty($stylesheet_path['id'])){
-			if (!self::is_readable_and_not_empty( $stylesheet_path['url'] ) ) {
-				$filesystem = Themify_Filesystem::get_instance();
-				if(!$filesystem->execute->is_file(self::getTmpPath($stylesheet_path['url']))){
-					$id = $stylesheet_path['id'];
-					if(!isset(self::$generateStyles[$id])){
-						self::$generateStyles[$id] = true;
-						$post_data = $GLOBALS['ThemifyBuilder_Data_Manager']->get_data($id);
-						if($post_data){
-							static $strucutre =null;
-							if($strucutre===null){
-								$strucutre = true;
-								Themify_Builder_Component_Module::load_modules();
-								wp_enqueue_script('tb_builder_js_style',themify_enque(THEMIFY_URI.'/js/generate-style.js'),null,THEMIFY_VERSION,true);
+	public static function enqueue_stylesheet( $return = false, $post_id = null ) {
+	    $isActive=Themify_Builder::$frontedit_active===true || Themify_Builder_Model::is_front_builder_activate();
+	    if(($isActive===false && isset(self::$isLoaded[$post_id])) || themify_is_rest()){
+		    return false;
+	    }
+	    $stylesheet_path = self::get_stylesheet( 'bydir', $post_id );
+		if (!self::is_readable_and_not_empty( $stylesheet_path['url'] ) ) {
+			if(!isset(self::$generateStyles[$post_id]) && !Themify_Filesystem::is_file(self::getTmpPath($stylesheet_path['url']))){
 
-								wp_localize_script('tb_builder_js_style', 'ThemifyBuilderStyle', array(
-										'styles'=>Themify_Builder::getComponentJson(true),
-										'points'=>themify_get_breakpoints(),
-										'nonce'=>wp_create_nonce('tb_load_nonce'),
-										'ajaxurl'=>admin_url('admin-ajax.php'),
-										'google'=>themify_get_google_web_fonts_list(),
-										'cf'=>Themify_Custom_Fonts::get_list()
-								));
-							}
-							$post_data = self::reSaveData($post_data);
-							$GLOBALS['ThemifyBuilder_Data_Manager']->save_data($post_data, $id);
-							wp_localize_script('tb_builder_js_style', 'themify_builder_data_'.$id, $post_data);
-							$gs = Themify_Global_Styles::used_global_styles($id);
-							if(!empty($gs)){
-								wp_localize_script('tb_builder_js_style', 'themify_builder_gs_'.$id, $gs);
-							}
-							$gs=$post_data=null;
-						}
+				self::$generateStyles[$post_id] = true;
+				global $ThemifyBuilder;
+				$post_data = ThemifyBuilder_Data_Manager::get_data($post_id);
+				if($post_data){
+					static $strucutre =null;
+					if($strucutre===null){
+						$strucutre = true;
+						Themify_Builder_Component_Module::load_modules();
+						wp_enqueue_script('tb_builder_js_style',themify_enque(THEMIFY_URI.'/js/generate-style.js'),null,THEMIFY_VERSION,true);
+
+						add_filter( 'themify_google_fonts_full_list', '__return_true' );
+						wp_localize_script('tb_builder_js_style', 'ThemifyBuilderStyle', array(
+							'builder_url' => THEMIFY_BUILDER_URI,
+							'styles'=>Themify_Builder::getComponentJson(true),
+							'points'=>themify_get_breakpoints(),
+							'nonce'=>wp_create_nonce('tb_load_nonce'),
+							'ajaxurl'=>admin_url('admin-ajax.php'),
+							'google'=>themify_get_google_web_fonts_list(),
+							'cf'=>Themify_Custom_Fonts::get_list(),
+							'cf_api_url' => Themify_Custom_Fonts::$api_url,
+						));
+						remove_filter( 'themify_google_fonts_full_list', '__return_true' );
 					}
+					$post_data = self::reSaveData($post_data);
+					ThemifyBuilder_Data_Manager::save_data($post_data, $post_id);
+					wp_localize_script('tb_builder_js_style', 'themify_builder_data_'.$post_id, $post_data);
+					$gs = Themify_Global_Styles::used_global_styles($post_id);
+					if(!empty($gs)){
+						wp_localize_script('tb_builder_js_style', 'themify_builder_gs_'.$post_id, $gs);
+					}
+					$gs=$post_data=null;
+					TFCache::$stopCache=true;
+					$ThemifyBuilder->get_builder_stylesheet('',false,true);
 				}
 			}
-			else{
-				setlocale( LC_CTYPE, get_locale() . '.UTF-8' );
-				$handler = pathinfo( $stylesheet_path['url'] );
-				$handlerId=$handler['filename'];
-				$version = filemtime( $stylesheet_path['url'] );
-				$url = self::get_stylesheet( 'byurl', $stylesheet_path['id'] );
-				$url = themify_https_esc( $url['url'] );
-				self::$isLoaded[$stylesheet_path['id']]=true;
-				if( $return ) {
-					return array(
+		}
+		else{
+			$handler = pathinfo( $stylesheet_path['url'] );
+			$handlerId=$handler['filename'];
+			$version = filemtime( $stylesheet_path['url'] );
+			$url = self::get_stylesheet( 'byurl', $post_id);
+			$url = themify_https_esc( $url['url'] );
+			self::$isLoaded[$post_id]= array(
 					'handler' => $handlerId,
-					'url' => $url . '?ver=' . $version
-					);
-				} else {
-					global $ThemifyBuilder; 
-					$isLoop = $ThemifyBuilder->in_the_loop===true && Themify_Enqueue_Assets::$isInTop===true && Themify_Enqueue_Assets::$isInline===false;
-					
-					$isHeader=$isLoop===false  && Themify_Enqueue_Assets::$isHeader===true && Themify_Enqueue_Assets::$isInline===false;
-					if($isHeader===true && $isActive===false){
-					    $isLoop=true;
-					}
-					$fonts = self::getFonts( $stylesheet_path['id'] );
-					$link='';
-					if ( !empty( $fonts ) ) {
-						$href = themify_get_google_fonts_url( $fonts );
-						$fonts = null;
-						if ( $href !== false ) {
-						    if($isLoop===true){
-							$link= '<link class="themify-builder-generated-css" id="' . $handlerId . '-fonts" rel="stylesheet" href="' . $href . '" type="text/css" />';
-						    }
-						    else{
-							if($isHeader===true && $isActive===false){
-							    $link='<link rel="preload" href="'.$href.'" as="style"/>';
-							}
-							themify_enque_style( $handlerId.'-fonts', $href, null,null);
-						    }
-						}
-					}
-
-					// custom fonts
-					$custom_fonts = Themify_Custom_Fonts::load_fonts( $stylesheet_path['id'] );
-					if ( ! empty( $custom_fonts ) ) {
-						echo '<style>' . $custom_fonts . '</style>' . PHP_EOL;
-					}
-
-					if($isLoop===true){
-						if($isActive===true && $stylesheet_path['id']==Themify_Builder::$builder_active_id){
-							$link.=self::get_active_style_tag($handlerId);
-							remove_filter('style_loader_tag', array(__CLASS__, 'set_active_builder_style_position'), 15, 4);
-						}
-						else{
-							$link.= '<link class="themify-builder-generated-css" id="' . $handlerId . '" rel="stylesheet" href="' . $url . '?ver=' . $version . '" type="text/css" />';
-						}
-					    
-					}
-					else{
-						
-						if($isActive===true && $stylesheet_path['id']==Themify_Builder::$builder_active_id){
-							self::$activeBuilderHandler=$handlerId;
-						}
-						elseif($isHeader===true&& $isActive===false){
-							$link.= '<link rel="preload" href="'.$url.'?ver='.$version.'" as="style"/>';
-					    }
-					    themify_enque_style( $handlerId, $url, null, $version);
-					}
-					echo $link;
+					'url' => $url,
+					'v'=>$version
+				);
+			if( $return===true ) {
+				return self::$isLoaded[$post_id];
+			} else {
+				$fonts = self::getFonts( $post_id );
+				if ( !empty( $fonts ) ) {
+					Themify_Enqueue_Assets::addGoogleFont($fonts);
 				}
-				return true;
+				// custom fonts
+				$custom_fonts = Themify_Custom_Fonts::load_fonts( $post_id );
+				if ( ! empty( $custom_fonts ) ) {
+					echo '<style id="' . $handlerId . '-cffonts">' . $custom_fonts . '</style>' . PHP_EOL;
+				}
+				unset($custom_fonts,$fonts);
+				global $ThemifyBuilder; 
+				if($isActive===true && $ThemifyBuilder->in_the_loop===true && $post_id!=Themify_Builder::$builder_active_id ){
+						echo '<link class="themify-builder-generated-css" id="' . $handlerId . '" rel="stylesheet" href="' . $url . '?ver=' . $version . '" type="text/css">';
+				}
 			}
-		}
-		return false;
+			return true;
+	    }
+	    return false;
 	}
 	
-	public static function set_active_builder_style_position($tag, $handle, $href, $media) {
-		if($handle===self::$activeBuilderHandler){
-			$tag = self::get_active_style_tag($handle);
-			remove_filter('style_loader_tag', array(__CLASS__, 'set_active_builder_style_position'), 15, 4);
+	public static function load_styles(){
+		foreach(self::$isLoaded as $v){
+			themify_enque_style( $v['handler'], $v['url'], null, $v['v']);
 		}
-		return $tag;
+        self::$isLoaded=array();
 	}
+	
 	
 	private static function get_active_style_tag($handle){
-		return '<meta id="tb_active_style_'.Themify_Builder::$builder_active_id.'" name="'.$handle.'-css" content="'.$handle.'-css"/>';
+		return '<meta id="tb_active_style_'.Themify_Builder::$builder_active_id.'" name="'.$handle.'-css" content="'.$handle.'-css">';
 	}
 	
+	/**
+	* This function check the CSS generated files version and if
+	* it requires to update or not
+	 */
+	public static function auto_regenerate_css() {
+	    $css_version = get_option('tb_css_version',false);
+	    if($css_version!==THEMIFY_VERSION && Themify_Filesystem::is_dir( self::get_stylesheet_dir() ) && 'finished' === self::regenerate_css_files() ){
+		update_option('tb_css_version',THEMIFY_VERSION,false);
+	    }
+	}
 	/**
 	* If post doesn't have generated css file,generate an unique Id for each component in the builder
 	* 
@@ -239,29 +211,30 @@ class Themify_Builder_Stylesheet {
 	* which will help to detect there is no need to create css file.
 	* @return void
 	*/
-	public static function save_builder_css(){
+	public static function save_builder_css($echo=false){
 		check_ajax_referer('tb_load_nonce', 'tb_load_nonce');
 		if(!empty($_POST['id'])){
-			$filesystem = Themify_Filesystem::get_instance();
 			$id = (int)$_POST['id'];
-			$stylesheet_path = self::get_stylesheet( 'bydir',$id);
-			if (!$filesystem->execute->is_file($stylesheet_path['url']) ) {
-				$data = !empty($_POST['css'])?json_decode(stripslashes_deep($_POST['css']), true):array();
-				if(!is_array($data)){
-					$data = array();
+			$data = !empty($_POST['css'])?json_decode(stripslashes_deep($_POST['css']), true):array();
+			$custom_css = !empty( $_POST['custom_css']) ? stripcslashes( $_POST['custom_css'] ) : '';
+			if(!is_array($data)){
+				$data = array();
+			}
+			$res = self::write_stylesheet($id, $data,$custom_css);
+			if (empty($res['css_file'])) {
+				$stylesheet_path = self::get_stylesheet( 'bydir',$id);
+				if(!Themify_Filesystem::is_file($stylesheet_path['url']) ){
+					Themify_Filesystem::put_contents(self::getTmpPath($stylesheet_path['url']), 'done');
 				}
-				if(!empty($data)){
-					$res = self::write_stylesheet($id, $data);
-				}
-				if(empty($data) || empty($res['css_file'])){
-					$filesystem->execute->put_contents(self::getTmpPath($stylesheet_path['url']), 'done', FS_CHMOD_FILE);
-				}
+			}
+			if($echo===true){
+				echo json_encode($res);
 			}
 		}
 	    die;
 	}
 	/*Return tmp path of original file*/
-	public static function getTmpPath($path){
+	private static function getTmpPath($path){
 	    return str_replace('.css','-tmp.css',$path);
 	}
 	
@@ -272,6 +245,47 @@ class Themify_Builder_Stylesheet {
 	    self::$ids[$id] = true;
 	    return $id;
 	}
+	
+	
+
+	/**
+	 * Regenerate CSS files Ajax
+	 *
+	 */
+	public static function regenerate_css_files_ajax() {
+	    check_ajax_referer('ajax-nonce', 'nonce');
+	    Themify_Enqueue_Assets::clearConcateCss();
+	    die(self::regenerate_css_files());
+	}
+
+	/**
+	 * Find for old URLs in generated CSS files and regenerates them base on new URLs
+	 *
+	 */
+	public static function regenerate_css_files() {
+	    if ( current_user_can( 'manage_options' ) ) {
+		$path = self::get_stylesheet_dir();
+		if ( Themify_Filesystem::is_dir($path) && !Themify_Filesystem::delete($path) ) {
+		    return __( 'Something goes wrong. Please check the if the upload folder is writtable.' );
+		}
+		return 'finished';
+	    }
+	    return false;
+	}
+
+    /**
+     * Find for old URLs in generated CSS files and delete them
+     *
+     */
+    public static function remove_css_files($post_id) {
+        $css_file = self::get_stylesheet('bydir', $post_id);
+        $css_file = $css_file['url'];
+        $tmp_path = self::getTmpPath($css_file);
+        Themify_Filesystem::delete($css_file,'f');
+        Themify_Filesystem::delete($tmp_path,'f');
+        $tmp_path = $css_file = null;
+    }
+
 
     /**
      * Write stylesheet file.
@@ -281,40 +295,45 @@ class Themify_Builder_Stylesheet {
      * @return array
      */
     public static function write_stylesheet($style_id,$data,$custom_css = '') {
-		// Information about how writing went.
-		$css='';
-		$results = array();
+        // Information about how writing went.
+	
+        $results = array();
+		$css = '';
 		if(!empty($data)){
 			$breakpoints = themify_get_breakpoints();
 			$fonts = array( 'fonts' => array(), 'cf_fonts' => array() );
 			$breakpoints = array('desktop'=>'')+$breakpoints;
 			if(!empty($data['gs'])){
-				$css .= '/* Builder GLOBAL CSS START */' . PHP_EOL;
+				$css .= '/*Builder GLOBAL CSS START*/' . PHP_EOL;
+				if(!empty($data['gs']['used'])){
+                    $css .= '/*GS: '.$data['gs']['used'].'*/' . PHP_EOL;
+                    unset($data['gs']['used']);
+                }
 				foreach($breakpoints as $b=>$bpoint){
 					if(!empty($data['gs'][$b]) ){
-						$styles='';
-						foreach($data['gs'][$b] as  $selector=>$arr){
-							$styles.=$selector.'{'.implode(' ',$arr).'}'.PHP_EOL;
-						}
-						if($b!=='desktop'){
-							$max = is_array($bpoint)?$bpoint[1]:$bpoint;
-							$styles=PHP_EOL.sprintf('@media screen and (max-width: %spx) {', $max).PHP_EOL.$styles.'}';
-						}
-						$css.=$styles;
+					$styles='';
+					foreach($data['gs'][$b] as  $selector=>$arr){
+						$styles.=$selector.'{'.implode('',$arr).'}'.PHP_EOL;
+					}
+					if($b!=='desktop'){
+						$max = is_array($bpoint)?$bpoint[1]:$bpoint;
+						$styles=PHP_EOL.sprintf('@media screen and (max-width:%spx){', $max).PHP_EOL.$styles.'}';
+					}
+					$css.=$styles;
 					}
 				}
 				unset($data['gs']);
-				$css.='/* Builder GLOBAL CSS END */'.PHP_EOL;
+				$css.='/*Builder GLOBAL CSS END*/'.PHP_EOL;
 			}
 			foreach($breakpoints as $b=>$bpoint){
 				if(!empty($data[$b]) ){
 					$styles='';
 					foreach($data[$b] as  $selector=>$arr){
-						$styles.=$selector.'{'.implode(' ',$arr).'}'.PHP_EOL;
+						$styles.=$selector.'{'.implode('',$arr).'}'.PHP_EOL;
 					}
 					if($b!=='desktop'){
 						$max = is_array($bpoint)?$bpoint[1]:$bpoint;
-						$styles=PHP_EOL.sprintf('@media screen and (max-width: %spx) {', $max).PHP_EOL.$styles.'}';
+						$styles=PHP_EOL.sprintf('@media screen and (max-width:%spx){', $max).PHP_EOL.$styles.'}';
 					}
 					$css.=$styles;
 					unset($data[$b]);
@@ -331,30 +350,36 @@ class Themify_Builder_Stylesheet {
 					}
 				}
 			}
-			$data=null;
+			if(!empty($data['bg'])){
+				$created = array();
+				foreach($data['bg'] as $bg){
+				if(!isset($created[$bg])){
+					$created[$bg]=true;
+					themify_generateWebp($bg);
+				}
+				}
+				$created=null;
+			}
 		}
-		$css_file = self::get_stylesheet('bydir', $style_id);
-		$css_file = $css_file['url'];
-		$tmp_path = self::getTmpPath($css_file);
-		$filesystem = Themify_Filesystem::get_instance();
-        if ($filesystem->execute->is_file($css_file)) {
-            $filesystem->execute->delete($css_file);
-        }
-		if ($filesystem->execute->is_file($tmp_path)) {
-            $filesystem->execute->delete($tmp_path);
-        }
+		$data=null;
+		self::remove_css_files($style_id);
 		if(!empty($custom_css)){
-			$css .= '/* Builder Custom CSS START */' . PHP_EOL . $custom_css . PHP_EOL . '/* Builder Custom CSS END */';
+			$css .= '/*Builder Custom CSS START*/' . PHP_EOL . $custom_css . PHP_EOL . '/*Builder Custom CSS END*/';
 		}
-		if (!empty($css)) {
+		unset($custom_css);
+        if (!empty($css)) {
+            $css_file = self::get_stylesheet('bydir', $style_id);
+            $css_file = $css_file['url'];
 			$css = apply_filters( 'themify_builder_stylesheet_css', $css, $style_id, $css_file );
 			$css = '/* Generated from '.get_post_type($style_id).': '.get_post_field( 'post_name', $style_id )." */\r\n".$css;
-            $write = $filesystem->execute->put_contents($css_file, $css, FS_CHMOD_FILE);
-            if($write) {
+			$write = Themify_Filesystem::put_contents($css_file, $css);
+			unset($css_file,$css);
+			if($write) {
 				// Add information about writing.
 				$tmp = self::get_stylesheet( 'byurl', $style_id );
 				$results['css_file'] = $tmp['url'];
 				$results['write'] = $write;
+				unset($tmp);
 				if(!empty($fonts)){
 					// Save Fonts
 					foreach ( array_keys( $fonts ) as $ftype ) {
@@ -375,14 +400,22 @@ class Themify_Builder_Stylesheet {
 						}
 					}
 				}
-			}else{
-				$results['write'] = esc_html__('Styles can`t be written.Please check permission of uploading folder', 'themify');
 			}
-		} else {
-			// Add information about writing.
-			$results['write'] = esc_html__('Nothing written. Empty CSS.', 'themify');
-		}
-		return $results;
+			else{
+					 $results['write'] = esc_html__('Styles can`t be written.Please check permission of uploading folder', 'themify');
+			}
+        } 
+		else {
+            // Add information about writing.
+            $results['write'] = esc_html__('Nothing written. Empty CSS.', 'themify');
+        }
+        return $results;
+    }
+    
+    public static function get_stylesheet_dir($mode = 'bydir'){
+	$upload_dir = themify_upload_dir();
+	$mode=$mode==='bydir'?'basedir':'baseurl';
+	return "$upload_dir[$mode]/themify-css";
     }
 
     /**
@@ -395,30 +428,13 @@ class Themify_Builder_Stylesheet {
      *
      * @return string
      */
-    public static function get_stylesheet($mode = 'bydir', $single = null) {
-        static $before = null;
-        if ($before === null) {
-            $upload_dir = wp_upload_dir();
-            $before = array(
-                'bydir' => $upload_dir['basedir'],
-                'byurl' => $upload_dir['baseurl'],
-            );
+    private static function get_stylesheet($mode = 'bydir', $id = null) {
+        if ($id===null) {
+            $id = Themify_Builder_Model::get_ID();
         }
-      
-        if ($single===null) {
-            $single = Themify_Builder_Model::get_ID();
-        }
-        $single = is_int($single) ? get_post($single) : get_page_by_path($single, OBJECT, Themify_Builder_Layouts::$layout_part_slug);
-        if (!is_object($single)) {
-            return array('id'=>$single,'url'=>'');
-        }
-        $single = $single->ID;
-        $path = "$before[$mode]/themify-css";
-        if ('bydir' === $mode) {
-            $filesystem = Themify_Filesystem::get_instance();
-            if ( ! $filesystem->execute->is_dir($path) ) {
-                wp_mkdir_p( $path);
-            }
+        $path = self::get_stylesheet_dir($mode);
+        if ('bydir' === $mode && !Themify_Filesystem::is_dir($path)) {
+             wp_mkdir_p( $path);
         }
 
         /**
@@ -426,10 +442,10 @@ class Themify_Builder_Stylesheet {
          *
          * @param string $stylesheet Path or URL for the global styling stylesheet.
          * @param string $mode What was being retrieved, 'bydir' or 'byurl'.
-         * @param int $single ID of the template, template part or content builder that we're fetching.
+         * @param int $id ID of the template, template part or content builder that we're fetching.
          *
          */
-        return array('id'=>$single,'url'=>apply_filters('themify_builder_get_stylesheet',  "$path/themify-builder-$single-generated.css", $mode, $single));
+        return array('id'=>$id,'url'=>apply_filters('themify_builder_get_stylesheet',  "$path/themify-builder-$id-generated.css", $mode, $id));
     }
 
 
@@ -440,27 +456,20 @@ class Themify_Builder_Stylesheet {
      * @since 2.2.6
      */
     public static function getFonts($post_id=null) {
-		if ( defined( 'THEMIFY_GOOGLE_FONTS' ) && THEMIFY_GOOGLE_FONTS == false ) {
-			return array();
+		if ( defined( 'THEMIFY_GOOGLE_FONTS' ) && THEMIFY_GOOGLE_FONTS === false ) {
+			return false;
 		}
 
         $entry_google_fonts = get_option('themify_builder_google_fonts');
-	$google_fonts=array();
         if (!empty($entry_google_fonts) && is_array($entry_google_fonts)) {
             $entry_id = $post_id?$post_id:Themify_Builder_Model::get_ID();
             if (isset($entry_google_fonts[$entry_id])) {
-                $fonts = explode('|', $entry_google_fonts[$entry_id]);
-                foreach ($fonts as $font) {
-		    if(!empty($font) && !in_array($font,self::$isLoadedFonts,true)){
-			$google_fonts[] = $font;
-			self::$isLoadedFonts[]=$font;
-		    }
-                }
+                return explode('|', $entry_google_fonts[$entry_id]);
             }
         }
-        return $google_fonts;
+        return false;
     }
-
+	
 
     /**
      * Checks whether a file exists, can be loaded and is not empty.
@@ -531,5 +540,5 @@ class Themify_Builder_Stylesheet {
         $opacity = isset($color[1]) && $color[1] !== '' ? $color[1] : '1';
         return $opacity >= 0 && $opacity !== '1' && $opacity !== '1.00' && $opacity !== '0.99' ? 'rgba(' . self::hex2rgb($color[0]) . ', ' . $opacity . ')' : ($color[0] !== '' ? ('#' . str_replace('#', '', $color[0])) : false);
     }
-    
+	
 }

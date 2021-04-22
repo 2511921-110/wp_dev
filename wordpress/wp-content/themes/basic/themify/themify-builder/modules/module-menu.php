@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Menu
  * Description: Display Custom Menu
@@ -16,7 +16,16 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 	    'category' => array('general','site')
 	));
     }
-
+    
+    public function get_icon(){
+	return 'view-list';
+    }
+	
+    public function get_assets() {
+	return array(
+		'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+	);
+    }
     public function get_title($module) {
 	return isset($module['mod_settings']['custom_menu']) ? $module['mod_settings']['custom_menu'] : '';
     }
@@ -42,11 +51,7 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 				'id' => 'alignment',
 				'label' => __( 'Alignment', 'themify' ),
 				'type' => 'icon_radio',
-				'options' => array(
-					array( 'value' => 'left', 'name' => __( 'Left', 'themify' ), 'icon' => '<span class="ti-align-left"></span>' ),
-					array( 'value' => 'center', 'name' => __( 'Center', 'themify' ), 'icon' => '<span class="ti-align-center"></span>' ),
-					array( 'value' => 'right', 'name' => __( 'Right', 'themify' ), 'icon' => '<span class="ti-align-right"></span>' )
-				),
+				'aligment2' => true
 			),
 	    array(
 		'id' => 'custom_menu',
@@ -85,26 +90,31 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 			'after' => __('Breakpoint (px)', 'themify'),
 			'binding' => array(
 				'empty' => array(
-				'hide' => array('menu_slide_direction')
+				'hide' =>'menu_slide_direction'
 				),
 				'not_empty' => array(
-				'show' => array('menu_slide_direction')
+				'show' =>'menu_slide_direction'
 				)
 			),
 			'wrap_class' => 'tb-checkbox_element_allow_menu'
 	    ),
-	    array(
-				'id'         => 'mobile_menu_style',
-			'label' => '',
-			'type' => 'select',
-				'after'      => __( 'Mobile Menu Style', 'themify' ),
-			'options' => array(
-					'slide'    => __( 'Slide', 'themify' ),
-					'overlay'  => __( 'Overlay', 'themify' ),
-					'dropdown' => __( 'Dropdown', 'themify' )
-			),
-			'wrap_class' => 'tb-checkbox_element_allow_menu'
-	    ),
+        array(
+            'id'         => 'mobile_menu_style',
+            'label' => '',
+            'type' => 'select',
+            'after'      => __( 'Mobile Menu Style', 'themify' ),
+            'options' => array(
+                'slide'    => __( 'Slide', 'themify' ),
+                'overlay'  => __( 'Overlay', 'themify' ),
+                'dropdown' => __( 'Dropdown', 'themify' )
+            ),
+            'binding' => array(
+                'slide' => array('show' => array('menu_slide_direction')),
+                'overlay' => array('show' => array('menu_slide_direction')),
+                'dropdown' => array('hide' => array('menu_slide_direction'))
+            ),
+            'wrap_class' => 'tb-checkbox_element_allow_menu'
+        ),
 	    array(
 				'id'         => 'menu_slide_direction',
 			'label' => '',
@@ -139,11 +149,12 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-	public function get_default_settings() {
+	public function get_live_default() {
 		return array(
-			'custom_menu' => 'default',
+			'custom_menu' => '',
 			'mobile_menu_style' => 'slide',
-			'color_menu' => 'tb_default_color'
+			'color_menu' => 'tb_default_color',
+			'allow_menu_fallback' => 'allow_fallback',
 		);
 	}
 
@@ -434,12 +445,12 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 		self::get_tab(array(
 		    'n' => array(
 			'options' => array(
-			    self::get_color(' li.current_page_item > a,  li.current-menu-item > a', 'current-links_background_color', 'bg_c', 'background-color')
+			    self::get_color(array('.module .nav li.current_page_item > a', '.module .nav li.current-menu-item > a'), 'current-links_background_color', 'bg_c', 'background-color')
 			)
 		    ),
 		    'h' => array(
 			'options' => array(
-			    self::get_color(' li.current_page_item > a:hover,  li.current-menu-item > a:hover', 'current-links_hover_background_color', 'bg_c', 'background-color')
+			    self::get_color(array('.module .nav li.current_page_item > a:hover', '.module .nav li.current-menu-item > a:hover'), 'current-links_hover_background_color', 'bg_c', 'background-color')
 			)
 		    )
 		))
@@ -449,14 +460,14 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 		self::get_tab(array(
 		    'n' => array(
 			'options' => array(
-			    self::get_color(' li.current_page_item > a,  li.current-menu-item > a', 'current-links_color'),
-			    self::get_text_decoration(' li.current_page_item a,  li.current-menu-item a', 'current-links_text_decoration')
+			    self::get_color(array('.module .nav li.current_page_item > a', '.module .nav li.current-menu-item > a'), 'current-links_color'),
+			    self::get_text_decoration(array('.module .nav li.current_page_item > a', '.module .nav li.current-menu-item > a'), 'current-links_text_decoration')
 			)
 		    ),
 		    'h' => array(
 			'options' => array(
-			    self::get_color(' li.current_page_item > a:hover,  li.current-menu-item > a:hover', 'current-links_color_hover'),
-			    self::get_text_decoration(' li.current_page_item a,  li.current-menu-item a', 'c-l_t_d','h')
+			    self::get_color(array('.module li.current_page_item > a:hover', '.module li.current-menu-item > a:hover'), 'current-links_color_hover'),
+			    self::get_text_decoration(array('.module li.current_page_item > a', '.module li.current-menu-item > a'), 'c-l_t_d','h')
 			)
 		    )
 		))
@@ -466,12 +477,12 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 			self::get_tab(array(
 				'n' => array(
 				'options' => array(
-					self::get_border(' li.current_page_item a,  li.current-menu-item a', 'b_m_c_l')
+					self::get_border(array('.module .nav li.current_page_item > a', '.module .nav li.current-menu-item > a'), 'b_m_c_l')
 				)
 				),
 				'h' => array(
 				'options' => array(
-					self::get_border(' li.current_page_item a,  li.current-menu-item a', 'b_m_c_l', 'h')
+					self::get_border(array('.module .nav li.current_page_item > a', '.module .nav li.current-menu-item > a'), 'b_m_c_l', 'h')
 				)
 				)
 			))
@@ -481,12 +492,12 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 			self::get_tab(array(
 				'n' => array(
 					'options' => array(
-						self::get_box_shadow(' li.current_page_item > a,  li.current-menu-item > a', 'sh_m_c_l')
+						self::get_box_shadow(array('.module .nav li.current_page_item > a', '.module .nav li.current-menu-item > a'), 'sh_m_c_l')
 					)
 				),
 				'h' => array(
 					'options' => array(
-						self::get_box_shadow(' li.current_page_item > a,  li.current-menu-item > a', 'sh_m_c_l', 'h')
+						self::get_box_shadow(array('.module .nav li.current_page_item > a', '.module .nav li.current-menu-item > a'), 'sh_m_c_l', 'h')
 					)
 				)
 			))
@@ -610,20 +621,20 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 			self::get_tab(array(
 				'n' => array(
 				'options' => array(
-					self::get_color('.mobile-menu-module', 'mobile_menu_background_color', 'bg_c', 'background-color'),
-					self::get_padding('.mobile-menu-module', 'p_m_m_ct'),
-					self::get_border('.mobile-menu-module', 'b_m_m_ct'),
-					self::get_box_shadow('.mobile-menu-module', 'sh_m_m_ct'),
-					self::get_width('.mobile-menu-module', 'wh_m_m_ct')
+					self::get_color(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'mobile_menu_background_color', 'bg_c', 'background-color'),
+					self::get_padding(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'p_m_m_ct'),
+					self::get_border(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'b_m_m_ct'),
+					self::get_box_shadow(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'sh_m_m_ct'),
+					self::get_width(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'wh_m_m_ct')
 				)
 				),
 				'h' => array(
 				'options' => array(
-					self::get_color('.mobile-menu-module', 'm_m_b_c', 'bg_c', 'background-color', null, 'h'),
-					self::get_padding('.mobile-menu-module', 'p_m_m_ct', 'h'),
-					self::get_border('.mobile-menu-module', 'b_m_m_ct', 'h'),
-					self::get_box_shadow('.mobile-menu-module', 'sh_m_m_ct', 'h'),
-					self::get_width('.mobile-menu-module', 'wh_m_m_ct', 'h')
+					self::get_color(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'm_m_b_c', 'bg_c', 'background-color', null, 'h'),
+					self::get_padding(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'p_m_m_ct', 'h'),
+					self::get_border(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'b_m_m_ct', 'h'),
+					self::get_box_shadow(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'sh_m_m_ct', 'h'),
+					self::get_width(array('.mobile-menu-module', '.mobile-menu-dropdown.module-menu-mobile-active .nav'), 'wh_m_m_ct', 'h')
 				)
 				)
 			))
@@ -633,38 +644,38 @@ class TB_Menu_Module extends Themify_Builder_Component_Module {
 		self::get_tab(array(
 		    'n' => array(
 			'options' => array(
-			    self::get_font_family('.mobile-menu-module li a', 'f_f_m_m'),
-			    self::get_color('.mobile-menu-module li a', 'm_c_m_m'),
-			    self::get_font_size('.mobile-menu-module li a', 'f_s_m_m'),
-			    self::get_line_height('.mobile-menu-module li a', 'l_h_m_m'),
-			    self::get_letter_spacing('.mobile-menu-module li a', 'l_s_m_m'),
-			    self::get_text_align('.mobile-menu-module li a', 't_a_m_m'),
-			    self::get_text_transform('.mobile-menu-module li a', 't_t_m_m'),
-			    self::get_font_style('.mobile-menu-module li a', 'f_sy_m_m', 'f_b_m_m'),
-			    self::get_text_decoration('.mobile-menu-module li a', 't_d_m_m'),
-				self::get_text_shadow('.mobile-menu-module li a', 't_sh_m'),
-			    self::get_color('.mobile-menu-module li a', 'b_c_m_m', 'bg_c', 'background-color'),
-				self::get_padding('.mobile-menu-module li a', 'p_m_m'),
-				self::get_margin('.mobile-menu-module li a', 'm_m_m'),
-				self::get_border('.mobile-menu-module li a', 'b_m_m')
+			    self::get_font_family(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'f_f_m_m'),
+			    self::get_color(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'm_c_m_m'),
+			    self::get_font_size(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'f_s_m_m'),
+			    self::get_line_height(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'l_h_m_m'),
+			    self::get_letter_spacing(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'l_s_m_m'),
+			    self::get_text_align(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 't_a_m_m'),
+			    self::get_text_transform(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 't_t_m_m'),
+			    self::get_font_style(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'f_sy_m_m', 'f_b_m_m'),
+			    self::get_text_decoration(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 't_d_m_m'),
+				self::get_text_shadow(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 't_sh_m'),
+			    self::get_color(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'bg_c', 'background-color'),
+				self::get_padding(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'p_m_m'),
+				self::get_margin(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'm_m_m'),
+				self::get_border(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'b_m_m')
 			)
 		    ),
 		    'h' => array(
 			'options' => array(
-			    self::get_font_family('.mobile-menu-module li a', 'f_f_m_m', 'h'),
-			    self::get_color('.mobile-menu-module li a', 'm_c_h_m_m',null, null, 'h'),
-			    self::get_font_size('.mobile-menu-module li a', 'f_s_m_m', 'h'),
-			    self::get_line_height('.mobile-menu-module li a', 'l_h_m_m', 'h'),
-			    self::get_letter_spacing('.mobile-menu-module li a', 'l_s_m_m', 'h'),
-			    self::get_text_align('.mobile-menu-module li a', 't_a_m_m', 'h'),
-			    self::get_text_transform('.mobile-menu-module li a', 't_t_m_m', 'h'),
-			    self::get_font_style('.mobile-menu-module li a', 'f_sy_m_m', 'f_b_m_m', 'h'),
-			    self::get_text_decoration('.mobile-menu-module li a', 't_d_m_m', 'h'),
-				self::get_text_shadow('.mobile-menu-module li a', 't_sh_m','h'),
-				self::get_color('.mobile-menu-module li a:hover', 'b_c_m_m_h', 'bg_c', 'background-color', null, 'h'),
-				self::get_padding('.mobile-menu-module li a', 'p_m_m', 'h'),
-				self::get_margin('.mobile-menu-module li a', 'm_m_m', 'h'),
-				self::get_border('.mobile-menu-module li a', 'b_m_m', 'h')
+			    self::get_font_family(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'f_f_m_m', 'h'),
+			    self::get_color(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'm_c_h_m_m',null, null, 'h'),
+			    self::get_font_size(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'f_s_m_m', 'h'),
+			    self::get_line_height(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'l_h_m_m', 'h'),
+			    self::get_letter_spacing(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'l_s_m_m', 'h'),
+			    self::get_text_align(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 't_a_m_m', 'h'),
+			    self::get_text_transform(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 't_t_m_m', 'h'),
+			    self::get_font_style(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'f_sy_m_m', 'f_b_m_m', 'h'),
+			    self::get_text_decoration(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 't_d_m_m', 'h'),
+				self::get_text_shadow(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 't_sh_m','h'),
+				self::get_color(array('.mobile-menu-module li a:hover', '.mobile-menu-dropdown.module-menu-mobile-active li a:hover'), 'b_c_m_m_h', 'bg_c', 'background-color', null, 'h'),
+				self::get_padding(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'p_m_m', 'h'),
+				self::get_margin(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'm_m_m', 'h'),
+				self::get_border(array('.mobile-menu-module li a', '.mobile-menu-dropdown.module-menu-mobile-active li a'), 'b_m_m', 'h')
 			)
 		    )
 		))

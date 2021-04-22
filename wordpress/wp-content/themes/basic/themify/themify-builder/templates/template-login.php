@@ -1,5 +1,7 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Template Login
  * 
@@ -28,26 +30,28 @@ $fields_default = array(
 );
 $fields_args = wp_parse_args( $args['mod_settings'], $fields_default );
 unset( $args['mod_settings'] );
-
+$fields_default=null;
 $mod_name=$args['mod_name'];
 $builder_id = $args['builder_id'];
-$element_id = isset($args['element_id'])?'tb_'.$args['element_id']:$args['module_ID'];
+$element_id = $args['module_ID'];
 
 $container_class = apply_filters( 'themify_builder_module_classes', array(
 	'module', 
 	'module-' . $mod_name, 
 	$element_id, 
-	$fields_args['css'], 
-	self::parse_animation_effect( $fields_args['animation_effect'], $fields_args )
+	$fields_args['css']
 	), $mod_name, $element_id, $fields_args );
 
 if(!empty($fields_args['global_styles']) && Themify_Builder::$frontedit_active===false){
     $container_class[] = $fields_args['global_styles'];
 }
-$container_props = apply_filters( 'themify_builder_module_container_props', array(
+$container_props = apply_filters( 'themify_builder_module_container_props', self::parse_animation_effect($fields_args,array(
 	'class' => implode( ' ', $container_class),
-), $fields_args, $mod_name, $element_id );
+)), $fields_args, $mod_name, $element_id );
 $args=null;
+if(Themify_Builder::$frontedit_active===false){
+    $container_props['data-lazy']=1;
+}
 ?>
 <!-- module login -->
 <div <?php echo self::get_element_attributes(self::sticky_element_props($container_props,$fields_args)); ?>>
@@ -67,31 +71,31 @@ $args=null;
 			<div class="tb_login_error"><?php echo esc_html( $fields_args['msg_fail'] ) ?></div>
 		<?php endif; ?>
 
-		<form class="tb_login_form" name="loginform" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ) ?>" method="post">
+		<form class="tb_login_form tf_clearfix tf_box tf_clear" name="loginform" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ) ?>" method="post">
 			<p class="tb_login_username">
 				<label>
 					<span class="tb_login_username_text"><?php echo esc_html( $fields_args['label_username'] ) ?></span>
-					<input type="text" name="log" class="" value="" size="20" />
+					<input type="text" name="log" class="" value="" size="20" required="required" />
 				</label>
 			</p>
 			<p class="tb_login_password">
 				<label>
 					<span class="tb_login_password_text"><?php echo esc_html( $fields_args['label_password'] ) ?></span>
-					<input type="password" name="pwd" class="" value="" size="20" />
+					<input type="password" name="pwd" class="" value="" size="20" required="required" />
 				</label>
 			</p>
-			<div class="tb_login_links">
+			<div class="tb_login_links tf_box tf_clear">
 				<a href="<?php echo esc_url( network_site_url( 'wp-login.php?action=lostpassword', 'login_post' ) ); ?>"><?php echo esc_html( $fields_args['label_forgotten_password'] ); ?></a>
 			</div>
 			<?php if ( $fields_args['remember_me_display'] === 'show' ) : ?>
-			<p class="tb_login_remember">
+			<p class="tb_login_remember tf_left tf_box">
 				<label>
 					<input name="rememberme" type="checkbox" value="forever" /> 
 					<span class="tb_login_remember_text"><?php echo esc_html( $fields_args['label_remember'] ); ?></span>
 				</label>
 			</p>
 			<?php endif; ?>
-			<p class="tb_login_submit">
+			<p class="tb_login_submit tf_right">
 				<button name="wp-submit"><?php echo esc_html( $fields_args['label_log_in'] ) ?></button>
 				<input type="hidden" name="redirect_to" value="<?php echo esc_url( $fields_args['redirect_to'] ) ?>" />
 				<input type="hidden" name="tb_login" value="1" />
@@ -105,21 +109,21 @@ $args=null;
 
 		</form>
 
-		<form class="tb_lostpassword_form" name="lostpasswordform" action="<?php echo esc_url( network_site_url( 'wp-login.php?action=lostpassword', 'login_post' ) ); ?>" method="post" style="display: none;">
+		<form class="tb_lostpassword_form tf_clearfix tf_box tf_clear" name="lostpasswordform" action="<?php echo esc_url( network_site_url( 'wp-login.php?action=lostpassword', 'login_post' ) ); ?>" method="post" style="display: none;">
 			<p class="tb_lostpassword_username">
 				<label>
 					<span class="tb_lostpassword_username_text"><?php echo esc_html( $fields_args['lostpasswordform_label_username'] ) ?></span>
-					<input type="text" name="user_login" class="" value="" size="20" />
+					<input type="text" name="user_login" class="" value="" size="20" required="required" />
 				</label>
 			</p>
 			<?php if ( ! empty( $fields_args['lostpasswordform_redirect_to'] ) ) : ?>
 				<input type="hidden" name="redirect_to" value="<?php echo esc_attr( $fields_args['lostpasswordform_redirect_to'] ); ?>" />
 			<?php endif; ?>
-			<p class="tb_lostpassword_submit">
+			<p class="tb_lostpassword_submit tf_right">
 				<button><?php echo esc_html( $fields_args['lostpasswordform_label_reset'] ) ?></button>
 			</p>
 
-			<div class="tb_login_links">
+			<div class="tb_login_links tf_left tf_box">
 				<a href="<?php echo esc_url( site_url( 'wp-login.php' ) ); ?>"><?php echo esc_html( $fields_args['label_log_in'] ); ?></a>
 			</div>
 		</form>

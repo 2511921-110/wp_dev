@@ -1,5 +1,7 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
 foreach( array( 'image', 'audio', 'postmeta', 'post_id_info', 'multi', 'date', 'video', 'color', 'dropdown', 'dropdownbutton', 'textbox', 'textarea', 'checkbox', 'separator', 'layout', 'radio', 'gallery_shortcode', 'query_category', 'assignments', 'repeater', 'image_radio' ) as $field_type ) {
 	add_action( "themify_metabox/field/{$field_type}", "themify_meta_field_{$field_type}", 10, 1 );
 }
@@ -519,7 +521,7 @@ function themify_meta_field_separator( $args ) {
 
 	$html .= isset( $meta_box['description'] )? themify_meta_field_get_description($meta_box['description']) : '';
 
-	$out = '<div class="themify_field_row clearfix ' . esc_attr( $toggle_class ) . '" ' . esc_attr( $ext_attr );
+	$out = '<div class="themify_field_row tf_clearfix ' . esc_attr( $toggle_class ) . '" ' . esc_attr( $ext_attr );
 	if ( isset( $args['data_hide'] ) && ! empty( $args['data_hide'] ) ) {
 		$out .= ' data-hide="' . esc_attr( $args['data_hide'] ) . '"';
 	}
@@ -984,20 +986,20 @@ function themify_meta_field_assignments( $args ) {
 	}
 	$taxonomies = array_map( 'get_taxonomy', $taxonomies );
 
-	$output = '<div id="themify_assignments_'. $pre .'" class="themify-assignments"><ul class="clearfix">';
+	$output = '<div id="themify_assignments_'. $pre .'" class="themify-assignments"><ul class="tf_clearfix">';
 
 	/* build the tab links */
 	$output .= '<li><a href="#' . $pre . '-assignment-tab-general">' . __( 'General', 'themify' ) . '</a></li>';
 	$output .= '<li><a href="#' . $pre . '-assignment-tab-pages" class="themify-popup-visibility-tab" data-type="page">' . __( 'Pages', 'themify' ) . '</a></li>';
-	$output .= '<li><a href="#' . $pre . '-assignment-tab-categories-singles" class="themify-popup-visibility-tab" data-type="category_single">' . __( 'Category Singles', 'themify' ) . '</a></li>';
-	$output .= '<li><a href="#' . $pre . '-assignment-tab-categories" class="themify-popup-visibility-tab" data-type="category">' . __( 'Categories', 'themify' ) . '</a></li>';
+	$output .= '<li><a href="#' . $pre . '-assignment-tab-categories-singles" class="themify-popup-visibility-tab" data-type="category_single">' . __( 'In Category', 'themify' ) . '</a></li>';
+	$output .= '<li><a href="#' . $pre . '-assignment-tab-categories" class="themify-popup-visibility-tab" data-type="category">' . __( 'Category Archives', 'themify' ) . '</a></li>';
 	$output .= '<li><a href="#' . $pre . '-assignment-tab-post-types" class="themify-popup-visibility-tab" data-type="post">' . __( 'Post Types', 'themify' ) . '</a></li>';
 	$output .= '<li><a href="#' . $pre . '-assignment-tab-taxonomies">' . __( 'Taxonomies', 'themify' ) . '</a></li>';
 	$output .= '<li><a href="#' . $pre . '-assignment-tab-userroles">' . __( 'User Roles', 'themify' ) . '</a></li>';
 	$output .= '</ul>';
 
 	/* build the tab items */
-	$output .= '<div id="' . $pre . '-assignment-tab-general" class="themify-assignment-options clearfix">';
+	$output .= '<div id="' . $pre . '-assignment-tab-general" class="themify-assignment-options tf_clearfix">';
 	$checked = isset($selected['general']['home']) ? checked($selected['general']['home'], 'on', false) : '';
 	$output .= '<label><input type="checkbox" data-name="' . $pre . '[general][home]" ' . $checked . ' />' . __( 'Home page', 'themify' ) . '</label>';
 	$checked = isset($selected['general']['page']) ? checked($selected['general']['page'], 'on', false) : '';
@@ -1030,36 +1032,36 @@ function themify_meta_field_assignments( $args ) {
 	$output .= '</div>'; // tab-general
 	// Pages tab
     wp_reset_postdata();
-	$output .= '<div id="' . $pre . '-assignment-tab-pages" class="themify-assignment-options themify-assignment-type-options clearfix"  data-type="page" data-post-id="' . get_the_ID() . '">';
+	$output .= '<div id="' . $pre . '-assignment-tab-pages" class="themify-assignment-options themify-assignment-type-options tf_clearfix"  data-type="page" data-post-id="' . get_the_ID() . '">';
 	$output .= '</div>'; // tab-pages
 	// Category Singles tab
-	$output .= '<div id="' . $pre . '-assignment-tab-categories-singles" class="themify-assignment-options themify-assignment-type-options clearfix" data-type="category_single">';
+	$output .= '<div id="' . $pre . '-assignment-tab-categories-singles" class="themify-assignment-options themify-assignment-type-options tf_clearfix" data-type="category_single">';
 	$output .= '</div>';
 
 	// Categories tab
-	$output .= '<div id="' . $pre . '-assignment-tab-categories" class="themify-assignment-options themify-assignment-type-options clearfix" data-type="category">';
+	$output .= '<div id="' . $pre . '-assignment-tab-categories" class="themify-assignment-options themify-assignment-type-options tf_clearfix" data-type="category">';
 	$output .= '</div>'; // tab-categories
 	// Post types tab
-	$output .= '<div id="' . $pre . '-assignment-tab-post-types" class="themify-assignment-options clearfix" data-type="post">';
+	$output .= '<div id="' . $pre . '-assignment-tab-post-types" class="themify-assignment-options tf_clearfix" data-type="post">';
 	$output .= '<div id="' . $pre . '-themify-assignment-post-types-inner-tabs" class="themify-assignment-inner-tabs">';
-	$output .= '<ul class="inline-tabs clearfix">';
+	$output .= '<ul class="inline-tabs tf_clearfix">';
 	foreach ( $post_types as $key => $post_type ) {
 		$output .= '<li><a href="#' . $pre . '-assignment-tab-' . $key . '">' . esc_html( $post_type->label ) . '</a></li>';
 	}
 	$output .= '</ul>';
-	$output .= '<div class="themify-assignment-type-options clearfix" data-type="post"></div>';
+	$output .= '<div class="themify-assignment-type-options tf_clearfix" data-type="post"></div>';
 	$output .= '</div>';
 	$output .= '</div>'; // tab-post-types
 	// Taxonomies tab
-	$output .= '<div id="' . $pre . '-assignment-tab-taxonomies" class="themify-assignment-options clearfix">';
+	$output .= '<div id="' . $pre . '-assignment-tab-taxonomies" class="themify-assignment-options tf_clearfix">';
 	$output .= '<div id="' . $pre . '-themify-assignment-taxonomies-inner-tabs" class="themify-assignment-inner-tabs">';
-	$output .= '<ul class="inline-tabs clearfix">';
+	$output .= '<ul class="inline-tabs tf_clearfix">';
 	foreach ( $taxonomies as $key => $tax ) {
 		$output .= '<li><a href="#' . $pre . '-assignment-tab-' . $key . '">' . esc_html($tax->label) . '</a></li>';
 	}
 	$output .= '</ul>';
 	foreach ( $taxonomies as $key => $tax ) {
-		$output .= '<div id="' . $pre . '-assignment-tab-' . $key . '" class="clearfix">';
+		$output .= '<div id="' . $pre . '-assignment-tab-' . $key . '" class="tf_clearfix">';
 		$terms = get_terms( $key, array( 'hide_empty' => true ) );
 		if ( ! empty( $terms ) ) : foreach ( $terms as $term ) :
 				$checked = isset( $selected['tax'][$key][$term->slug] ) ? checked( $selected['tax'][$key][$term->slug], 'on', false ) : '';
@@ -1071,7 +1073,7 @@ function themify_meta_field_assignments( $args ) {
 	$output .= '</div>';
 	$output .= '</div>'; // tab-taxonomies
 	// User Roles tab
-	$output .= '<div id="' . $pre . '-assignment-tab-userroles" class="themify-assignment-options clearfix">';
+	$output .= '<div id="' . $pre . '-assignment-tab-userroles" class="themify-assignment-options tf_clearfix">';
 	foreach ( $GLOBALS['wp_roles']->roles as $key => $role ) {
 		$checked = isset( $selected['roles'][$key] ) ? checked( $selected['roles'][$key], 'on', false ) : '';
 		$output .= '<label><input type="checkbox" data-name="' . esc_attr( $pre . '[roles][' . $key . ']' ) . '" ' . $checked . ' />' . esc_html( $role['name'] ) . '</label>';
@@ -1450,7 +1452,7 @@ function themify_meta_field_repeater_template( $meta_box, $data, $id ) {
 	echo '<div class="themify-repeater-remove-row"><a href="#"></a></div>';
 	foreach ( $meta_box['fields'] as $field ) {
 		if ( is_callable( 'themify_meta_field_'.$field['type'] ) ) {
-			echo '<div class="themify_field_row clearfix ">';
+			echo '<div class="themify_field_row tf_clearfix ">';
 			! empty( $field['title'] ) && printf( '<div class="themify_field_title">%s</div>', $field['title'] );
 			$field_id = $field['name'];
 			$field['name'] = $meta_box['name'] . '[' . $id . '][' . $field['name'] . ']';

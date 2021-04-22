@@ -1,7 +1,112 @@
 <?php
 
-class Builder_Optin_Service {
+defined( 'ABSPATH' ) || exit;
 
+class Builder_Optin_Service {
+	
+	/* array list of provider instances */
+	private static $providers=array();
+
+	/**
+	 * Creates or returns an instance of this class.
+	 *
+	 * @return	A single instance of this class.
+	 */
+	public static function init() {
+		if ( is_admin() ) {
+			add_action( 'wp_ajax_tb_optin_subscribe', array( __CLASS__, 'ajax_subscribe' ) );
+			add_action( 'wp_ajax_nopriv_tb_optin_subscribe', array( __CLASS__, 'ajax_subscribe' ) );
+		}
+	}
+	
+	
+	/**
+	 * Initialize data providers for the module
+	 *
+	 * Other plugins or themes can extend or add to this list
+	 * by using the "builder_optin_services" filter.
+	 */
+	private static function init_providers($type='all') {
+		$dir = trailingslashit( dirname( __FILE__ ) );
+		$providers = apply_filters( 'builder_optin_services', array(
+			'mailchimp' => 'Builder_Optin_Service_MailChimp',
+			'activecampaign' => 'Builder_Optin_Service_ActiveCampaign',
+			'convertkit' => 'Builder_Optin_Service_ConvertKit',
+			'getresponse' => 'Builder_Optin_Service_GetResponse',
+			'mailerlite' => 'Builder_Optin_Service_MailerLite',
+			'newsletter' => 'Builder_Optin_Service_Newsletter',
+		) );
+		if($type!=='all'){
+			if(!isset($providers[$type])){
+				return false;
+			}
+			$providers=array($type=>$providers[$type]);
+		}
+
+		foreach ( $providers as $id => $provider ) {
+			if(!isset(self::$providers[ $id ])){
+				if(is_file($dir . '/'.$id.'.php')){
+					include_once( $dir . '/'.$id.'.php' );
+				}
+				if ( class_exists( $provider ) ) {
+					self::$providers[ $id ] = new $provider();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Helper function to retrieve list of providers or provider instance
+	 *
+	 * @return object
+	 */
+	public static function get_providers($id='all') {
+		if(!isset( self::$providers[ $id ] ) ){
+			self::init_providers($id);
+		}
+		if($id==='all'){
+			return self::$providers;
+		}
+		return isset( self::$providers[ $id ] ) ? self::$providers[ $id ] : false;
+	}
+
+
+	/**
+	 * Handles the Ajax request for subscription form
+	 *
+	 * Hooked to wp_ajax_tb_optin_subscribe
+	 */
+	public static function ajax_subscribe() {
+		if ( ! isset( $_POST['tb_optin_provider'], $_POST['tb_optin_fname'], $_POST['tb_optin_lname'], $_POST['tb_optin_email'] ) ) {
+			wp_send_json_error( array( 'error' => __( 'Required fields are empty.', 'themify' ) ) );
+		}
+
+		$data = array();
+		foreach ( $_POST as $key => $value ) {
+			// remove "tb_optin_" prefix from the $_POST data
+			$key = preg_replace( '/^tb_optin_/', '', $key );
+			$data[ $key ] = sanitize_text_field( trim( $value ) );
+		}
+
+		if ( $provider = self::get_providers( $data['provider'] ) ) {
+			$result = $provider->subscribe( $data );
+			if ( is_wp_error( $result ) ) {
+				wp_send_json_error( array( 'error' => $result->get_error_message() ) );
+			} else {
+				wp_send_json_success( array(
+					/* send name and email in GET, these may come useful when building the page that the visitor will be redirected to */
+					'redirect' => add_query_arg( array(
+						'fname' => $data['fname'],
+						'lname' => $data['lname'],
+						'email' => $data['email'],
+					), $data['redirect'] )
+				) );
+			}
+		} else {
+			wp_send_json_error( array( 'error' => __( 'Unknown provider.', 'themify' ) ) );
+		}
+	}
+	
 	function get_id() {}
 
 	/**
@@ -76,118 +181,17 @@ class Builder_Optin_Service {
 	function subscribe( $args ) {}
 }
 
-class Builder_Optin_Services_Container {
 
-	/* array list of provider instances */
-	public $providers;
+Builder_Optin_Service::init();
 
-	/**
-	 * Creates or returns an instance of this class.
-	 *
-	 * @return	A single instance of this class.
-	 */
+class Builder_Optin_Services_Container {//deprecated backward compatibility for addons 17.01.2021
+
+	
 	public static function get_instance() {
-		static $instance = null;
-		if ( $instance === null ) {
-			$instance = new self;
-		}
-		return $instance;
+		return new self;
 	}
-
-	private function __construct() {
-		if ( did_action( 'init' ) ) {
-			$this->init_providers();
-		} else {
-			add_action( 'init', array( $this, 'init_providers' ), 100 );
-		}
-		if ( is_admin() ) {
-			add_action( 'wp_ajax_tb_optin_subscribe', array( $this, 'ajax_subscribe' ) );
-			add_action( 'wp_ajax_nopriv_tb_optin_subscribe', array( $this, 'ajax_subscribe' ) );
-		}
-	}
-
-	/**
-	 * Initialize data providers for the module
-	 *
-	 * Other plugins or themes can extend or add to this list
-	 * by using the "builder_optin_services" filter.
-	 */
-	function init_providers() {
-		$dir = trailingslashit( dirname( __FILE__ ) );
-		include( $dir . '/mailchimp.php' );
-		include( $dir . '/activecampaign.php' );
-		include( $dir . '/convertkit.php' );
-		include( $dir . '/getresponse.php' );
-		include( $dir . '/mailerlite.php' );
-		include( $dir . '/newsletter.php' );
-		$providers = apply_filters( 'builder_optin_services', array(
-			'mailchimp' => 'Builder_Optin_Service_MailChimp',
-			'activecampaign' => 'Builder_Optin_Service_ActiveCampaign',
-			'convertkit' => 'Builder_Optin_Service_ConvertKit',
-			'getresponse' => 'Builder_Optin_Service_GetResponse',
-			'mailerlite' => 'Builder_Optin_Service_MailerLite',
-			'newsletter' => 'Builder_Optin_Service_Newsletter',
-		) );
-
-		foreach ( $providers as $id => $provider ) {
-			if ( class_exists( $provider ) ) {
-				$this->providers[ $id ] = new $provider();
-			}
-		}
-	}
-
-	/**
-	 * Helper function to retrieve list of providers
-	 *
-	 * @return object
-	 */
-	public function get_providers() {
-		return $this->providers;
-	}
-
-	/**
-	 * Helper function to retrieve a provider instance
-	 *
-	 * @return object
-	 */
+	
 	public function get_provider( $id ) {
-		return isset( $this->providers[ $id ] ) ? $this->providers[ $id ] : false;
-	}
-
-	/**
-	 * Handles the Ajax request for subscription form
-	 *
-	 * Hooked to wp_ajax_tb_optin_subscribe
-	 */
-	public function ajax_subscribe() {
-		if ( ! isset( $_POST['tb_optin_provider'], $_POST['tb_optin_fname'], $_POST['tb_optin_lname'], $_POST['tb_optin_email'] ) ) {
-			wp_send_json_error( array( 'error' => __( 'Required fields are empty.', 'themify' ) ) );
-		}
-
-		$data = array();
-		foreach ( $_POST as $key => $value ) {
-			// remove "tb_optin_" prefix from the $_POST data
-			$key = preg_replace( '/^tb_optin_/', '', $key );
-			$data[ $key ] = sanitize_text_field( trim( $value ) );
-		}
-
-		if ( $provider = $this->get_provider( $data['provider'] ) ) {
-			$result = $provider->subscribe( $data );
-			if ( is_wp_error( $result ) ) {
-				wp_send_json_error( array( 'error' => $result->get_error_message() ) );
-			} else {
-				wp_send_json_success( array(
-					/* send name and email in GET, these may come useful when building the page that the visitor will be redirected to */
-					'redirect' => add_query_arg( array(
-						'fname' => $data['fname'],
-						'lname' => $data['lname'],
-						'email' => $data['email'],
-					), $data['redirect'] )
-				) );
-			}
-		} else {
-			wp_send_json_error( array( 'error' => __( 'Unknown provider.', 'themify' ) ) );
-		}
+		return Builder_Optin_Service::get_providers($id);
 	}
 }
-Builder_Optin_Services_Container::get_instance();

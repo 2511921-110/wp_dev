@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Fancy Heading
  * Description: Heading with fancy styles
@@ -16,11 +17,24 @@ class TB_Fancy_Heading_Module extends Themify_Builder_Component_Module {
 	    'slug' => 'fancy-heading'
 	));
     }
+    
+    public function get_icon(){
+	return 'smallcap';
+    }
 
+    public function get_assets() {
+	return array(
+		'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+	);
+    }
     public function get_options() {
 	$aligment = Themify_Builder_Model::get_text_aligment();
 	foreach($aligment as $k=>$v){
-	    $aligment[$k]['value'] = 'themify-text-'.$v['value'];
+	    if('justify'===$v['value']){
+	        unset($aligment[$k]);
+	        continue;
+        }
+		$aligment[$k]['value'] = 'themify-text-'.$v['value'];
 	}
 	return array(
 	    array(
@@ -70,6 +84,17 @@ class TB_Fancy_Heading_Module extends Themify_Builder_Component_Module {
 		'options' => $aligment
 	    ),
 		array(
+			'id' => 'inline_text',
+			'type' => 'checkbox',
+			'label' => __('Inline Text', 'themify'),
+			'options' => array(
+				array( 'name' => '1', 'value' => __( 'Display main & sub heading as one line', 'themify' )),
+			),
+			'control' => array(
+				'type' => 'refresh'
+			),
+		),
+		array(
 			'id' => 'divider',
 			'label' => __('Divider', 'themify'),
 			'type' => 'toggle_switch',
@@ -87,7 +112,7 @@ class TB_Fancy_Heading_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
 	    'heading' => self::$texts['heading'],
 	    'sub_heading' => self::$texts['sub_heading'],
@@ -171,6 +196,21 @@ class TB_Fancy_Heading_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -210,6 +250,8 @@ class TB_Fancy_Heading_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 
 	$heading = array(
@@ -362,35 +404,25 @@ class TB_Fancy_Heading_Module extends Themify_Builder_Component_Module {
 
     protected function _visual_template() {
 	?>
-	<div class="module module-<?php echo $this->slug; ?> {{ data.css_class }}">
+    <# var inline=data.inline_text==='1'?' inline-fancy-heading':'',
+        divider = ( 'no' === data.divider ) ? ' tb_hide_divider' : '';#>
+	<div class="module module-<?php echo $this->slug; ?> {{ data.css_class }}{{ inline }}{{divider}}">
 	    <# 
 	    var heading_tag = !data.heading_tag ? 'h1' : data.heading_tag,
-                text_alignment='',
-                divider = ( 'no' === data.divider ) ? ' tb_hide_divider' : '',
+                text_alignment=data.text_alignment?'tf_text'+(data.text_alignment.replace('themify-text-',''))[0]:'',
                 headingLink = ( '' !== data.heading_link && undefined !== data.heading_link ) ? 'href='+data.heading_link : '',
 		subHeadingLink = ( '' !== data.sub_heading_link && undefined !== data.sub_heading_link ) ? 'href=' + data.sub_heading_link : '';
-		if(data.text_alignment==='themify-text-right'){
-		    text_alignment = 'tb-align-right';
-		}
-		else if(data.text_alignment==='themify-text-left'){
-		    text_alignment = 'tb-align-left';
-		}
-		else if(data.text_alignment==='themify-text-justify'){
-		    text_alignment = 'tb-align-justify';
-		}
-		else if(data.text_alignment==='themify-text-center'){
-		    text_alignment = 'tb-align-center';
-		}
+        inline=inline===''?'tf_block':'tf_inline_b';
 	    #>
 	    <{{ heading_tag }} class="fancy-heading {{ text_alignment }}">
-        <span class="main-head" contenteditable="false" data-name="heading">
+        <span class="main-head {{inline}}" contenteditable="false" data-name="heading">
             <# if('' === headingLink){ #>
                     {{{ data.heading }}}
             <# }else{ #>
                 <a {{headingLink}} >{{{ data.heading }}}</a>
             <# } #>
         </span>
-        <span class="sub-head{{divider}}" contenteditable="false" data-name="subheading">
+        <span class="sub-head {{inline}} tf_rel" contenteditable="false" data-name="subheading">
             <# if('' === subHeadingLink){ #>{{{ data.sub_heading }}}<# }else{ #>
                 <a {{subHeadingLink}} >{{{ data.sub_heading }}}</a>
             <# } #>

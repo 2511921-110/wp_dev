@@ -1,20 +1,24 @@
 <?php
 
-if ( !defined( 'ABSPATH' ) )
-	exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Module Name: Testimonials
  * Description: Display testimonial custom post type
  */
 class TB_Testimonials_Module extends Themify_Builder_Component_Module {
-	
 	function __construct() {
 		parent::__construct( array(
-			'name' => __( 'Testimonials', 'themify' ),
-			'slug' => 'testimonial-slider'
+		    'name' => __( 'Testimonials', 'themify' ),
+		    'slug' => 'testimonial-slider'
 		) );
 	}
+
+    public function get_assets() {
+        return array(
+            'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+        );
+    }
 
 	public function get_title( $module ){
 		$type = isset( $module['mod_settings']['type_query_testimonial'] ) ? $module['mod_settings']['type_query_testimonial'] : 'category';
@@ -26,6 +30,10 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 		} else {
 			return sprintf( '%s : %s', __( 'Slugs', 'themify' ), $slug_query );
 		}
+	}
+	
+	public function get_icon(){
+	    return 'clipboard';
 	}
 
 	public function get_options() {
@@ -51,16 +59,18 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 		    'label' => __('Grid Layout', 'themify'),
 		    'mode' => 'sprite',
 		    'options' => array(
-			array('img' => 'list_post', 'value' => 'list-post', 'label' => __('List Post', 'themify')),
-			array('img' => 'grid2', 'value' => 'grid2', 'label' => __('Grid 2', 'themify')),
-			array('img' => 'grid3', 'value' => 'grid3', 'label' => __('Grid 3', 'themify')),
-			array('img' => 'grid4', 'value' => 'grid4', 'label' => __('Grid 4', 'themify')),
+				array('img' => 'list_post', 'value' => 'list-post', 'label' => __('List Post', 'themify')),
+				array('img' => 'grid2', 'value' => 'grid2', 'label' => __('Grid 2', 'themify')),
+				array('img' => 'grid3', 'value' => 'grid3', 'label' => __('Grid 3', 'themify')),
+				array('img' => 'grid4', 'value' => 'grid4', 'label' => __('Grid 4', 'themify')),
+				array('img' => 'grid5', 'value' => 'grid5', 'label' => __('Grid 5', 'themify')),
+				array('img' => 'grid6', 'value' => 'grid6', 'label' => __('Grid 6', 'themify')),
 		    ),
 			'binding' => array(
-				'grid4' => array('show' => array('masonry')),
-				'grid3' => array('show' => array('masonry')),
-				'grid2' => array('show' => array('masonry')),
-				'list-post' => array('hide' => array('masonry'))
+				'grid4' => array('show' => 'masonry'),
+				'grid3' => array('show' =>'masonry'),
+				'grid2' => array('show' => 'masonry'),
+				'list-post' => array('hide' =>'masonry')
 			),
 		    'control' => array(
 			'classSelector' => '.themify_builder_testimonial'
@@ -88,7 +98,7 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 			array('img' => 'testimonials_image_bubble', 'value' => 'image-bubble', 'label' => __('Image Bubble', 'themify'))
 		    ),
 		    'control' => array(
-			'classSelector' => ''
+			'classSelector' => '.themify_builder_slider_wrap'
 		    )
 		),
 		array(
@@ -176,7 +186,7 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 	    );
 	}
 
-    public function get_default_settings(){
+    public function get_live_default(){
 		return array(
 			'layout_testimonial' => 'image-top',
 			'img_h_slider' => 100,
@@ -224,7 +234,7 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 						'options' => array(
 							self::get_font_family(),
 							self::get_color_type( array( ' .tb_text_wrap', '.module .testimonial-title', ' .person-name', ' .person-position', ' .person-company', ' .person-company a' ) ),
-							self::get_font_size(' .post'),
+							self::get_font_size(array(' .post',' .testimonial-title',' .testimonial-entry-content',' .testimonial-author .person-name',' .testimonial-author .person-position',' .testimonial-author .person-company')),
 							self::get_line_height(' .post'),
 							self::get_letter_spacing(' .post'),
 							self::get_text_align(' .post'),
@@ -238,7 +248,7 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 						'options' => array(
 							self::get_font_family( '', 'f_f', 'h' ),
 							self::get_color_type( array( ':hover .tb_text_wrap', '.module:hover .testimonial-title', ':hover .person-name', ':hover .person-position', ':hover .person-company', ':hover .person-company a' ), '', 'f_c_t_h', 'f_c_h', 'f_g_c_h' ),
-							self::get_font_size( ' .post', 'f_s', 'h' ),
+							self::get_font_size(array(' .post',' .testimonial-title',' .testimonial-entry-content',' .testimonial-author .person-name',' .testimonial-author .person-position',' .testimonial-author .person-company'), 'f_s', 'h' ),
 							self::get_line_height( ' .post', 'l_h', 'h' ),
 							self::get_letter_spacing( ' .post', 'l_s', 'h' ),
 							self::get_text_align( ' .post', 't_a', 'h' ),
@@ -326,6 +336,21 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 			// Rounded Corners
 			self::get_expand( 'r_c', array(
 					self::get_tab( array(
@@ -358,6 +383,8 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 					) )
 				)
 			),
+			// Display
+			self::get_expand('disp', self::get_display())
 		);
 
 		$testimonial_title = array(
@@ -507,7 +534,7 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 					'n' => array(
 						'options' => array(
 							self::get_font_family( ' .testimonial-content', 'font_family_content' ),
-							self::get_color(array( ' .testimonial-content', ' .testimonial-content-main', ' .testimonial-content-main p'), 'font_color_content' ),
+							self::get_color( ' .testimonial-content', 'font_color_content' ),
 							self::get_font_size( ' .testimonial-content', 'font_size_content' ),
 							self::get_line_height( ' .testimonial-content', 'line_height_content' ),
 							self::get_text_shadow( ' .testimonial-content', 't_sh_c' ),
@@ -516,7 +543,7 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 					'h' => array(
 						'options' => array(
 							self::get_font_family( ' .testimonial-content', 'f_f_c', 'h' ),
-							self::get_color(array( ' .testimonial-content', ' .testimonial-content-main', ' .testimonial-content-main p'), 'f_c_c', null, null, 'h' ),
+							self::get_color(' .testimonial-content', 'f_c_c', null, null, 'h' ),
 							self::get_font_size( ' .testimonial-content', 'f_s_c', '', 'h' ),
 							self::get_line_height( ' .testimonial-content', 'l_h_c', 'h' ),
 							self::get_text_shadow( ' .testimonial-content', 't_sh_c', 'h' ),
@@ -726,13 +753,16 @@ class TB_Testimonials_Module extends Themify_Builder_Component_Module {
 						'options' => array(
 							self::get_color( array( ' .carousel-prev', ' .carousel-next' ), 'background_color_arrows_controls', 'bg_c', 'background-color' ),
 							self::get_color( array( ' .carousel-prev::before', ' .carousel-next::before' ), 'font_color_arrows_controls' ),
-
+							self::get_width( array( ' .carousel-prev', ' .carousel-next' ), 'w_arr_ctrl'),
+							self::get_height( array( ' .carousel-prev', ' .carousel-next' ), 'h_arr_ctrl' ),
 						)
 					),
 					'h' => array(
 						'options' => array(
 							self::get_color( array( ' .carousel-prev:hover', ' .carousel-next:hover' ), 'background_color_hover_arrows_controls', 'bg_c', 'background-color' ),
-							self::get_color( array( ' .carousel-prev:hover::before', ' .carousel-next:hover::before' ), 'font_color_arrows_controls_hover' )
+							self::get_color( array( ' .carousel-prev:hover::before', ' .carousel-next:hover::before' ), 'font_color_arrows_controls_hover' ),
+							self::get_width( array( ' .carousel-prev:hover', ' .carousel-next:hover' ), 'w_arr_ctrl_h'),
+							self::get_height( array( ' .carousel-prev:hover', ' .carousel-next:hover' ), 'h_arr_ctrl_h' ),
 						)
 					)
 				) )

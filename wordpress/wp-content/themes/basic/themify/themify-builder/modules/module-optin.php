@@ -1,6 +1,6 @@
 <?php
-if ( ! defined( 'ABSPATH' ) )
-	exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Module Name: Optin Forms
@@ -10,14 +10,27 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 
 	function __construct() {
 		parent::__construct(array(
-			'name' => __('Optin Form', 'themify'),
-			'slug' => 'optin'
+		    'name' => __('Optin Form', 'themify'),
+		    'slug' => 'optin'
 		));
 
 		include_once( THEMIFY_BUILDER_INCLUDES_DIR. '/optin-services/base.php' );
 		add_action( 'wp_ajax_tb_optin_get_settings', array( $this, 'ajax_tb_optin_get_settings' ) );
 	}
-
+	
+	public function get_icon(){
+	    return 'email';
+	}
+	
+	public function get_assets() {
+		$_arr= array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+		if(!Themify_Builder_Model::is_front_builder_activate()){
+		    $_arr['js']=themify_enque(THEMIFY_BUILDER_JS_MODULES.$this->slug.'.js');
+		}
+		return $_arr;
+	}
 	public function get_title( $module ) {
 		return isset( $module['mod_settings']['mod_title'] ) ? wp_trim_words( $module['mod_settings']['mod_title'], 100 ) : '';
 	}
@@ -29,21 +42,20 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 	 */
 	function ajax_tb_optin_get_settings() {
 		check_ajax_referer( 'tb_load_nonce', 'tb_load_nonce' );
-		$providers = Builder_Optin_Services_Container::get_instance()->get_providers();
-		$providers_binding = array(); // used to generate binding data
-		$providers_settings = $providers_list = array();
+		$providers = Builder_Optin_Service::get_providers();
+		$providers_settings = $providers_list = $providers_binding = array();
 		foreach ( $providers as $id => $instance ) {
 			$providers_list[ $id ] = $instance->get_label();
 
 			$providers_settings[] = array(
 				'type' => 'group',
 				'options' => $instance->get_options(),
-				'wrap_class' => $id,
+				'wrap_class' => $id
 			);
 
 			$providers_binding[ $id ] = array(
 				'hide' => array_values(array_diff( array_keys( $providers ), array( $id ) )),
-				'show' => array( $id ),
+				'show' =>  $id ,
 			);
 		}
 
@@ -53,12 +65,12 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 				'type' => 'select',
 				'label' => __( 'Optin Providers', 'themify' ),
 				'options' => $providers_list,
-				'binding' => $providers_binding,
+				'binding' => $providers_binding
 			),
 			array(
 				'type' => 'group',
 				'id' => 'provider_settings',
-				'options' => $providers_settings,
+				'options' => $providers_settings
 			),
 		);
 		echo json_encode( $options );
@@ -110,10 +122,10 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 						),
 						'binding' => array(
 							'checked' => array(
-								'show' => array( 'default_fname' )
+								'show' => 'default_fname' 
 							),
 							'not_checked' => array(
-								'hide' => array( 'default_fname' )
+								'hide' => 'default_fname' 
 							)
 						)
 					),
@@ -150,10 +162,10 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 						),
 						'binding' => array(
 							'checked' => array(
-								'show' => array( 'default_lname' )
+								'show' =>'default_lname' 
 							),
 							'not_checked' => array(
-								'hide' => array( 'default_lname' )
+								'hide' => 'default_lname' 
 							)
 						)
 					),
@@ -204,8 +216,8 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 					'off' => array( 'name' => '', 'value' => 'dis' )
 				),
 				'binding' => array(
-					'checked' => array( 'show' => array( 'gdpr_label' ) ),
-					'not_checked' => array( 'hide' => array( 'gdpr_label' ) ),
+					'checked' => array( 'show' => 'gdpr_label'),
+					'not_checked' => array( 'hide' =>'gdpr_label' ),
 				)
 			),
 			array(
@@ -244,7 +256,7 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 		);
 	}
 
-	public function get_default_settings() {
+	public function get_live_default() {
 		return array(
 			'label_firstname' => __( 'First Name', 'themify' ),
 			'default_fname' => __( 'John', 'themify' ),
@@ -383,6 +395,22 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
+
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -422,6 +450,8 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Display
+			self::get_expand('disp', self::get_display())
 		);
 
 		$labels = array(
@@ -539,14 +569,14 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 			self::get_expand('m', array(
 				self::get_tab(array(
 					'n' => array(
-						'options' => array(
-							self::get_margin(' input','m_in')
-						)
+					'options' => array(
+						self::get_margin(' input', 'm_in')
+					)
 					),
 					'h' => array(
-						'options' => array(
-							self::get_margin(' input','m_in','h')
-						)
+					'options' => array(
+						self::get_margin(' input', 'm_in', 'h')
+					)
 					)
 				))
 			)),
@@ -576,6 +606,100 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 					'h' => array(
 						'options' => array(
 							self::get_box_shadow(' input', 'b_sh_in', 'h')
+						)
+					)
+				))
+			))
+		);
+		
+		$checkbox = array(
+		    self::get_expand('bg', array(
+			   self::get_tab(array(
+				   'n' => array(
+				   'options' => array(
+						self::get_color(' input[type="checkbox"]', 'b_c_cb', 'bg_c', 'background-color'),
+						self::get_color(' input[type="checkbox"]', 'f_c_cb'),
+				   )
+				   ),
+				   'h' => array(
+				   'options' => array(
+						self::get_color(' input[type="checkbox"]', 'b_c_cb', 'bg_c', 'background-color','h'),
+						self::get_color(' input[type="submit"]', 'f_c_cb',null,null,'h'),
+				   )
+				   )
+			   ))
+		    )),
+		    // Border
+		    self::get_expand('b', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_border(' input[type="checkbox"]','b_cb')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_border(' input[type="checkbox"]','b_cb','h')
+					)
+					)
+				))
+		    )),
+			// Padding
+			self::get_expand('p', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_padding(' input[type="checkbox"]', 'p_cb')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_padding(' input[type="checkbox"]', 'p_cb', 'h')
+					)
+					)
+				))
+			)),
+			// Margin
+			self::get_expand('m', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_margin(' #commentform input[type="checkbox"]', 'm_cb')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_margin(' #commentform input[type="checkbox"]', 'm_cb', 'h')
+					)
+					)
+				))
+			)),
+			// Rounded Corners
+			self::get_expand('r_c', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_border_radius(' input[type="checkbox"]', 'r_c_cb')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_border_radius(' input[type="checkbox"]', 'r_c_cb', 'h')
+						)
+					)
+				))
+			)),
+			// Shadow
+			self::get_expand('sh', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_box_shadow(' input[type="checkbox"]', 's_cb')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_box_shadow(' input[type="checkbox"]', 's_cb', 'h')
 						)
 					)
 				))
@@ -653,14 +777,14 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 			self::get_expand('m', array(
 				self::get_tab(array(
 					'n' => array(
-						'options' => array(
-							self::get_margin(' .tb_optin_submit button','m_sb')
-						)
+					'options' => array(
+						self::get_margin(' .tb_optin_submit button', 'm_sb')
+					)
 					),
 					'h' => array(
-						'options' => array(
-							self::get_margin(' .tb_optin_submit button','m_sb','h')
-						)
+					'options' => array(
+						self::get_margin(' .tb_optin_submit button', 'm_sb', 'h')
+					)
 					)
 				))
 			)),
@@ -713,6 +837,10 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 					'label' => __('Input Fields', 'themify'),
 					'options' => $inputs
 				),
+				'cb' => array(
+					'label' => __('Checkbox', 'themify'),
+					'options' => $checkbox
+				),
 				's_b' => array(
 					'label' => __('Subscribe Button', 'themify'),
 					'options' => $send_button
@@ -758,7 +886,7 @@ class TB_Optin_Module extends Themify_Builder_Component_Module {
 
 				<div class="tb_optin_submit">
 					<button>
-                        <# if ( data.button_icon ) { #><i class="<# print(tb_app.Utils.getIcon(data.button_icon))#>"></i><# } #>
+                        <# if ( data.button_icon ) { #><i><# print(tb_app.Utils.getIcon(data.button_icon).outerHTML)#></i><# } #>
                         {{{ data.label_submit }}}
                     </button>
 				</div>

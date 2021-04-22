@@ -21,7 +21,9 @@
  * @subpackage Themify_Builder/classes
  * @author     Themify
  */
-class Themify_Builder_Revisions {
+final class Themify_Builder_Revisions {
+
+	private static $default_revisions_limit = 50;
         
 	/**
 	 * Builder meta key.
@@ -29,15 +31,15 @@ class Themify_Builder_Revisions {
 	 * @access private
 	 * @var string $builder_meta_key
 	 */
-	private $builder_meta_key;
+	private static $builder_meta_key;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param object Themify_Builder $builder 
 	 */
-	public function __construct() {  
-		$this->builder_meta_key = $GLOBALS['ThemifyBuilder_Data_Manager']->meta_key;
+	public static function init() {  
+		self::$builder_meta_key = ThemifyBuilder_Data_Manager::$meta_key;
 
 		$ajax_events = array(
 			'load_revision_lists',
@@ -47,12 +49,12 @@ class Themify_Builder_Revisions {
 		);
 
 		foreach ( $ajax_events as $ajax_event ) {  
-		    add_action( 'wp_ajax_tb_' . $ajax_event, array( $this, $ajax_event ) );
+		    add_action( 'wp_ajax_tb_' . $ajax_event, array( __CLASS__, $ajax_event ) );
 		}
 	
-		add_filter('_wp_post_revision_fields', array( $this, 'post_revision_fields'), 10, 2);
+		add_filter('_wp_post_revision_fields', array( __CLASS__, 'post_revision_fields'), 10, 2);
 		
-		add_action( 'wp_restore_post_revision', array( $this, 'restore_revision' ), 10, 2 );
+		add_action( 'wp_restore_post_revision', array( __CLASS__, 'restore_revision' ), 10, 2 );
 	}
 
 	/**
@@ -60,13 +62,13 @@ class Themify_Builder_Revisions {
 	 * 
 	 * @access public
 	 */
-	public function load_revision_lists() {
+	public static function load_revision_lists() {
 	
 		check_ajax_referer('tb_load_nonce', 'tb_load_nonce');
 
 		$post_id = (int) $_POST['postid'];
 		$revisions = wp_get_post_revisions( $post_id, array(
-			'posts_per_page' => 50,
+			'posts_per_page' => self::$default_revisions_limit,
 		) );
 		$can_edit_post = $post_id===0?true:current_user_can( 'edit_post', $post_id );
 		include THEMIFY_BUILDER_INCLUDES_DIR . '/themify-builder-revision-list.php';
@@ -79,10 +81,10 @@ class Themify_Builder_Revisions {
 	 * @param array $fields 
 	 * @return array
 	 */
-	public function post_revision_fields( $fields,$post) {
+	public static function post_revision_fields( $fields,$post) {
 		if(function_exists('wp_print_revision_templates')){
-			$fields[ $this->builder_meta_key ] = esc_html__( 'Themify Builder', 'themify' );
-			add_filter('_wp_post_revision_field__themify_builder_settings_json', array( $this, 'post_revision_field'), 10, 4 );
+			$fields[ self::$builder_meta_key ] = esc_html__( 'Themify Builder', 'themify' );
+			add_filter('_wp_post_revision_field__themify_builder_settings_json', array( __CLASS__, 'post_revision_field'), 10, 4 );
 		}
 		return $fields;
 	}
@@ -94,7 +96,7 @@ class Themify_Builder_Revisions {
 	 * @param string $field 
 	 * @return string
 	 */
-	public function post_revision_field( $value, $field,$revision,$type ) {
+	public static function post_revision_field( $value, $field,$revision,$type ) {
 		if( is_object( $revision ) ) {
 			global $ThemifyBuilder;
 			$builder_data  = $ThemifyBuilder->get_builder_data($revision->ID);
@@ -110,7 +112,13 @@ class Themify_Builder_Revisions {
 	 * 
 	 * @access public
 	 */
-	public function save_revision() {
+	public static function save_revision() {
+
+		/* set a default limit for revisions */
+		if ( ! defined( 'WP_POST_REVISIONS' ) ) {
+			define( 'WP_POST_REVISIONS', self::$default_revisions_limit );
+		}
+
 		check_ajax_referer('tb_load_nonce', 'tb_load_nonce');
 		if(empty($_POST['data'])){
 			wp_send_json_error( esc_html__( 'Cannot save revision, please try again.', 'themify' ) );
@@ -139,7 +147,7 @@ class Themify_Builder_Revisions {
 				if(empty($builder_data)){
 					$builder_data=array();
 				}
-				$GLOBALS['ThemifyBuilder_Data_Manager']->save_data( $builder_data, $new_revision_id,'main', $_POST['sourceEditor']);
+				ThemifyBuilder_Data_Manager::save_data( $builder_data, $new_revision_id,'main', $_POST['sourceEditor']);
 				wp_send_json_success( $new_revision_id );
 			} else {
 				wp_send_json_error( esc_html__( 'Cannot save revision, please try again.', 'themify' ) );
@@ -157,11 +165,11 @@ class Themify_Builder_Revisions {
 	 * @param int $post_id 
 	 * @param int $rev_id 
 	 */
-	public function restore_revision( $post_id, $rev_id ) {
+	public static function restore_revision( $post_id, $rev_id ) {
 		global $ThemifyBuilder;
 		$builder_data  = $ThemifyBuilder->get_builder_data($rev_id);
 		if ( !empty($builder_data) ){
-		    $GLOBALS['ThemifyBuilder_Data_Manager']->save_data( $builder_data, $post_id );
+		    ThemifyBuilder_Data_Manager::save_data( $builder_data, $post_id );
 		}
 	}
 
@@ -170,7 +178,7 @@ class Themify_Builder_Revisions {
 	 * 
 	 * @access public
 	 */
-	public function restore_revision_page() {
+	public static function restore_revision_page() {
 	    check_ajax_referer('tb_load_nonce', 'tb_load_nonce');
 	    $rev_id = (int) $_POST['revid'];
 	    $revision = wp_get_post_revision( $rev_id );
@@ -201,7 +209,7 @@ class Themify_Builder_Revisions {
 	 * @access public
 	 * @return json
 	 */
-	public function delete_revision() {
+	public static function delete_revision() {
 	    check_ajax_referer('tb_load_nonce', 'tb_load_nonce');	
 	    $rev_id = (int) $_POST['revid'];
 	    $revision = wp_get_post_revision( $rev_id );
@@ -229,18 +237,16 @@ class Themify_Builder_Revisions {
 	public static function create_revision($post_id, $builder_data,$source_editor){
 		if( !wp_is_post_revision( $post_id )){
 			$post = get_post($post_id);
-			if(!empty($post) &&  'auto-draft' !== $post->post_status){
-				if(wp_revisions_enabled($post) && post_type_supports( $post->post_type, 'revisions' )){
-					unset( $post->post_modified,$post->post_modified_gmt );
-					$rev_id = _wp_put_post_revision( $post );
-					if ( ! is_wp_error( $rev_id ) ) {
-						if(empty($builder_data)){
-							$builder_data=array();
-						}
-						$GLOBALS['ThemifyBuilder_Data_Manager']->save_data( $builder_data, $rev_id,'main', $source_editor);
-						return $rev_id;
-					}
-				}
+			if(!empty($post) &&  'auto-draft' !== $post->post_status && wp_revisions_enabled($post) && post_type_supports( $post->post_type, 'revisions' )){
+			    unset( $post->post_modified,$post->post_modified_gmt );
+			    $rev_id = _wp_put_post_revision( $post );
+			    if ( ! is_wp_error( $rev_id ) ) {
+				    if(empty($builder_data)){
+					    $builder_data=array();
+				    }
+				    ThemifyBuilder_Data_Manager::save_data( $builder_data, $rev_id,'main', $source_editor);
+				    return $rev_id;
+			    }
 			}
 		}
 		return false;
@@ -253,8 +259,8 @@ class Themify_Builder_Revisions {
 	 * @param int $post_id 
 	 * @return boolean
 	 */
-	public function check_has_builder( $post_id ) {
-		$builder_data  = get_metadata( 'post', $post_id, $this->builder_meta_key, true );
+	public static function check_has_builder( $post_id ) {
+		$builder_data  = get_metadata( 'post', $post_id, self::$builder_meta_key, true );
 		return ! empty( $builder_data );
 	}
 }

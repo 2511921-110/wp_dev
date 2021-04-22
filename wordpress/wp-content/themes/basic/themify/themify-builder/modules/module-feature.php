@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Feature
  * Description: Display Feature content
@@ -16,12 +17,28 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
             'slug' => 'feature'
         ));
     }
-
+    
+    public function get_icon(){
+	return 'layout-media-left';
+    }
+    
+	public function get_assets() {
+		return array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+    }
     public function get_options() {
         return array(
             array(
                 'id' => 'mod_title_feature',
                 'type' => 'title'
+            ),
+            array(
+                'id' => 'title_tag',
+                'type' => 'select',
+                'label' => __('Feature Title Tag', 'themify'),
+                'h_tags' => true,
+                'default' => 'h3'
             ),
             array(
                 'id' => 'title_feature',
@@ -61,10 +78,7 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
                         'label' => __('Percentage', 'themify'),
                         'class' => 'xsmall',
                         'units' => array(
-                            '%' => array(
-                                'min' => 0,
-                                'max' => 100
-                            )
+                            '%' => ''
                         )
                     ),
                     array(
@@ -73,10 +87,7 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
                         'label' => __('Stroke', 'themify'),
                         'class' => 'xsmall',
                         'units' => array(
-                            'px' => array(
-                                'min' => 0,
-                                'max' => 100
-                            )
+                            'px' => ''
                         )
                     ),
                     array(
@@ -103,8 +114,8 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
                     ),
                     array(
                         'id' => 'custom_circle_size_feature',
-                        'type' => 'text',
-                        'label' => __('Circle size(px)', 'themify')
+                        'type' => 'number',
+                        'after' => __('Circle size(px)', 'themify')
                     ),
                 )
             ),
@@ -127,26 +138,24 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
             array(
                 'type' => 'multi',
                 'label' => '',
+				'wrap_class' => 'tb_group_element_icon',
                 'options' => array(
                     array(
                         'id' => 'icon_feature',
                         'type' => 'icon',
-                        'label' => __('Icon', 'themify'),
-                        'wrap_class' => 'tb_group_element_icon'
+                        'label' => __('Icon', 'themify')
                     ),
                     array(
                         'id' => 'icon_color_feature',
                         'type' => 'color',
                         'label' => 'c',
                         'class' => 'medium',
-                        'wrap_class' => 'tb_group_element_icon'
                     ),
                     array(
                         'id' => 'icon_bg_feature',
                         'type' => 'color',
                         'label' => 'bg',
-                        'class' => 'medium',
-                        'wrap_class' => 'tb_group_element_icon'
+                        'class' => 'medium'
                     ),
                 )
             ),
@@ -191,17 +200,13 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
                         'control'=>false,
                         'units' => array(
                             'px' => array(
-                                'min' => 0,
-                                'max' => 500
+                                'max' => 3500
                             ),
                             'em' => array(
                                 'min' => -10,
                                 'max' => 10
                             ),
-                            '%' => array(
-                                'min' => 0,
-                                'max' => 100
-                            )
+                            '%' =>''
                         )
                     ),
                     array(
@@ -211,17 +216,13 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
                         'control'=>false,
                         'units' => array(
                             'px' => array(
-                                'min' => 0,
-                                'max' => 500
+                                'max' => 3500
                             ),
                             'em' => array(
                                 'min' => -10,
                                 'max' => 10
                             ),
-                            '%' => array(
-                                'min' => 0,
-                                'max' => 100
-                            )
+                            '%' => ''
                         )
                     )
                 ),
@@ -260,8 +261,9 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
         );
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
         return array(
+            'title_tag' => 'h3',
             'title_feature' => self::$texts['title_feature'],
             'content_feature' => self::$texts['content_feature'],
             'circle_percentage_feature' => '100',
@@ -270,7 +272,8 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
             'layout_feature' => 'icon-top',
             'circle_size_feature' => 'small',
 	    'icon_type_feature'=>'icon',
-            'circle_color_feature' => '#de5d5d'
+            'circle_color_feature' => '#de5d5d',
+            'custom_circle_size_feature' => 120
         );
     }
 
@@ -296,8 +299,8 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
             self::get_tab(array(
                 'n' => array(
                     'options' => array(
-                        self::get_font_family(array(' .tb_text_wrap',' h3.module-feature-title')),
-                        self::get_color_type(array(' .tb_text_wrap', ' h3.module-feature-title')),
+                        self::get_font_family(array(' .tb_text_wrap',' .module-feature-title')),
+                        self::get_color_type(array(' .tb_text_wrap', ' .module-feature-title')),
                         self::get_font_size(),
                         self::get_line_height(),
                         self::get_letter_spacing(),
@@ -310,8 +313,8 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
                 ),
                 'h' => array(
                     'options' => array(
-                        self::get_font_family(array(':hover .tb_text_wrap',':hover h3.module-feature-title'), 'f_f_h'),
-                        self::get_color_type(array(':hover .tb_text_wrap', ':hover h3.module-feature-title'),'', 'f_c_t_h', 'f_c_h', 'f_g_c_h'),
+                        self::get_font_family(array(':hover .tb_text_wrap',':hover .module-feature-title'), 'f_f_h'),
+                        self::get_color_type(array(':hover .tb_text_wrap', ':hover .module-feature-title'),'', 'f_c_t_h', 'f_c_h', 'f_g_c_h'),
                         self::get_font_size('', 'f_s', '', 'h'),
                         self::get_line_height('', 'l_h', 'h'),
                         self::get_letter_spacing('', 'l_s', 'h'),
@@ -400,6 +403,21 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 	        // Height & Min Height
 	        self::get_expand('ht', array(
 			        self::get_height(),
@@ -439,6 +457,8 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Display
+			self::get_expand('disp', self::get_display())
         );
 
         $feature_title = array(
@@ -448,7 +468,7 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
                 'n' => array(        
                     'options' => array(
                         self::get_font_family(array('.module .module-feature-title', '.module .module-feature-title a'), 'font_family_title'),
-                        self::get_color(array('.module h3.module-feature-title', '.module h3.module-feature-title a'), 'font_color_title'),
+                        self::get_color(array('.module .module-feature-title', '.module .module-feature-title a'), 'font_color_title'),
                         self::get_font_size('.module .module-feature-title', 'font_size_title'),
                         self::get_line_height('.module .module-feature-title', 'line_height_title'),
                         self::get_letter_spacing('.module .module-feature-title', 'l_s_t'),
@@ -460,7 +480,7 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
                 'h' => array(
                     'options' => array(
                         self::get_font_family(array('.module .module-feature-title', '.module .module-feature-title a'), 'f_f_t', 'h'),
-						self::get_color(array('.module h3.module-feature-title', '.module h3.module-feature-title a'), 'font_color_title',  null, null, 'hover'),
+						self::get_color(array('.module .module-feature-title', '.module .module-feature-title a'), 'font_color_title',  null, null, 'hover'),
                         self::get_font_size('.module .module-feature-title', 'f_s_t', '', 'h'),
                         self::get_line_height('.module .module-feature-title', 'l_h_t', 'h'),
                         self::get_letter_spacing('.module .module-feature-title', 'l_s_t', 'h'),
@@ -589,13 +609,8 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
 
     protected function _visual_template() {
         $module_args = self::get_module_args();
-        $chart_vars = apply_filters('themify_chart_init_vars', array(
-            'trackColor' => 'rgba(0,0,0,.1)',
-            'size' => 150
-        ));
         ?>
         <#
-        var chart_vars = JSON.parse('<?php echo json_encode($chart_vars) ?>');
         _.defaults(data, {
 	    icon_feature:'',
 	    icon_bg_feature:''
@@ -603,56 +618,42 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
         if (!data.layout_feature) {
 	    data.layout_feature = 'icon-top';
         }
-        var chart_class = '';
-        if (data.circle_size_feature === 'large') {
-	    chart_vars.size = 200;
-        } else if (data.circle_size_feature === 'medium') {
-	    chart_vars.size = 150;
-        } else if (data.circle_size_feature === 'small') {
-	    chart_vars.size = 100;
-        }else if (data.circle_size_feature === 'custom'){
-	    chart_vars.size = data.custom_circle_size_feature;
-        }
         data.circle_percentage_feature = data.circle_percentage_feature?data.circle_percentage_feature.replace('%',''):'';
-        if(!data.circle_percentage_feature){
-	    chart_class='no-chart';
-	    data.circle_percentage_feature = 0;
-	    chart_vars.trackColor = 'rgba(0,0,0,0)';
-        }
-        else{
-	    if(data.circle_percentage_feature>100){
-		data.circle_percentage_feature = '100';
+	var w=data.circle_stroke_feature || 0,
+		isEmpty=data.circle_percentage_feature<=0 || w==0,
+	    chart_class = 'with-chart',
+	    insetColor=data.icon_bg_feature!=='' && data.icon_type_feature=='icon'?tb_app.Utils.toRGBA(data.icon_bg_feature):'',
+	    st='';
+	    if(w==1){
+		w=2;
 	    }
-	    chart_class = 'with-chart';
-	}
-        if(data.overlap_image_feature){
-	    chart_class+=' with-overlay-image';
-        }
-        var module_id = '.tb_element_cid_'+data.cid,
-        style = '',
-        insetColor = data.icon_bg_feature!==''?tb_app.Utils.toRGBA(data.icon_bg_feature):'';
-        if(data.circle_stroke_feature){
-	    var circleBackground = chart_vars.trackColor,
-	    circleColor = tb_app.Utils.toRGBA(data.circle_color_feature),
-	    insetSize =  parseInt(data.circle_stroke_feature),
-	    style=module_id+' .module-feature-chart-html5{box-shadow: inset 0 0 0 '+insetSize+'px '+circleBackground+';}';
-	    style+=module_id+' .chart-loaded.chart-html5-fill{box-shadow: inset 0 0 0 '+insetSize+'px '+circleColor+';}';
-        }
-	    if(insetColor!==''){
-		style+=module_id+' .chart-html5-inset{background-color:'+insetColor+';}';
+	    var r='calc(50% - '+w/2+'px)';
+	    if(isEmpty){
+			chart_class='no-chart';
+	    }
+	    else{
+		if(data.circle_percentage_feature>100){
+			data.circle_percentage_feature = '100';
+		}
+		if(data.overlap_image_feature){
+			chart_class+=' with-overlay-image';
+		}
+	    }
+	    if(data.circle_size_feature=='custom' && data.custom_circle_size_feature){
+		st='width:'+data.custom_circle_size_feature+'px;height:'+data.custom_circle_size_feature+'px;';
+	    }
+	    if(isEmpty && insetColor !== ''){
+		st+='background-color:'+insetColor;
 	    }
         #>
         <div class="module module-<?php echo $this->slug; ?> {{chart_class}} layout-{{ data.layout_feature }} size-{{data.circle_size_feature}} {{ data.css_feature }}">
-            <style type="text/css">
-                {{style}}
-            </style> 
             <# if( data.mod_title_feature ) { #>
             <?php echo $module_args['before_title']; ?>
             {{{ data.mod_title_feature }}}
             <?php echo $module_args['after_title']; ?>
             <# } #>
 
-            <div class="module-feature-image">
+            <div class="module-feature-image tf_textc tf_rel">
                 <# if(data.overlap_image_feature){
                 var style = 'width:' + ( data.overlap_image_width ? data.overlap_image_width + 'px;' : 'auto;' );
                 style += 'height:' + ( data.overlap_image_height ? data.overlap_image_height + 'px;' : 'auto;' );
@@ -660,51 +661,46 @@ class TB_Feature_Module extends Themify_Builder_Component_Module {
                 <img src="{{data.overlap_image_feature}}" style="{{style}}"/>
                 <#}
                 if(data.link_feature){ #>
-                <a href="{{ data.link_feature }}">
-                    <#}#>
-                    <div class="module-feature-chart-html5"
-                         <# if(data.circle_percentage_feature){ #>
-                         data-progress="0"
-                         data-progress-end="{{data.circle_percentage_feature}}"
-                         data-size="{{chart_vars.size}}"
-                         <#}#>>
-                         <div class="chart-html5-circle">
-                            <# if(data.circle_percentage_feature){ #>
-                            <div class="chart-html5-mask chart-html5-full">
-                                <div class="chart-html5-fill"></div>
-                            </div>
-                            <div class="chart-html5-mask chart-html5-half">
-                                <div class="chart-html5-fill"></div>
-                            </div>
-                            <#}#>
-                            <div class="chart-html5-inset<# if(data.icon_type_feature==='icon' && data.icon_feature!==''){ #> chart-html5-inset-icon<# } #>">
-                                <# if (data.icon_type_feature && data.icon_type_feature.indexOf('image')!==-1){ #>
-				    <# if(data.image_feature){ #>
-					<img src="{{data.image_feature}}" />
-				    <# } #>
-                                <# }
-                                else{ 
-                                if ('' !== insetColor){ #><div class="module-feature-background" style="background:{{insetColor}}"></div><# }
-                                if ('' !== data.icon_feature){ #><i class="module-feature-icon {{tb_app.Utils.getIcon(data.icon_feature)}}"<# if(data.icon_color_feature!==''){ #> style="color:<# print(tb_app.Utils.toRGBA(data.icon_color_feature)) #>"<# } #>></i><# } 
-                                } #>
-                            </div>
-                        </div>
-                    </div>
-                    <# if(data.link_feature){ #>
-                </a>
-                <# } #>
+		    <a href="{{ data.link_feature }}">
+		<#}#>
+		<span class="module-feature-chart-html5 tf_box tf_rel tf_inline_b"<# if(st!==''){#> style="{{st}}"<#}#>>
+			<# if(!isEmpty){#>
+			    <svg class="tf_abs tf_w tf_h">
+				<circle class="tb_feature_fill" r="{{r}}" cx="50%" cy="50%" stroke-width="{{w}}"/>
+				<circle class="tb_feature_stroke" r="{{r}}" cx="50%" cy="50%" stroke="{{tb_app.Utils.toRGBA(data.circle_color_feature)}}" stroke-width="{{w}}" data-progress="{{data.circle_percentage_feature}}" stroke-dasharray="0,10000"/>
+				<# if(insetColor !== '' && data.icon_type_feature=='icon'){#>
+				    <circle class="tb_feature_bg" r="calc(50% - <# print((w>1?(w-1):0))#>px)" cx="50%" cy="50%" stroke-width="{{w}}" fill="{{insetColor}}" />
+				<# }#>
+			    </svg>
+			<# }#>
+			<span class="chart-html5-circle tf_w tf_h">
+			    <# if(data.icon_type_feature=='icon'){
+				if(data.icon_feature){#>
+				    <i class="module-feature-icon tf_rel"<# if(data.icon_color_feature!==''){ #> style="color:<# print(tb_app.Utils.toRGBA(data.icon_color_feature)) #>"<# } #>><# print(tb_app.Utils.getIcon(data.icon_feature).outerHTML)#></i>
+				<# } 
+			    }
+			    else if(data.image_feature){
+			    #>
+				<img style="width:calc(100% - {{w*2}}px);height:calc(100% - {{w*2}}px)" src="{{data.image_feature}}" />
+			    <# } #>
+			</span>
+		    </span>
+		<# if(data.link_feature){ #>
+		    </a>
+		<# } #>
             </div>
-            <div class="module-feature-content">
+            <div class="module-feature-content tf_textc">
                 <# if(data.title_feature!==''){ #>
-                <h3 class="module-feature-title"<# if(!data.link_feature){#> data-name="title_feature" contenteditable="false"<#}#>>
+                <# var tag = data.title_tag?data.title_tag:'h3'; #>
+                <{{tag}} class="module-feature-title"<# if(!data.link_feature){#> data-name="title_feature" contenteditable="false"<#}#>>
                     <# if(data.link_feature){ #>
-                    <a href="{{data.link_feature}}" contenteditable="false" data-name="title_feature" href="{{data.link_feature}}">
-                        <#}#>
+			<a href="{{data.link_feature}}" contenteditable="false" data-name="title_feature" href="{{data.link_feature}}">
+		    <#}#>
                         {{{data.title_feature}}}
                         <# if(data.link_feature){ #>
                     </a>
                     <#}#>
-                </h3>
+                </{{tag}}>
                 <# } #>
 		<div contenteditable="false" data-name="content_feature" class="tb_text_wrap tb_editor_enable">
 		    {{{ data.content_feature }}}

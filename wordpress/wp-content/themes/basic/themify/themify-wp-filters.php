@@ -5,6 +5,8 @@
  * @package Themify
  */
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Add Themify Settings link to admin bar
  * @since 1.1.2
@@ -24,7 +26,9 @@ add_action( 'wp_before_admin_bar_render', 'themify_admin_bar' );
 
 /**
  * Generate CSS code from Styling panel
+ * deprecated should be removed
  */
+
 function themify_get_css() {
 	$data = themify_get_data();
 	$output = '';
@@ -57,11 +61,7 @@ function themify_get_css() {
 									foreach( $v['value'] as $key => $val ) {
 										if( '' == $val ) {
 											if( strpos( $key, 'style' ) === false ) {
-												if ( strpos( $key, 'color' ) === false ) {
-													$v['value'][$key] = 0;
-												} else {
-													$v['value'][$key] = '000000';
-												}
+											    $v['value'][$key] = strpos( $key, 'color' ) ?0:'000000';
 											} else {
 												$v['value'][$key] = 'solid';
 											}
@@ -135,7 +135,7 @@ function themify_get_css() {
 									}
 								break;
 								case 'color':
-									if ( !empty( $v['value']['value'] )&& $v['value']['value'] != ' ' ) {
+									if ( !empty( $v['value']['value'] )&& $v['value']['value'] !== ' ' ) {
 										$temp .= $attribute.': ';
 										$temp .= themify_sanitize_hex_color( $v['value']['value'] ) . ";\n";
 									}
@@ -143,13 +143,13 @@ function themify_get_css() {
 								case 'background-color':
 									if ( !empty( $v['value']['transparent'] ) ) {
 										$temp .= $attribute.": transparent;\n";
-									} elseif ( !empty( $v['value']['value'] ) && $v['value']['value'] != ' ' ) {
+									} elseif ( !empty( $v['value']['value'] ) && $v['value']['value'] !== ' ' ) {
 										$temp .= $attribute.': ';
 										$temp .= themify_sanitize_hex_color( $v['value']['value'] ) .";\n";
 									}
 								break;
 								case 'background-image':
-									if ( !empty( $v['value']['value'] ) && $v['value']['value'] != ' ' ) {
+									if ( !empty( $v['value']['value'] ) && $v['value']['value'] !== ' ' ) {
 										$temp .= $attribute.': ';
 										$temp .= 'url('.$v['value']['value'].')'.";\n";
 									} elseif ( isset( $v['value']['none'] ) && 'on' === $v['value']['none'] ) {
@@ -158,39 +158,39 @@ function themify_get_css() {
 									}
 								break;
 								case 'background-repeat':
-									if ( !empty( $v['value']['value'] ) && $v['value']['value'] != ' ' ) {
+									if ( !empty( $v['value']['value'] ) && $v['value']['value'] !== ' ' ) {
 										$temp .= $attribute.': ';
 										$temp .= $v['value']['value'].";\n";
 									}
 								break;
 								case 'font-family':
-									if ( !empty( $v['value']['value'] ) &&  $v['value']['value'] != ' ' ) {
+									if ( !empty( $v['value']['value'] ) &&  $v['value']['value'] !== ' ' ) {
 										$temp .= $attribute.': ';
                                                                                 $temp .= '"' . $v['value']['value'] . '"' .";\n";
                                                                         }
 								break;
 								case 'line-height':
-									if ( !empty( $v['value']['value'] ) && $v['value']['value'] != ' ' ) {
+									if ( !empty( $v['value']['value'] ) && $v['value']['value'] !== ' ' ) {
 										$temp .= $attribute.': ';
 										$temp .= $v['value']['value'].$v['value']['unit'].";\n";
 									}
 								break;
 								case 'position':
-									if ( !empty( $v['value']['value'] ) && $v['value']['value'] != ' ' ) {
+									if ( !empty( $v['value']['value'] ) && $v['value']['value'] !== ' ' ) {
 										$temp .= $attribute.': ';
 										$temp .= $v['value']['value'].";\n";
 										if($v['value']['value'] === 'absolute' || $v['value']['value'] === 'fixed'){
 											if($v['value']['x_value'] != '' && $v['value']['x_value'] != ' '){
 												$temp .= $v['value']['x'].': '.$v['value']['x_value']."px;\n";
 											}
-											if($v['value']['y_value'] != '' && $v['value']['y_value'] != ' '){
+											if($v['value']['y_value'] != '' && $v['value']['y_value'] !== ' '){
 												$temp .= $v['value']['y'].': '.$v['value']['y_value']."px;\n";
 											}
 										}
 									}
 								break;
 								default:
-									if ( !empty( $v['value']['value'] )&& $v['value']['value'] != ' ' ) {
+									if ( !empty( $v['value']['value'] )&& $v['value']['value'] !== ' ' ) {
 										$temp .= $attribute.': ';
 										$temp .= $v['value']['value'];
 										if(isset($v['value']['unit'])){
@@ -237,89 +237,16 @@ function themify_get_css() {
 function themify_body_classes( $classes ) {
 	global $themify;
 
-	$template = get_template();
-	$classes[] = 'themify-fw-' . str_replace( '.', '-', THEMIFY_VERSION );
-	$classes[] = $template . '-' . str_replace( '.', '-', wp_get_theme( $template )->version );
-
 	// Add skin name
-	if( $skin = themify_is_theme_skin() ) {
-		$skin_dir = explode( '/', $skin );
-		$classes[] = 'skin-' . $skin_dir[sizeof( $skin_dir ) - 2];
-	} else {
-		$classes[] = 'skin-default';
+	$skin = themify_get_skin();
+	if($skin===false){
+	    $skin='default';
 	}
-
-	// Browser classes
-	global $is_gecko, $is_opera, $is_iphone, $is_IE, $is_winIE, $is_macIE;
-
-	$is_android = $is_webkit = $is_edge = $is_ie10 = $is_ie9 = $is_ie8 = false;
-
-	if ( isset( $_SERVER['HTTP_USER_AGENT'] ) ) {
-		if ( stripos( $_SERVER['HTTP_USER_AGENT'], 'android' ) ) {
-			$is_android = true;
-		}
-		if ( stripos( $_SERVER['HTTP_USER_AGENT'], 'webkit' ) ) {
-			$is_webkit = true;
-		}
-		if( stripos( $_SERVER['HTTP_USER_AGENT'], 'Edge' ) ) {
-			$is_edge = true;
-		}
-		if ( stripos( $_SERVER['HTTP_USER_AGENT'], 'MSIE 10' ) ) {
-			$is_ie10 = true;
-		}
-		if ( stripos( $_SERVER['HTTP_USER_AGENT'], 'MSIE 9' ) ) {
-			$is_ie9 = true;
-		}
-		if ( stripos( $_SERVER['HTTP_USER_AGENT'], 'MSIE 8' ) ) {
-			$is_ie8 = true;
-		}
+	$classes[] = 'skin-'.$skin;
+	$classes[] = themify_is_shop() || is_singular()?themify_get( 'content_width','default_width' ):'default_width';
+	if ( is_singular() && post_password_required( get_the_ID() )) {
+		$classes[] = 'entry-password-required';
 	}
-
-	$browsers = array(
-		'gecko'   => $is_gecko,
-		'opera'   => $is_opera,
-		'iphone'  => $is_iphone,
-		'android' => $is_android,
-		'webkit'  => $is_webkit,
-		'edge'	  => $is_edge,
-		'ie' 	  => $is_IE,
-		'iewin'   => $is_winIE,
-		'iemac'   => $is_macIE,
-		'ie10' 	  => $is_ie10,
-		'ie9' 	  => $is_ie9,
-		'ie8' 	  => $is_ie8
-	);
-
-	$is_not_ie = true;
-
-	foreach( $browsers as $browser => $state ) {
-		if ( $state ) {
-			$classes[] = $browser;
-			if ($is_not_ie===true && stripos( $browser, 'ie' ) !== false ) {
-			    $is_not_ie = false;
-			}
-		}
-	}
-	if ( $is_not_ie===true) {
-	    $classes[] = 'not-ie';
-	}
-
-	// Add default layout and post layout
-	$post_layout = themify_get('setting-default_post_layout');
-
-	// Set content width
-	if ( is_search() ) {
-		$classes[] = 'default_width';
-	} elseif ( themify_is_shop() ) {
-	    $content_width = get_post_meta( get_option( 'woocommerce_shop_page_id' ), 'content_width', true );
-		$classes[] = $content_width ? $content_width : 'default_width';
-	} elseif ( is_singular() ) {
-	    $classes[] = themify_check( 'content_width' ) ? themify_get( 'content_width' ) : 'default_width';
-	    if ( post_password_required( get_the_ID() ) ) {
-			$classes[] = 'entry-password-required';
-	    }
-	}
-
 	if( themify_is_query_page() ) {
 		$classes[] = 'query-page';
 		$classes[] = isset($themify->query_post_type) ? 'query-'.$themify->query_post_type: 'query-post';
@@ -341,12 +268,15 @@ function themify_body_classes( $classes ) {
 		$classes[] = 'lightboxed';
 	}
 
-	$classes[] = themify_is_touch() ? 'touch' : 'no-touch';
-		
-	if(themify_get('setting-lightbox_content_images')){
-		$classes[] = 'themify_lightboxed_images';
+	// Add Accessibility classes
+	$acc_link=themify_get('setting-acc_lfo','',true);
+	if('h'===$acc_link || 'n'===$acc_link){
+		$classes[] = 'h'===$acc_link?'tf_focus_heavy':'tf_focus_none';
 	}
-		
+	if('l'===themify_get('setting-acc_fs','',true)){
+		$classes[] = 'tf_large_font';
+	}
+	
 	return apply_filters('themify_body_classes', $classes);
 }
 add_filter( 'body_class', 'themify_body_classes' );
@@ -375,48 +305,27 @@ function themify_post_class( $classes ) {
 }
 add_filter( 'post_class', 'themify_post_class' );
 
-if ( ! function_exists( 'themify_disable_responsive_design' ) ) :
+
 /**
- * Disables the responsive design by removing media-queries.css file and changing viewport tag
- *
- * @since 2.1.5
+ * Add wmode transparent and post-video container for responsive purpose
+ * Remove webkitallowfullscreen and mozallowfullscreen for HTML validation purpose
+ * @param string $html The embed markup.
+ * @param string $url The URL embedded.
+ * @return string The modified embed markup.
  */
-function themify_disable_responsive_design() {
-	// Remove media-queries.css
-	add_action( 'wp_enqueue_scripts', 'themify_disable_media', 20 );
-
-	// Remove JS for IE
-	remove_action( 'wp_head', 'themify_ie_enhancements' );
-
-	// Remove meta viewport tag
-	remove_action( 'wp_head', 'themify_viewport_tag' );
-}
-function themify_disable_media(){
-    wp_deregister_style( 'themify-media-queries' );
-}
-endif;
-if ( 'on' === themify_get( 'setting-disable_responsive_design' ) ) {
-	add_action( 'init', 'themify_disable_responsive_design' );
-}
-
-if ( ! function_exists( 'themify_wp_video_shortcode' ) ) :
-/**
- * Removes height in video to replicate this fix https://github.com/markjaquith/WordPress/commit/3d8e31fb82cc1485176c89d27b736bcd9d2444ba#diff-297bf46a572d5f80513d3fed476cd2a2R1862
- *
- * @param $out
- * @param $atts
- *
- * @return mixed
- */
-function themify_wp_video_shortcode( $out, $atts ) {
-	$width_rule = '';
-	if ( ! empty( $atts['width'] ) ) {
-		$width_rule = sprintf( 'width: %dpx; ', $atts['width'] );
+function themify_parse_video_embed_vars($html, $url) {
+	$html = themify_make_lazy( $html );
+	if ( false !== strpos( $url, 'youtube.com' )
+		|| false !== strpos( $url, 'youtu.be' )
+		|| false !== strpos( $url, 'vimeo.com' )
+		|| false !== strpos( $url, 'funnyordie.com' )
+		|| false !== strpos( $url, 'dailymotion.com' )
+		|| false !== strpos( $url, 'blip.tv' ) ) {
+		$html = '<div class="post-video">' . $html . '</div>';
 	}
-	return preg_replace( '/<div style="(.*?)" class="wp-video">/i', '<div style="' . esc_attr( $width_rule ) . '" class="wp-video">', $out );
+	
+	return $html;
 }
-endif;
-add_filter( 'wp_video_shortcode', 'themify_wp_video_shortcode', 10, 2 );
 
 add_filter( 'embed_oembed_html', 'themify_parse_video_embed_vars', 10, 2 );
 
@@ -459,6 +368,7 @@ function themify_upload_mime_types( $existing_mime_types = array() ) {
 	$existing_mime_types['svgz'] = 'image/svg+xml';
 	$existing_mime_types['zip'] = 'application/zip';
 	$existing_mime_types['json'] = 'application/json';
+	$existing_mime_types['webp'] = 'image/webp';
 	return $existing_mime_types;
 }
 endif;
@@ -484,44 +394,10 @@ function themify_custom_category( $null, $column, $termid ) {
 add_filter( 'manage_category_custom_column', 'themify_custom_category', 10, 3 );
 
 
-/**
- * Filters wp_nav_menu_args to set custom menu on pages that have one.
- * Also adds menu name as a classname to menus when "container" is missing.
- *
- * @since 2.8.9
- * @return array
- */
-function themify_wp_nav_menu_args_filter( $args ) {
-
-	if ( isset( $args['menu_id'] ) && $args['menu_id'] === 'main-nav' && (is_singular() || themify_is_shop()) ) {
-	    // See if the page has a menu assigned
-	    $custom_menu = themify_get( 'custom_menu' );
-	    if ( ! empty( $custom_menu ) ) {
-		    $args['menu'] = $custom_menu;
-	    }
-	}
-
-	if ( ! $args['container'] ) {
-		if( ! empty( $args['menu'] ) ) {
-			$menu = wp_get_nav_menu_object( $args['menu'] );
-		} elseif ( $args['theme_location'] && ( $locations = get_nav_menu_locations() ) && isset( $locations[ $args['theme_location'] ] ) ) {
-			$menu = wp_get_nav_menu_object( $locations[ $args['theme_location'] ] );
-		}
-
-		if ( isset( $menu ) && ! is_wp_error( $menu ) && $menu !== false ) {
-			$args['menu_class'] .= ' menu-name-' . $menu->slug;
-		}
-	}
-
-	return $args;
-}
-add_filter( 'wp_nav_menu_args', 'themify_wp_nav_menu_args_filter', 100 );
-
 function themify_favicon_action() {
-	$data = themify_get_data();
-	if ( !empty( $data['setting-favicon'] )) {
-		$favurl = themify_https_esc($data['setting-favicon']);
-		echo "\n\n",'<link href="' . esc_attr( $favurl ) . '" rel="shortcut icon" /> ';
+	$icon = themify_get('setting-favicon',false,true);
+	if ( !empty( $icon )) {
+		echo "\n\n",'<link href="' . esc_attr( themify_https_esc($icon) ) . '" rel="shortcut icon" /> ';
 	}
 }
 add_action( 'admin_head', 'themify_favicon_action' );
@@ -533,21 +409,40 @@ if ( ! function_exists( 'themify_search_in_category' ) ) :
  * @param $query
  * @return mixed
  */
-function themify_search_in_category_filter( $query ) {
+function themify_search_query_action( $query ) {
 	if ( $query->is_search && ! is_admin() && $query->is_main_query() ) {
-		$query = themify_search_in_category( $query );
-	}
-
-	return $query;
-}
-function themify_search_in_category( $query ) {
-	$cat_search = themify_get( 'setting-search_settings' );
-	if ( isset( $cat_search ) && $cat_search != '' ) {
-		$query->set( 'cat', $cat_search );
+	    remove_action( 'pre_get_posts', 'themify_search_query_action', 999 );
+        $args = apply_filters('themify_search_args',array('post_type'=>$query->get('post_type')));
+        if(isset($args['tax_query'])){
+            $query->set( 'tax_query', $args['tax_query'] );
+        }
 	}
 }
 endif;
-add_filter( 'pre_get_posts', 'themify_search_in_category_filter', 999 );
+if ( ! is_admin() ) {
+	add_action( 'pre_get_posts', 'themify_search_query_action', 999 );
+}
+
+if ( ! function_exists( 'themify_search_in_category' ) ) :
+    /**
+     * Exclude Custom Post Types from Search - Filter
+     *
+     * @param $args
+     * @return array
+     */
+function themify_search_in_category_filter( $args ) {
+    $cat_search = themify_get( 'setting-search_settings','',true );
+    if ( !empty( $cat_search )) {
+        $post_type=is_array($args['post_type'])?$args['post_type'][0]:$args['post_type'];
+        $taxonomy = 'product'===$post_type ? 'product_cat' : 'category';
+        $args['tax_query']=themify_parse_category_args($cat_search, $taxonomy);
+    }
+    return $args;
+}
+add_filter( 'themify_search_args', 'themify_search_in_category_filter' );
+endif;
+
+
 
 /**
  * Exclude post types from search results, per user settings
@@ -559,7 +454,7 @@ function themify_register_post_type_args( $args, $post_type ) {
 		return $args;
 
 	$key = $post_type === 'page' ? 'setting-search_settings_exclude' : 'setting-search_exclude_' . $post_type;
-	if ( themify_get( $key ) ) {
+	if ( themify_get( $key,false,true ) ) {
 		/**
 		 * @note Side effect: removes the post type from WP_Query query when 'post_type' => 'any'
 		 * @link https://developer.wordpress.org/reference/classes/wp_query/#post-type-parameters
@@ -569,62 +464,49 @@ function themify_register_post_type_args( $args, $post_type ) {
 
 	return $args;
 }
-if ( ! is_admin() )
+if ( ! is_admin() ) {
 	add_filter( 'register_post_type_args', 'themify_register_post_type_args', 10, 2 );
+}
 
 function themify_feed_settings_action($query){
 	
 	if( $query->is_feed ) {
-            $data = themify_get_data();
-            if( isset( $data['setting-feed_settings'] ) ) {
-                $query->set( 'cat', $data['setting-feed_settings'] );	
-            }
-	}
-
-	return $query;
-}
-add_filter('pre_get_posts','themify_feed_settings_action');
-
-if ( ! themify_check( 'setting-exclude_img_rss' ) ) {
-	add_filter( 'the_content', 'themify_custom_fields_for_feeds' );
-	/*
-	 * Firefox doesn't render images to feed when select full text from admin > Settings > Reading But IE does automatically for full text.
-	 * So this code below will be used by firefox only to render/fetch images in feed. If we use for all then it will show images 2 times.
-	 */
-	$useragent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : '';
-	if ( preg_match( '|Firefox/([0-9\.]+)|', $useragent ) ) {
-		add_filter( 'the_excerpt_rss', 'themify_custom_fields_for_feeds' );
-		add_filter( 'the_content_feed', 'themify_custom_fields_for_feeds' );
-	}
-
-	function themify_custom_fields_for_feeds( $content ) {
-		global  $themify_check;
-		if ( !is_feed() || $themify_check == true ) {
-			return $content;
+		$v = themify_get('setting-feed_settings',null,true);
+		if( !empty( $v ) ) {
+			$query->set( 'cat', $v );	
 		}
+	}
+	else{
+	    remove_action('pre_get_posts','themify_feed_settings_action');
+	}
+}
+add_action('pre_get_posts','themify_feed_settings_action');
 
+if (! themify_check( 'setting-exclude_img_rss',true ) ) {
+	add_filter( 'the_content_feed', 'themify_custom_fields_for_feeds' );
+	add_filter( 'the_excerpt_rss', 'themify_custom_fields_for_feeds' );
+	function themify_custom_fields_for_feeds( $content ) {
 		if ( has_post_thumbnail() ) {
 			$content = '<p>' . get_the_post_thumbnail( null, 'full' ) . '</p>' . $content;
 		}
-		$themify_check = false;
 		return $content;
 	}
 }
 
 // Custom Post Types in RSS
 function themify_feed_custom_posts( $qv ) {
-	$feed_custom_posts = themify_check( 'setting-feed_custom_post' )
-		? explode( ',', trim( themify_get( 'setting-feed_custom_post' ) ) ) : '';
-
-	if( ! empty( $feed_custom_posts ) && isset( $qv['feed'] ) && ! isset( $qv['post_type'] ) ) {
-		if( in_array( 'all', $feed_custom_posts,true ) ) {
-			$post_types = get_post_types( array('public' => true, 'publicly_queryable' => 'true' ) );
-			$qv['post_type'] = array_diff( $post_types, array('attachment', 'tbuilder_layout', 'tbuilder_layout_part', 'section') );
-		} else {
-			$qv['post_type'] = $feed_custom_posts;
+	if(isset( $qv['feed'] ) && ! isset( $qv['post_type'] ) ){
+		$feed_custom_posts = explode( ',', trim( themify_get( 'setting-feed_custom_post',false,true ) ) );
+		$feed_custom_posts = array_filter( $feed_custom_posts );
+		if( ! empty( $feed_custom_posts )) {
+			if( in_array( 'all', $feed_custom_posts,true ) ) {
+				$post_types = get_post_types( array('public' => true, 'publicly_queryable' => 'true' ) );
+				$qv['post_type'] = array_diff( $post_types, array('attachment', 'tbuilder_layout', 'tbuilder_layout_part', 'section') );
+			} else {
+				$qv['post_type'] = $feed_custom_posts;
+			}
 		}
 	}
-
 	return $qv;
 }
 add_filter( 'request', 'themify_feed_custom_posts' );
@@ -633,12 +515,13 @@ add_filter( 'request', 'themify_feed_custom_posts' );
  * Show custom 404 page (function)
  */
 function themify_404_page_id() {
-	$pageid = themify_get( 'setting-page_404' );
+	$pageid = themify_get( 'setting-page_404',false,true );
 
 	if( ! empty( $pageid ) ) {
 		if( defined( 'ICL_SITEPRESS_VERSION' ) ) {
 			$pageid = apply_filters( 'wpml_object_id', $pageid, 'page', true );
-		} else if( defined( 'POLYLANG_VERSION' ) && function_exists( 'pll_get_post' ) ) {
+		} 
+		elseif( defined( 'POLYLANG_VERSION' ) && function_exists( 'pll_get_post' ) ) {
 			$translatedpageid = pll_get_post( $pageid );
 			if ( !empty( $translatedpageid ) && 'publish' === get_post_status( $translatedpageid ) ) {
 				$pageid = $translatedpageid;
@@ -646,11 +529,7 @@ function themify_404_page_id() {
 		}
 	}
 
-	if ( get_post( $pageid ) ) {
-		return $pageid;
-	}
-
-	return false;
+	return get_post( $pageid )?$pageid:false;
 }
 
 function themify_set_404_wp_query( $pageid ) {
@@ -658,7 +537,10 @@ function themify_set_404_wp_query( $pageid ) {
 
 	$wp_query = null;
 	$wp_query = new WP_Query();
-	$wp_query->query( 'page_id=' . $pageid );
+	$wp_query->query( array(
+		'page_id' => $pageid,
+		'suppress_filters' => true,
+	) );
 	$wp_query->the_post();
 
 	return $wp_query;
@@ -674,7 +556,7 @@ function themify_404_init() {
 add_action( 'init', 'themify_404_init' );
 
 function themify_404_display_static_page_result($posts, $query ) {
-	if($query->is_main_query()){
+	if ( $query->is_404() && $query->is_main_query() ) {
 		remove_filter( 'the_posts', 'themify_404_display_static_page_result', 999, 2 );
 		$pageid = themify_404_page_id();
 		$page_exists = get_post( $pageid );
@@ -767,11 +649,9 @@ function themify_404_template( $template ) {
 
 	$template = get_page_template();
 	$pageid = themify_404_page_id();
-
+	$pageLayout=themify_get( 'page_layout' );
 	// PAGE LAYOUT (global $themify)
-	$layout = ( themify_get( 'page_layout' ) !== 'default' && themify_check( 'page_layout' ) )
-		? themify_get( 'page_layout' )
-		: themify_get( 'setting-default_page_layout' );
+	$layout = ( $pageLayout !== 'default' && $pageLayout )? $pageLayout: themify_get( 'setting-default_page_layout','',true );
 	
 	if ( $layout != '' ) {
 		$themify->layout = $layout;
@@ -783,7 +663,8 @@ function themify_404_template( $template ) {
 	if ( ! empty( $hide_page_title ) && 'default' !== $hide_page_title ) {
 		$themify->page_title = $hide_page_title;
 	} else {
-		$themify->page_title = themify_check( 'setting-hide_page_title' ) ? themify_get( 'setting-hide_page_title' ) : 'no';
+		$hide_page_title=themify_get( 'setting-hide_page_title',false,true );
+		$themify->page_title = $hide_page_title ? $hide_page_title : 'no';
 	}
 	
 	if ( 'yes' === $themify->page_title ) {
@@ -810,12 +691,19 @@ function themify_404_force_query() {
  *
  * @return bool
  */
-function themify_theme_fullwidth_layout_support( $support ) {
-	global $themify;
-	/* if Content Width option is set to Fullwidth, do not use JavaScript, using sidebar-none layout, force fullwidth rows using JavaScript */
-	return themify_get( 'content_width' ) === 'full_width'?true:($themify->layout === 'sidebar-none'?false:true);
+function themify_fullwidth_layout_support($support){
+    if($support!==true) {
+        global $themify;
+        if($themify->layout!=='sidebar-none' || (function_exists('themify_theme_is_fullpage_scroll') && themify_theme_is_fullpage_scroll())) {
+            $support=true;
+        } else {
+            /* if Content Width option is set to Fullwidth, do not use JavaScript, using sidebar-none layout, force fullwidth rows using JavaScript */
+            $support=(is_singular() || themify_is_shop()) ? themify_get('content_width')==='full_width' : false;
+        }
+    }
+    return $support;
 }
-add_filter( 'themify_builder_fullwidth_layout_support', 'themify_theme_fullwidth_layout_support' );
+add_filter( 'themify_builder_fullwidth_layout_support', 'themify_fullwidth_layout_support' );
 
 /**
  * Load current skin's functions file if it exists
@@ -831,54 +719,26 @@ function themify_theme_load_skin_functions() {
 add_action( 'after_setup_theme', 'themify_theme_load_skin_functions', 1 );
 
 /**
- * JavaScript code that toggles "mobile_menu_active" body class, based on browser window size
- *
- * @since 2.9.2
- */
-function themify_mobile_menu_script() {
-?>
-<script type="text/javascript">
-	function themifyMobileMenuTrigger(e) {
-		var w = document.body.clientWidth;
-		if( w > 0 && w <= tf_mobile_menu_trigger_point ) {
-			document.body.classList.add( 'mobile_menu_active' );
-		} else {
-			document.body.classList.remove( 'mobile_menu_active' );
-		}
-		
-	}
-	themifyMobileMenuTrigger();
-	var _init =function () {
-	    jQuery( window ).on('tfsmartresize.tf_mobile_menu', themifyMobileMenuTrigger );
-	    document.removeEventListener( 'DOMContentLoaded', _init, {once:true,passive:true} );
-	    _init=null;
-	};
-	document.addEventListener( 'DOMContentLoaded', _init, {once:true,passive:true} );
-</script>
-<?php
-}
-add_action( 'themify_body_start', 'themify_mobile_menu_script' );
-
-/**
  * Change order and orderby parameters in the index loop, per options in Themify > Settings > Default Layouts
  *
  * @since 3.1.2
  */
 function themify_archive_post_order( $query ) {
-	if ( ( is_home() || is_archive() ) && $query->is_main_query() && ! is_admin() ) {
-		if ( ! themify_is_woocommerce_active() || ( themify_is_woocommerce_active() && ! is_shop() && ! is_product_category() ) ) {
-			$query->set( 'order', themify_get( 'setting-index_order' ) );
-			$query->set( 'orderby', themify_get( 'setting-index_orderby' ) );
-
-			if ( in_array( themify_get( 'setting-index_orderby' ), array( 'meta_value', 'meta_value_num' ) ) && themify_check( 'setting-index_meta_key' ) ) {
-				$query->set( 'meta_key', themify_get( 'setting-index_meta_key' ) );
+	if ( $query->is_main_query() && ( $query->is_home() || $query->is_category() || $query->is_tag() ) ) {
+		remove_action( 'pre_get_posts', 'themify_archive_post_order', 999 );
+		$query->set( 'order', themify_get( 'setting-index_order','date',true ) );
+		$orderBy=themify_get( 'setting-index_orderby' ,'',true);
+		$query->set( 'orderby', $orderBy);
+		if (($orderBy==='meta_value' || $orderBy==='meta_value_num')) {
+			$metaKey=themify_get( 'setting-index_meta_key',false,true );
+			if($metaKey){
+				$query->set( 'meta_key', $metaKey );
 			}
 		}
 	}
-
-	return $query;
 }
-add_filter( 'pre_get_posts', 'themify_archive_post_order' );
+if ( ! is_admin() )
+	add_action( 'pre_get_posts', 'themify_archive_post_order', 999 );
 
 
 /**
@@ -904,30 +764,13 @@ function themify_filter_widget_text( $text, $instance = array( ) ) {
 	if( (isset( $instance['filter'] ) && 'content' === $instance['filter'])  || (isset( $wp_widget_factory->widgets['WP_Widget_Text'] ) && method_exists( $wp_widget_factory->widgets['WP_Widget_Text'], 'is_legacy_instance' ) && ! $wp_widget_factory->widgets['WP_Widget_Text']->is_legacy_instance( $instance ) )) {
 		return $text;
 	}
-	$text = do_shortcode( $text );
-	return shortcode_unautop( $text );
+	return shortcode_unautop( do_shortcode( $text ) );
 }
 add_filter( 'widget_text', 'themify_filter_widget_text', 10, 2 );
 /**
  * Enable shortcodes in Text widget for Wp 4.8+
  */
 add_filter( 'widget_text_content', 'do_shortcode', 12 );
-
-/**
- * Set the Twitter API keys, required for the [themify_twitter] shortcode
- *
- * @return array
- */
-function themify_set_twitter_credentials() {
-	$data = themify_get_data();
-	$prefix = 'setting-twitter_settings_';
-
-	return array(
-		'consumer_key' => isset( $data[$prefix.'consumer_key'] )? $data[$prefix.'consumer_key'] : '',
-		'consumer_secret' => isset( $data[$prefix.'consumer_secret'] )? $data[$prefix.'consumer_secret'] : '',
-	);
-}
-add_filter( 'themify_twitter_credentials', 'themify_set_twitter_credentials' );
 
 /**
  * Registers support for various WordPress features
@@ -945,6 +788,8 @@ function themify_setup_wp_features() {
 		'comment-list',
 		'gallery',
 		'caption',
+		'script', 
+		'style'
 	) );
 }
 add_filter( 'after_setup_theme', 'themify_setup_wp_features' );
@@ -988,13 +833,13 @@ function themify_setup_cpt_post_options( $metaboxes ){
 	}
 
 	/* post types that should not have the CPT Post options */
-	$excludes = array( 'tbuilder_layout', 'tbuilder_layout_part' );
-	if ( in_array( $typenow, $excludes ) ) {
+    $excludes = apply_filters( 'themify_exclude_cpt_post_options', array( 'tbuilder_layout', 'tbuilder_layout_part' ));
+	if ( in_array( $typenow, $excludes,true) ) {
 		return $metaboxes;
 	}
 
 	global $typenow;
-	$name = isset( $typenow ) && $typenow ? 'custom_post_' . $typenow . '_single' : 'page_layout';
+	$name = !empty( $typenow )? 'custom_post_' . $typenow . '_single' : 'page_layout';
 
 	$post_options =  array(
 			array(
@@ -1004,7 +849,7 @@ function themify_setup_cpt_post_options( $metaboxes ){
 				'type' => 'layout',
 				'show_title' => true,
 				'meta' => apply_filters('themify_post_type_theme_sidebars' , array(
-							array('value' => 'default', 'img' => 'images/layout-icons/default.png', 'selected' => true, 'title' => __('Default', 'themify')),
+							array('value' => 'default', 'img' => 'themify/img/default.svg', 'selected' => true, 'title' => __('Default', 'themify')),
 							array('value' => 'sidebar1', 'img' => 'images/layout-icons/sidebar1.png', 'title' => __('Sidebar Right', 'themify')),
 							array('value' => 'sidebar1 sidebar-left', 'img' => 'images/layout-icons/sidebar1-left.png', 'title' => __('Sidebar Left', 'themify')),
 							array('value' => 'sidebar-none', 'img' => 'images/layout-icons/sidebar-none.png', 'title' => __('No Sidebar ', 'themify'))
@@ -1021,13 +866,13 @@ function themify_setup_cpt_post_options( $metaboxes ){
 				'meta' => array(
 					array(
 						'value' => 'default_width',
-						'img' => 'themify/img/default.png',
+						'img' => 'themify/img/default.svg',
 						'selected' => true,
 						'title' => __( 'Default', 'themify' )
 					),
 					array(
 						'value' => 'full_width',
-						'img' => 'themify/img/fullwidth.png',
+						'img' => 'themify/img/fullwidth.svg',
 						'title' => __( 'Fullwidth', 'themify' )
 					)
 				),
@@ -1046,7 +891,7 @@ function themify_setup_cpt_post_options( $metaboxes ){
 		),
 	), $metaboxes );
 }
-add_filter( 'themify_metabox/fields/themify-meta-boxes', 'themify_setup_cpt_post_options', 98 );
+add_filter( 'themify_metabox/fields/themify-meta-boxes', 'themify_setup_cpt_post_options', 101 );
 
 /**
  * Set proper sidebar layout for post types' single post view
@@ -1059,10 +904,11 @@ function themify_cpt_set_post_options() {
 		if ( ! in_array( get_post_type(), $exclude,true ) ) {
 		    global $themify;
 			$cpt_sidebar = 'custom_post_'.get_post_type().'_single';
-			if ( themify_check( $cpt_sidebar ) && themify_get( $cpt_sidebar ) !== 'default' ) {
-				$themify->layout = themify_get( $cpt_sidebar );
-			} elseif ( themify_check( 'setting-'.$cpt_sidebar ) ) {
-				$themify->layout = themify_get( 'setting-'.$cpt_sidebar );
+			$layout=themify_get( $cpt_sidebar ) ;
+			if ( $layout!== 'default' && !empty($layout)) {
+				$themify->layout = $layout;
+			} elseif ( themify_check( 'setting-'.$cpt_sidebar,true) ) {
+				$themify->layout = themify_get( 'setting-'.$cpt_sidebar,false,true );
 			} else {
 				$themify->layout = themify_get( 'page_layout' );
 			}
@@ -1078,3 +924,120 @@ function themify_prepend_attachment() {
 	return '<p>' . wp_get_attachment_link( 0, 'large', false ) . '</p>';
 }
 add_filter( 'prepend_attachment', 'themify_prepend_attachment' );
+
+function themify_theme_post_gallery($output, $attr){
+	remove_filter('post_gallery', 'themify_theme_post_gallery', 10, 2);
+	Themify_Enqueue_Assets::loadGalleryCss();
+	return $output;
+}
+add_filter( 'post_gallery', 'themify_theme_post_gallery', 10, 2 );
+
+
+//Make query page
+if( ! function_exists( 'themify_custom_query_posts' ) ) {
+	function themify_custom_query_posts( $args ) {
+		global $themify;
+		if ( isset($themify->query_category) && $themify->query_category !== '' &&  is_page()) {
+		    $qpargs = array(
+			    'post_type' => !empty($themify->query_post_type)?$themify->query_post_type:'post',
+			    'posts_per_page' => ! empty( $themify->posts_per_page ) ? $themify->posts_per_page : get_option( 'posts_per_page' ),
+			    'order' => $themify->order,
+			    'orderby' => $themify->orderby
+		    );
+		    if( ! empty( $themify->order_meta_key ) ) {
+			    $qpargs['meta_key'] = $themify->order_meta_key;
+		    }
+		    $taxonomy = isset( $themify->query_taxonomy ) ? $themify->query_taxonomy : 'category';
+			$qpargs['tax_query'] = themify_parse_category_args($themify->query_category, $taxonomy);
+
+		    if( ! empty( $args ) ) {
+			    $qpargs = wp_parse_args( $args, $qpargs );
+		    }
+		    if(!isset($qpargs['paged'])){
+			$qpargs['paged']=!empty($themify->paged)?$themify->paged:get_query_var('paging', 1);
+		    }
+			
+		    do_action('themify_query_before_posts_page_args', $qpargs);
+		    $qpargs=apply_filters( 'themify_query_posts_page_args', $qpargs );
+		    query_posts( $qpargs );
+		    do_action('themify_query_after_posts_page_args', $qpargs);
+		    if(!has_action('themify_reset_query','wp_reset_query')){
+				add_action('themify_reset_query','wp_reset_query',1);
+		    }
+		}
+	}
+}
+
+/**
+ * Add custom query_posts
+ */
+add_action( 'themify_custom_query_posts', 'themify_custom_query_posts' );
+
+function themify_custom_except_length($length) {
+    global $themify;
+    if(empty($themify->excerpt_length)){
+	remove_filter('excerpt_length','themify_custom_except_length', 999);
+    }
+    elseif($themify->display_content === 'excerpt'){
+	return apply_filters( 'themify_custom_excerpt_length', $themify->excerpt_length );
+    }
+    return $length;
+}
+if ( ! is_admin() )
+	add_filter( 'excerpt_length', 'themify_custom_except_length', 999 );
+
+
+/**
+ * Change the default Read More link
+ * @return string
+ */
+function themify_modify_read_more_link($link,$more_link_text='') {
+	return '<a class="more-link" href="' . get_permalink() . '">'.$more_link_text.'</a>';
+}
+add_filter( 'the_content_more_link', 'themify_modify_read_more_link', 10, 2 );
+
+
+add_filter('script_loader_tag', 'themify_defer_js', 11, 3);
+add_filter('wp_get_attachment_image_src', 'themify_generate_src_webp', 100,1);
+
+//deprecated code 07.06.2020
+if(is_child_theme()){
+    function themify_set_deprecated_values(){
+	global $themify;
+	$themify->image_setting=$themify->image_align=$themify->allow_sorting=$themify->is_builder_loop=$themify->is_isotop='';
+    }
+    add_action('after_setup_theme', 'themify_set_deprecated_values',15);
+    if(!function_exists('themify_theme_comment')){
+	function themify_theme_comment($comment, $args, $depth){
+	    themify_comment_list($comment, $args, $depth);
+	}
+    }
+    if(!function_exists('themify_theme_query_classes')){
+	function themify_theme_query_classes(){return '';}
+    }
+}
+function themify_set_is_shop($query){
+	if($query && $query->is_main_query()){
+		remove_filter('parse_query','themify_set_is_shop',100,1);
+		$id=false;
+			if($query->is_page()){
+				$id=!empty($query->query_vars['page_id'])?$query->query_vars['page_id']:(!empty($query->queried_object->ID)?$query->queried_object->ID:-1);
+				if($id>0){
+					$id=(int)$id;
+				}
+			}
+		themify_is_shop($id);
+	}
+	return $query;
+}
+if(!is_admin()){
+    add_filter('parse_query','themify_set_is_shop',100,1);
+}
+
+// Portfolio comments filter
+function portfolio_comments_open( $open, $post_id ) {
+    return 'portfolio' === get_post_type($post_id) && themify_check( 'setting-portfolio_comments',true )?true:$open;
+}
+if(themify_is_themify_theme()){
+    add_filter( 'comments_open', 'portfolio_comments_open', 10, 2 );
+}

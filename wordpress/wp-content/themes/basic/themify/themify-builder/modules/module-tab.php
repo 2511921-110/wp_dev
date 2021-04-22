@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Tab
  * Description: Display Tab content
@@ -16,7 +17,16 @@ class TB_Tab_Module extends Themify_Builder_Component_Module {
 	    'slug' => 'tab'
 	));
     }
-
+    
+    public function get_icon(){
+	return 'layout-tab';
+    }
+    
+    public function get_assets() {
+		return array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+    }
     public function get_options() {
 	return array(
 	    array(
@@ -87,10 +97,10 @@ class TB_Tab_Module extends Themify_Builder_Component_Module {
 		),	
 		'binding' => array(
 		    'checked' => array(
-			'show' => array('tab_breakpoint')
+			'show' => 'tab_breakpoint'
 		    ),
 		    'not_checked' => array(
-			'hide' => array('tab_breakpoint')
+			'hide' => 'tab_breakpoint'
 		    )
 		)
 	    ),
@@ -124,7 +134,7 @@ class TB_Tab_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
 	    'tab_content_tab' => array(
 		array('title_tab' => self::$texts['title_tab'], 'text_tab' => self::$texts['text_tab'])
@@ -260,6 +270,22 @@ class TB_Tab_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Width
+		self::get_expand('w', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_width('', 'w')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_width('', 'w', 'h')
+					)
+				)
+			))
+		)),
+
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height('.ui'),
@@ -299,6 +325,8 @@ class TB_Tab_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 
 	$title = array(
@@ -577,30 +605,34 @@ class TB_Tab_Module extends Themify_Builder_Component_Module {
     protected function _visual_template() {
 	$module_args = self::get_module_args();
 	?>
-    <# data.color_tab = undefined === data.color_tab || 'default' === data.color_tab ? 'tb_default_color' : data.color_tab; #>
+    <# data.color_tab = undefined === data.color_tab || 'default' === data.color_tab ? 'tb_default_color' : data.color_tab; 
+	var tabId=data.cid.replace('tb_','');
+    #>
 	<div class="module module-<?php echo $this->slug; ?> ui tab-style-{{ data.style_tab }} {{ data.layout_tab }} {{ data.color_tab }} {{ data.css_tab }} <# data.tab_appearance_tab  ? print( data.tab_appearance_tab.split('|').join(' ') ) : ''; #>" <# ( 'allow_tab' == data.allow_tab_breakpoint && '' != data.tab_breakpoint ) ? print( "data-tab-breakpoint='"+ data.tab_breakpoint +"'" ) : ""; #>  >
 	     <# if ( data.mod_title_tab ) { #>
 	     <?php echo $module_args['before_title']; ?>{{{ data.mod_title_tab }}}<?php echo $module_args['after_title']; ?>
 	     <# }
-
 	     if ( data.tab_content_tab ) {#>
-	     <div class="builder-tabs-wrap">
-		<span class="tab-nav-current-active">{{{ data.tab_content_tab[0].title_tab }}}</span>
-		<ul class="tab-nav">
+	     <div class="builder-tabs-wrap tf_rel">
+		<div class="tab-nav-current-active tf_hide">
+            <span class="tab_burger_icon tf_hide tf_rel"></span>
+            <span class="tb_tab_title">{{{ data.tab_content_tab[0].title_tab }}}</span>
+        </div>
+		<ul class="tab-nav tf_clearfix">
 		    <# _.each( data.tab_content_tab, function( item,i ) { #>
 		    <li class="<# i == 0 && print('current') #>" aria-expanded="{{i == 0}}">
-			<a class='tb-tab-a' href="#tab-{{ data.cid }}-{{ i }}">
-			    <# if ( item ) { #>
-			    <# if ( item.icon_tab ) { #><i class="fa {{ item.icon_tab }}"></i><# } #>
-			    <# if ( item.title_tab ) { #><span contenteditable="false" data-name="title_tab" data-index="{{i}}" data-repeat="tab_content_tab" class="tb-tab-span">{{{ item.title_tab }}}</span><# } #>
-			    <# } #>
+			<a class='tb-tab-a' href="#tab-{{ tabId }}-{{ i }}">
+			    <# if ( item ) {
+				if ( item.icon_tab ) { #><i><# print(tb_app.Utils.getIcon(item.icon_tab).outerHTML)#></i><# }
+				if ( item.title_tab ) { #><span contenteditable="false" data-name="title_tab" data-index="{{i}}" data-repeat="tab_content_tab" class="tb-tab-span">{{{ item.title_tab }}}</span><# } 
+			    } #>
 			</a>
 		    </li>
 		    <#  } ); #>
 		</ul>
 
 		<# _.each( data.tab_content_tab, function( item,i ) { #>
-		    <div id="tab-{{ data.cid }}-{{ i }}" class="tab-content" aria-hidden="{{i != 0}}">
+		    <div data-id="tab-{{ tabId }}-{{ i }}" class="tab-content" aria-hidden="{{i != 0}}">
 			<div class="tb_editor_enable tb_text_wrap" contenteditable="false" data-name="text_tab" data-index="{{i}}" data-repeat="tab_content_tab"><# item && item.text_tab && print( item.text_tab ) #></div>
 		    </div>
 		<# } ); #>

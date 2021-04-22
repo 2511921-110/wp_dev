@@ -10,6 +10,20 @@
  *
  ***************************************************************************/
 
+input[type="text"], input[type="password"], input[type="color"], input[type="date"], input[type="datetime"], input[type="datetime-local"], input[type="email"], input[type="month"], input[type="number"], input[type="search"], input[type="tel"], input[type="time"], input[type="url"], input[type="week"], select, textarea {
+	border-radius:8px;
+	min-height:auto;
+	font-size:inherit;
+	height:auto;
+}
+.wp-core-ui select{
+    border-radius:8px;
+}
+.wp-core-ui select:focus{
+    border:none;
+    box-shadow:none;
+}
+
 /* Mode Switcher
 ------------------------------------------------------*/
 #accordion-section-themify_options .customize-section-title,
@@ -31,7 +45,8 @@
     color:#fff;
     padding:5px 15px;
     display:inline-block;
-    transition:all .2s ease-out;
+    transition:background-color .2s ease-out,color .2s ease-out;
+	border-radius:12px 12px 0 0    
 }
 #accordion-section-themify_options .themify-customizer-switch.switchto,
 #sub-accordion-section-themify_options .themify-customizer-switch.switchto{
@@ -75,8 +90,8 @@
 }
 #sub-accordion-section-themify_options .customize-import .customize-import-icon{
     position:absolute;
-    left:18px;
-    top:5px;
+    left:15px;
+    top:8px;
 }
 #sub-accordion-section-themify_options .customize-import #customizer-importplupload-upload-ui{
     vertical-align:middle;
@@ -255,7 +270,7 @@ a.themify-suba-toggle:hover{
 .customize-control .custom-select.font-family-select input,
 .customize-control .custom-select.font-family-select:after,
 .customize-control .custom-select.font-family-select{
-    border-radius: 4px;
+    border-radius: 8px;
 }
 .customize-control .custom-select.themify-font-weight{
     width:76px;
@@ -268,7 +283,7 @@ li.customize-control[class*=themify] button{
     height:30px;
     background:#fff;
     border:1px solid #b6b6b6;
-    border-radius: 4px;
+    border-radius: 8px;
     box-shadow:none;
     outline:none;
     line-height: normal;
@@ -293,6 +308,9 @@ li.customize-control[class*=themify] .selected{
 }
 .logo-text-mode button[data-align="justify"] {
 	display:none
+}
+.wp-customizer #themify_font_preview{
+	left:265px !important
 }
 /* Style and Decoration buttons */
 .button[data-style], .button[data-decoration]{
@@ -336,6 +354,14 @@ li.customize-control[class*=themify] .selected{
 }
 /* Image Control
 -----------------------------------------------------*/
+.customize-control .custom-select.background-style,
+.customize-control .custom-select.background-position {
+    float: none;
+    display: block;
+}
+.logo-mode-wrap {
+    margin-top:10px;
+}
 .open-media-wrap{
     position:relative;
     width:85px;
@@ -344,7 +370,7 @@ li.customize-control[class*=themify] .selected{
     background:#eee;
     border:1px solid #bbb;
     margin-right:10px;
-	border-radius: 4px;
+    border-radius: 10px;
 }
 .open-media-wrap .open-media{
     background:#333;
@@ -376,7 +402,7 @@ li.customize-control[class*=themify] .selected{
     width:85px;
     height:85px;
     overflow:hidden;
-	border-radius: 4px;
+    border-radius: 8px;
 }
 .open-media-wrap img{
     max-height:100%;
@@ -396,9 +422,6 @@ li.customize-control[class*=themify] .selected{
     margin-bottom:15px;
     padding-bottom:8px;
 }
-.color-picker-visible{
-    height:140px;
-}
 .color-picker + label{
     display:block;
     width:100px;
@@ -407,15 +430,15 @@ li.customize-control[class*=themify] .selected{
     position:absolute;
 }
 .color-picker .minicolors-swatch{
-    height:28px;
+    height:30px;
     width:27px;
     top:0;
     left:0;
 	box-sizing: border-box;
-	border-radius: 4px 0px 0px 4px;
+	border-radius: 8px 0px 0px 8px;
 }
 .color-picker input[type=text].minicolors-input{
-    height:28px;
+    height:30px;
     border-color:#bbb;
     padding-left:34px;
     width:115px;
@@ -426,9 +449,9 @@ li.customize-control[class*=themify] .selected{
     display:none;
     left:95px;
     z-index:1;
-    top:6px;
+    top:9px;
     font-size:9px;
-    padding:2px 4px 0;
+    padding:6px;
 }
 .color-picker-label{
     position:absolute;
@@ -437,39 +460,53 @@ li.customize-control[class*=themify] .selected{
     width:130px;
 }
 .color-label{
-    margin-top:5px;
+    margin-top: 14px;
 }
 .color-picker .minicolors-focus{
     width:117px;
-    z-index:4;
+    z-index:6;
 }
 .minicolors-swatch{
     border-color:#bbb;
 }
 .color-picker .minicolors-focus .minicolors-panel{
-    position:relative;
+    position: absolute;
     height:152px;
     left: 70px;
     display:block !important;
-    top:27px;
+    top: 32px;
 }
 .minicolors-theme-default .minicolors-swatches {
-	width: 82px;
 	overflow-y: auto;
 }
 .color-picker .minicolors-swatch.minicolors-input-swatch .minicolors-swatch-color {
-    border-radius: 3px 0px 0px 3px;
+    border-radius: 7px 0px 0px 7px;
 }
-.tb_swatches_container .tb_cm_dropdown {
+.tf_swatches_container .tb_cm_dropdown {
     right: auto;
     left: 100%;
 }
-.tb_swatches_container .tb_cm_dropdown:before {
+.tf_swatches_container .tb_cm_dropdown:before {
     border-left-color: transparent;
     border-left-width: 0;
     border-right-color: #000;
     left: auto;
     right: 100%;
+}
+.tf_plus_icon:after,
+.tf_plus_icon:before{
+    content:'';
+    height:50%;
+    width:1px;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%) rotate(0deg);
+    background-color:currentColor;
+    transition:transform .25s;
+}
+.tf_plus_icon:after{
+    transform:translate(-50%,-50%) rotate(90deg);
 }
 /* Remove Buttons
 ------------------------------------------------------*/
@@ -480,9 +517,9 @@ li.customize-control[class*=themify] .selected{
     line-height:14px;
     position:absolute;
 }
-.open-media-wrap .remove-image:hover{
-    color:#d30;
-    background:#eee;
+.open-media-wrap .remove-image:before,
+.open-media-wrap .remove-image:after{
+    height:60%
 }
 .color-picker .remove-color{
     color:#808080;
@@ -502,11 +539,11 @@ input[type=text].dimension-width,
 .customize-control .border-width-unit{
     float:left;
     min-width:0;
-    margin:0 1px 0 0;
+    margin:0 2px 0 0;
     padding:0;
-    height:28px;
+    height:30px;
     width:85px;
-	border-radius: 4px;
+    border-radius: 8px;
 }
 .customize-control input[type=text].border-width{
     width:30px;
@@ -526,7 +563,7 @@ input[type=text].dimension-width,
 /* Width
 ------------------------------------------------------*/
 .customize-control .auto-prop-combo{
-    height:28px;
+    height:30px;
     width:76px;
     position:relative;
 }
@@ -584,7 +621,7 @@ input[type=text].dimension-width,
     position:relative;
     padding:27px 10px 0;
     margin:-20px 0 0;
-    word-wrap:normal;
+    overflow-wrap:normal;
     box-sizing:border-box;
     background:#fff;
 }
@@ -625,12 +662,13 @@ input[type=text].dimension-width,
     z-index: 999;
 }
 .close-custom-css-expanded{
-    position: fixed;
-    top: 5px;
-    left: 575px;
-    z-index: 99999;
-    display: none;
-    color: #000;
+    position:fixed;
+    top:5px;
+    left:575px;
+    z-index:99999;
+    display:none;
+    color:#000;
+    padding:8px
 }
 .enable-expanded-area{
     display: block;
@@ -651,11 +689,11 @@ input[type=text].dimension-width,
     left:100px;
     width:170px;
 }
-.image-size .times{
-    padding:0 5px;
-    font-weight:bold;
-    font-size:21px;
-    vertical-align:middle;
+.image-size .tf_close{
+    margin:0;
+	padding:7px;
+	display:inline-block;
+	vertical-align:middle
 }
 .customize-control .image-size input[type="text"]{
     width:50px
@@ -671,10 +709,14 @@ input[type=text].dimension-width,
     display:inline-block;
     width:auto;
     clear:none;
+    vertical-align:middle
+}
+.tool_wrapper .clearall-icon{
+    margin-right:12px
 }
 .customize-control-themify_tools .themify-control-title{
-    font-size:14px;
-    margin:10px 0 0;
+    font-size:13px;
+    margin:10px 10px 0;
 }
 .clearall, .customize-import, .customize-export{
     color:#333;
@@ -704,14 +746,13 @@ input[type=text].dimension-width,
 ------------------------------------------------------*/
 .customize-control-themify_subaccordion_start input[type=text],
 .customize-control-themify_subaccordion_start select{
-    height:28px;
+    height:30px;
 }
 .customize-control-themify_subaccordion_start select{
     vertical-align:baseline;
     padding:0;
     margin:0;
     text-indent:.01px;
-    text-overflow:'';
     outline:none;
     z-index:2;
     cursor:pointer;
@@ -735,7 +776,7 @@ input[type=text].dimension-width,
     position:relative;
     background:none;
     line-height:100%;
-    padding-left:4px;
+    padding-left: 8px;
     width:100%;
     max-width:100%;
     border:none;
@@ -747,7 +788,7 @@ input[type=text].dimension-width,
     top:10px;
     right:7px;
     color:#aaa;
-    font-size:12px;
+    font-size:10px;
     height:10px;
     width:10px;
     display:block;
@@ -831,7 +872,7 @@ select.dimension-unit,
 select.font_size_unit,
 select.font_line_unit,
 select.letter_spacing_unit{
-    width:70px;
+    width: 70px;
     max-width:150%;
     color:#aaa;
     font-size:10px;
@@ -868,7 +909,7 @@ select.letter_spacing_unit{
     display:none;
     position:absolute;
     z-index:1000;
-    border-radius:3px;
+    border-radius:14px;
     background-color:#000;
     line-height:100%;
     color:#fff !important;
@@ -911,6 +952,9 @@ select.letter_spacing_unit{
     width:768px;
     margin:auto 0 auto -384px
 }
+.wp-full-overlay-footer .devices button{
+    vertical-align:middle
+}
 /* clearfix */
 #customize-theme-controls ul:after,
 #customize-theme-controls li:after{ 
@@ -930,6 +974,16 @@ select.letter_spacing_unit{
 }
 
 /* RTL SUPPORT */
+.rtl input[type=text].dimension-width{
+    margin-left:4px;
+    margin-right:0
+}
+.rtl .customize-control .custom-select{
+    margin-right:0;
+}
+.rtl .customize-control .custom-select + label{
+    margin-right:5px;
+}
 .rtl #sub-accordion-section-themify_options .themify-suba-toggle {
     padding-right: 35px;
 }
@@ -941,15 +995,30 @@ select.letter_spacing_unit{
 	padding-left: 5px;
 	padding-right: 34px;
 }
+.rtl .color-picker .minicolors-focus .minicolors-panel{
+    left:0
+}
 .rtl .color-picker .minicolors-swatch {
 	left: auto;
 	right: 0;
+	border-radius:0px 8px 8px 0px
+}
+.rtl .minicolors-theme-default .minicolors-swatches .minicolors-swatch{
+    border-radius:0
+}
+.rtl .color-picker .minicolors-swatch.minicolors-input-swatch .minicolors-swatch-color{
+    border-radius:0px 8px 8px 0px
+}
+.rtl .color-picker .remove-color{
+    left:auto;
+    right:95px
 }
 .rtl .custom-select:before {
-	right: 15px;
+	left: 15px;
+	right: auto;
 }
 .rtl .custom-select select {
-	padding: 0 2px
+	padding: 0 2px;
 }
 .rtl .customize-control .custom-select.themify-font-weight:before {
     right: auto;
@@ -977,7 +1046,7 @@ select.letter_spacing_unit{
 .rtl .letter_spacing + .custom-select + label,
 .rtl .dimension-width + .custom-select + .custom-select,
 .rtl .custom-select + .dimension-row-label {
-    margin-left: 0;    
+    margin-left: 0;
     margin-right: -36px;
 }
 .rtl .customize-control input.margin-width[type=text],
@@ -997,7 +1066,6 @@ select.letter_spacing_unit{
 }
 .rtl .themify-customizer-brick.mode-switcher{
 	direction: ltr;
-	display: -ms-flexbox;
 	display: flex;
 	flex-direction: row-reverse;
 }
@@ -1016,4 +1084,69 @@ select.letter_spacing_unit{
 }
 .rtl .preview-tablet .wp-full-overlay-main{
     margin:auto -384px auto 0;
+}
+/* fix colorpicker position in Border options */
+.rtl .custom-select + .color-picker .minicolors-focus .minicolors-panel {
+	right: -90px;
+}
+
+/* control tool wrapper */
+.rtl #sub-accordion-section-themify_options .customize-import .customize-import-icon{
+    left:auto;
+    right:12px;
+}
+.rtl #sub-accordion-section-themify_options .customize-import #customizer-importplupload-upload-ui input{
+    padding-left:0 !important;
+    padding-right:24px !important;
+}
+.rtl .customize-export .customize-export-icon{
+    display:inline-block;
+    margin-left:4px
+}
+.rtl .tool_wrapper .clearall-icon{
+    margin-right:0;
+    margin-left:12px
+}
+
+/* icon tooltip */
+.customize-control button[data-title] {
+    position: relative;
+}
+.customize-control button[data-title]:after {
+    content: "";
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #000;
+    border-bottom: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    pointer-events: none;
+    display: none;
+}
+.customize-control button[data-title]:before {
+    content: attr(data-title);
+    position: absolute;
+    z-index: 10;
+    background: #000;
+    color: #fff;
+    padding:4px 10px;
+    bottom: 100%;
+    left: 50%;
+    transform: translate(-50%,-6px);
+    border-radius:15px;
+    font:normal 11px/1.4em Helvetica, Arial, sans-serif;
+    pointer-events: none;
+    display: none;
+}
+.customize-control button[data-title]:hover:before,
+.customize-control button[data-title]:hover:after {
+    display: block;
+}
+.rtl .close-custom-css-expanded{
+    left:600px;
 }

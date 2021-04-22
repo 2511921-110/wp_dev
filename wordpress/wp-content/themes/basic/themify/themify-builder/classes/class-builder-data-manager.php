@@ -9,7 +9,8 @@
  * @package    Themify_Builder
  * @subpackage Themify_Builder/classes
  */
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * The Builder Data Manager class.
@@ -30,40 +31,33 @@ class ThemifyBuilder_Data_Manager {
 	 * @var string $meta_key
 	 */
 	 
-	private $old_meta_key = '_themify_builder_settings';
+	private static $old_meta_key = '_themify_builder_settings';
 	
-	public $meta_key = '_themify_builder_settings_json';
+	public static $meta_key = '_themify_builder_settings_json';
 
 	private static $static_content_process;
 
-	private static $regex_static_content = '/(?:<p>)?(?:<|&lt;)!--themify_builder_static--(?:>|&gt;)(?:.*?)?(?:<|&lt;)!--\/themify_builder_static--(?:>|&gt;)(?:<\/p>)?/s';
 
-	private static $regex_builder_block = '/<!--themify-builder:block-->/s'; // custom tag name, not standard GT Block name
-
-	private static $latest_CSS_version = '4.7.0'; // Put the latest version number of FW that needs to regenerate the CSS
 
 	/**
 	 * Constructor
 	 * 
 	 * @access public
 	 */
-	public function __construct() {
-		add_action( 'import_post_meta', array( $this, 'import_post_meta' ), 10, 3 );
+	public static function init() {
+		add_action( 'import_post_meta', array( __CLASS__, 'import_post_meta' ), 10, 3 );
         
         /* disable this due to issue #7087 */
         /*$option = get_option( 'tb-data-updater-notice-dismissed' );
 		if ( empty( $option ) ) {
-			add_action( 'admin_notices', array( $this, 'static_content_notices' ) );
+			add_action( 'admin_notices', array( __CLASS__, 'static_content_notices' ) );
 		}*/
-		add_action( 'admin_init', array( $this, 'init_static_content_updater' ) );
-		if ( current_user_can( 'manage_options' ) ) {
-			add_action( 'admin_init', array( __CLASS__, 'auto_regenerate_css' ) );
-		}
+		add_action( 'admin_init', array( __CLASS__, 'init_static_content_updater' ) );
 		if ( is_multisite() ) {
-			add_action( 'network_admin_menu', array( $this, 'network_builder_updater_menu' ) );
+			add_action( 'network_admin_menu', array( __CLASS__, 'network_builder_updater_menu' ) );
 		}
-		//add_action( 'init', array( $this, 'init_static_content_bg_process' ) ); /* disable this due to issue #7087 */
-		add_action( 'wp_ajax_tb_dismiss_data_updater_notice', array($this, 'dismiss_data_updater_notice'), 10);
+		//add_action( 'init', array( __CLASS__, 'init_static_content_bg_process' ) ); /* disable this due to issue #7087 */
+		add_action( 'wp_ajax_tb_dismiss_data_updater_notice', array(__CLASS__, 'dismiss_data_updater_notice'), 10);
 	}
 
 
@@ -74,9 +68,9 @@ class ThemifyBuilder_Data_Manager {
 	 * @param int $post_id 
 	 * @return array
 	 */
-	public function get_data( $post_id ) {
+	public static function get_data( $post_id ) {
 			
-		$data = get_post_meta( $post_id, $this->meta_key, true );
+		$data = get_post_meta( $post_id, self::$meta_key, true );
 		if(!empty($data)){
 			$is_old=strpos($data,'\\\\\\')!==false ||  (strpos($data,'row_order')!==false && strpos($data,'column_order')!==false);//backward compatibility,only old version data contains row_order
 			$data =json_decode( $data, true );
@@ -85,7 +79,7 @@ class ThemifyBuilder_Data_Manager {
 			}
 		}
 		else{
-			$data = get_post_meta( $post_id, $this->old_meta_key, true);
+			$data = get_post_meta( $post_id, self::$old_meta_key, true);
 			if(!empty($data)){
 				$data = stripslashes_deep(maybe_unserialize( $data ));
 			}
@@ -101,24 +95,26 @@ class ThemifyBuilder_Data_Manager {
 	 * @param int $post_id 
 	 * @param string $action 
 	 */
-	public function save_data( $builder_data, $post_id, $action = 'main', $source_editor = 'frontend' ) {
+	public static function save_data( $builder_data, $post_id, $action = 'main', $source_editor = 'frontend' ) {
 				$result = array();
-				if($this->get_data($post_id)===$builder_data){
+				if ( 'backend' === $source_editor ) {
+					$plain_text = self::_get_all_builder_text_content( $builder_data );
+					if ( ! empty( $plain_text ) ){ 
+						$result['static_content'] = self::add_static_content_wrapper( $plain_text );
+					}
+					unset($plain_text);
+				}
+				if(self::get_data($post_id)===$builder_data){
 					$result['builder_data']=self::json_remove_unicode( $builder_data );
+					unset($builder_data);
 				}
 				else{
-					$result['builder_data'] = $this->construct_data( $builder_data, $post_id, $action );
-					
+					$result['builder_data'] = self::construct_data( $builder_data, $post_id, $action );
+					unset($builder_data);
 					if($action==='main'){
 						/* save the data in json format */
-						$result['mid']=$this->update_builder_meta($post_id,$result['builder_data']);
+						$result['mid']=self::update_builder_meta($post_id,$result['builder_data']);
 						if(!empty($result['mid'])){
-							if ( 'backend' === $source_editor ) {
-								// include static content data
-								$plain_text = $this->_get_all_builder_text_content( $builder_data );
-								if ( ! empty( $plain_text ) ) 
-									$result['static_content'] = $this->add_static_content_wrapper( $plain_text );
-							}
 							if(class_exists('Themify_Builder_Revisions')){
 							    Themify_Builder_Revisions::create_revision($post_id,$result['builder_data'],$source_editor);
 							 
@@ -148,7 +144,7 @@ class ThemifyBuilder_Data_Manager {
 	 * @param string $action 
 	 * @return array
 	 */
-	public function construct_data( $builder_data, $post_id, $action='main' ) { 
+	public static function construct_data( $builder_data, $post_id, $action='main' ) { 
 		 /* if it's serialized, convert to array */
 		 
 		if( is_serialized( $builder_data ) ) {
@@ -206,9 +202,9 @@ class ThemifyBuilder_Data_Manager {
 	 * 
 	 * @access public
 	 */
-	public function import_post_meta( $post_id, $key, $value ) {
-	    if( $key === $this->meta_key ) {
-			$this->update_builder_meta($post_id, $value);
+	public static function import_post_meta( $post_id, $key, $value ) {
+	    if( $key === self::$meta_key ) {
+			self::update_builder_meta($post_id, $value);
 	    }
 	}
 
@@ -216,95 +212,54 @@ class ThemifyBuilder_Data_Manager {
 	 * Check if content has static content
 	 * @param string $content 
 	 */
-	public function has_static_content( $content ) {
-		return preg_match( self::$regex_static_content, $content );
-	}
-
-	/**
-	 * Get static content
-	 * @param string $content 
-	 * @return string
-	 */
-	public function get_static_content( $content ) {
-		if ( preg_match( self::$regex_static_content, $content, $matches ) ) {
-			return $matches[0];
+	public static function has_static_content( $content ) {
+		$start=strpos($content,'<!--themify_builder_static-->');
+		if($start===false){
+			return false;
 		}
-		return '';
+		$end=strpos($content,'<!--/themify_builder_static-->');
+		return ($end!==false && ($start<$end));
 	}
 
-	/**
-	 * Check if content has builder block
-	 * @param string $content 
-	 */
-	public function has_builder_block( $content ) {
-		return preg_match( self::$regex_builder_block, $content );
-	}
 
 	/**
 	 * Update static content string in the string.
 	 * 
 	 * @param string $replace_string 
 	 * @param string $content 
+	 * @param bool $first_instance True: replace only the first instance of Builder placeholder and remove the rest; False: replace all instances with $replace_string
 	 * @return string
 	 */
-	public function update_static_content_string( $replace_string, $content ) {
-		if ( $this->has_static_content( $content ) ) {
-			$replace_string = preg_replace( '/\$(\d)/', '\\$$1', $replace_string ); // escape dollar sign
-			$replace_string = str_replace('<!-- /themify_builder_content -->', '', $replace_string );
-
-			// replace first instance of 'themify_builder_static' with output, clear the rest
-			$counter = 0;
-			$content = preg_replace_callback( self::$regex_static_content, function( $matches ) use ( $replace_string, &$counter ) {
-				return $counter++ === 0?$replace_string:'';
-			}, $content );
-			$content = $this->remove_empty_p( $content );
+	public static function update_static_content_string( $replace_string, $content) {
+		if ( self::has_static_content( $content ) ) {
+						
+			$arr = explode('<!--themify_builder_static-->',$content);
+			$html='';
+			foreach($arr as $v){
+				if($v!=='' && strpos($v,'<!--/themify_builder_static-->')!==false){
+					$tmp = explode('<!--/themify_builder_static-->',$v);
+					$html.=$replace_string.$tmp[1];
+					if(isset($tmp[2])){
+						$html.=$tmp[2];
+					}
+				}
+				else{
+					$html.=$v;
+				}
+			}
+			unset($arr,$content);
+			return self::remove_empty_p($html);
 		}
 		return $content;
 	}
 
-	/**
-	 * Update builder block tag in the string.
-	 * 
-	 * @param string $replace_string 
-	 * @param string $content 
-	 * @return string
-	 */
-	public function replace_builder_block_tag( $replace_string, $content ) {
-		if ( $this->has_builder_block( $content ) ) {
-			$replace_string = preg_replace( '/\$(\d)/', '\\\$$1', $replace_string ); // escape dollar sign
-			$content = preg_replace( self::$regex_builder_block, $replace_string, $content );
-			$content = $this->remove_empty_p( $content );
-		}
-		return $content;
-	}
-
-	/**
-	 * Add extra div wrapper to hide static content div 
-	 * 
-	 * @param string $content 
-	 * @return string
-	 */
-	public function wrap_static_content_if_fail( $content ) {
-		if ( ! $this->has_static_content( $content ) ) return $content;
-		return preg_replace_callback( self::$regex_static_content, array( $this, 'wrap_static_content_cb'), $content );
-	}
-
-	/**
-	 * Wrap static content callback
-	 * 
-	 * @param aray $matches 
-	 * @return string
-	 */
-	public function wrap_static_content_cb( $matches ) {
-		return '<div class="themify-builder-static-content">' . $matches[0] .'</div>';
-	}
 
 	/**
 	 * Add static content wrapper
 	 * @param string $string 
 	 * @return string
 	 */
-	public function add_static_content_wrapper( $string ) {
+	public static function add_static_content_wrapper( $string ) {
 		return '<!--themify_builder_static-->' . $string . '<!--/themify_builder_static-->';
 	}
 
@@ -314,19 +269,19 @@ class ThemifyBuilder_Data_Manager {
 	 * @param int $post_id
 	 * @param json string $data 
 	 */
-	private function save_builder_text_only( $post_id, $data ) {
+	private static function save_builder_text_only( $post_id, $data ) {
 		if(wp_is_post_revision( $post_id )){
 		    return false;
 		}
 		$post = get_post($post_id); 
 		if(!empty($post)){
-		    $text_only = $this->_get_all_builder_text_content(json_decode($data,true) );
+		    $text_only = self::_get_all_builder_text_content(json_decode($data,true) );
 		    if (!empty( $text_only ) ){
 			$post_content = $post->post_content;
-			if ( $this->has_static_content( $post_content ) ) {
-			    $post_content = $this->update_static_content_string( $this->add_static_content_wrapper( $text_only ), $post_content );
+			if ( self::has_static_content( $post_content ) ) {
+			    $post_content = self::update_static_content_string( self::add_static_content_wrapper( $text_only ), $post_content );
 			} else {
-			    $post_content = $post_content . $this->add_static_content_wrapper( $text_only );
+			    $post_content = $post_content . self::add_static_content_wrapper( $text_only );
 			}
 			self::update_post($post_id,array('post_content'=>$post_content));
 		    }
@@ -357,7 +312,7 @@ class ThemifyBuilder_Data_Manager {
 	 * @param array $data 
 	 * @return string
 	 */
-	public function _get_all_builder_text_content( $data ) {
+	public static function _get_all_builder_text_content( $data ) {
 		global $ThemifyBuilder;
 		$data = $ThemifyBuilder->get_flat_modules_list( null, $data );
 		$text = array();
@@ -368,7 +323,10 @@ class ThemifyBuilder_Data_Manager {
 						Themify_Builder_Component_Module::load_modules($module['mod_name']);
 					}
 					if(isset(Themify_Builder_Model::$modules[ $module['mod_name'] ])){
-						$text[] = self::removeTags(Themify_Builder_Model::$modules[ $module['mod_name'] ]->get_plain_content( $module ));
+						$t=Themify_Builder_Model::$modules[ $module['mod_name'] ]->get_plain_content( $module );
+						if($t!==''){
+							$text[] = self::removeTags($t);
+						}
 					}
 				}
 			}
@@ -381,11 +339,11 @@ class ThemifyBuilder_Data_Manager {
 	 * Display admin notices when builder should be updated
 	 * to support static content
 	 */
-	public function static_content_notices() {
+	public static function static_content_notices() {
 
 		if ( 'yes' === get_option( 'themify_builder_static_content_done' ) ) {
 			return;
-		} elseif ( ! $this->has_existing_builder_data() ) {
+		} elseif ( ! self::has_existing_builder_data() ) {
 			$_key='themify_builder_static_content_done';
 			delete_option($_key);
 			add_option($_key,'yes', '', false );
@@ -430,7 +388,7 @@ class ThemifyBuilder_Data_Manager {
 	/**
 	 * Init the static content class.
 	 */
-	public function init_static_content_bg_process() {
+	public static function init_static_content_bg_process() {
 		include_once( THEMIFY_BUILDER_CLASSES_DIR . '/class-themify-builder-static-content-updater.php' );
 		self::$static_content_process = new Themify_Builder_Static_Content_Updater();
 	}
@@ -438,7 +396,7 @@ class ThemifyBuilder_Data_Manager {
 	/**
 	 * Init background process the static content updater.
 	 */
-	public function init_static_content_updater() {
+	public static function init_static_content_updater() {
 		if ( ! empty( $_GET['do_update_themify_builder_static_content'] ) ) {
 			global $wpdb;
 
@@ -455,7 +413,7 @@ class ThemifyBuilder_Data_Manager {
 					FROM $wpdb->posts, $wpdb->postmeta 
 					WHERE $wpdb->posts.ID > ". $last_id ."
 					AND $wpdb->posts.ID = $wpdb->postmeta.post_id 
-					AND $wpdb->postmeta.meta_key = '" . $this->meta_key . "' 
+					AND $wpdb->postmeta.meta_key = '" . self::$meta_key . "' 
 					AND $wpdb->posts.post_status = 'publish' 
 					AND post_type IN (" . implode( ',', $post_types ) .") 
 					ORDER BY ID ASC 
@@ -479,9 +437,9 @@ class ThemifyBuilder_Data_Manager {
 	 * @access public
 	 * @return boolean
 	 */
-	public function has_existing_builder_data() {
+	public static function has_existing_builder_data() {
 		global $wpdb;
-		$sql = "SELECT post_id FROM $wpdb->postmeta WHERE AND meta_key = '" . $this->meta_key . "' LIMIT 1";
+		$sql = "SELECT post_id FROM $wpdb->postmeta WHERE AND meta_key = '" . self::$meta_key . "' LIMIT 1";
 		$id = $wpdb->get_var( $sql );
 		if(!empty($id)){
 		    $sql = "SELECT 1 FROM $wpdb->posts WHERE ID = '".$id."' AND post_status = 'publish' LIMIT 1";
@@ -499,8 +457,8 @@ class ThemifyBuilder_Data_Manager {
 	 * 
 	 * @param int $item
 	 */
-	public function run_static_content_updater( $item ) {
-		$data = $this->get_data( $item );
+	public static function run_static_content_updater( $item ) {
+		$data = self::get_data( $item );
 
 		if ( is_array( $data ) && ! empty( $data ) ) {
 			wp_update_post(array(
@@ -518,20 +476,8 @@ class ThemifyBuilder_Data_Manager {
 	 * @param string $content 
 	 * @return string
 	 */
-	public function remove_empty_p( $content ) {
-		return preg_replace( array(
-			'#<p>\s*<(div)#',
-			'#</(div)>\s*</p>#',
-			'#</(div)>\s*<br ?/?>#',
-			'#<(div)(.*?)>\s*</p>#',
-			'#<p>\s*</(div)#',
-		), array(
-			'<$1',
-			'</$1>',
-			'</$1>',
-			'<$1$2>',
-			'</$1',
-		), $content );
+	public static function remove_empty_p( $content ) {
+		return str_replace(array(PHP_EOL .'<!--themify_builder_content-->','<!--/themify_builder_content-->'.PHP_EOL,'<p><!--themify_builder_content-->','<!--/themify_builder_content--></p>'),array('<!--themify_builder_content-->','<!--/themify_builder_content-->','<!--themify_builder_content-->','<!--/themify_builder_content-->'),trim($content));
 	}
 
 	/**
@@ -539,7 +485,7 @@ class ThemifyBuilder_Data_Manager {
 	 * 
 	 * @access public
 	 */
-	public function dismiss_data_updater_notice() {
+	public static function dismiss_data_updater_notice() {
 		$_key='tb-data-updater-notice-dismissed';
 		delete_option($_key);
 		add_option($_key,1, '', false );
@@ -551,8 +497,8 @@ class ThemifyBuilder_Data_Manager {
 	 * 
 	 * @access public
 	 */
-	public function network_builder_updater_menu() {
-		add_menu_page( esc_html__( 'Themify Builder Data Updater', 'themify' ), esc_html__( 'Builder Updater', 'themify' ), 'manage_options', 'themify-builder-data-updater', array($this, 'network_builder_data_updater_page') );
+	public static function network_builder_updater_menu() {
+		add_menu_page( esc_html__( 'Themify Builder Data Updater', 'themify' ), esc_html__( 'Builder Updater', 'themify' ), 'manage_options', 'themify-builder-data-updater', array(__CLASS__, 'network_builder_data_updater_page') );
 	}
 
 	/**
@@ -560,13 +506,13 @@ class ThemifyBuilder_Data_Manager {
 	 * 
 	 * @access public
 	 */
-	public function network_collect_builder_data() {
+	public static function network_collect_builder_data() {
 		$sites = get_sites();
 		$ids = array();
 
 		foreach( $sites as $site ) {
 			switch_to_blog( $site->blog_id );
-			if ( 'yes' !== get_option( 'themify_builder_static_content_done' ) && $this->has_existing_builder_data() ) {
+			if ( 'yes' !== get_option( 'themify_builder_static_content_done' ) && self::has_existing_builder_data() ) {
 				$ids[] = $site->blog_id;
 			}
 			restore_current_blog();
@@ -579,7 +525,7 @@ class ThemifyBuilder_Data_Manager {
 	 * 
 	 * @access public
 	 */
-	public function network_builder_data_updater_page() { ?>
+	public static function network_builder_data_updater_page() { ?>
 		<div class="wrap">
 			<h2><?php esc_html_e( 'Themify Builder Data Updater', 'themify' );?></h2>
 			
@@ -668,40 +614,6 @@ class ThemifyBuilder_Data_Manager {
 	<?php
 	}
 
-	/**
-	 * This function check the CSS generated files version and if
-     * it requires to update or not
-	 */
-	public static function auto_regenerate_css() {
-		$need_action = self::needs_regenerate();
-	    // checks if need to regenerate css files
-	    if ( $need_action['regenerate'] ) {
-			if( 'finished' === Themify_Builder::regenerate_css_files() ) {
-				update_option('tb_css_version',self::$latest_CSS_version);
-			}
-		} else if($need_action['update']) {
-	        // update the css file version
-			update_option('tb_css_version',self::$latest_CSS_version);
-		}
-	}
-
-	/**
-	 * Checks if its needed to regenerate the CSS files or not
-	 */
-	public static function needs_regenerate() {
-		$css_version = get_option('tb_css_version');
-		// check for fresh install
-		if(false === $css_version){
-			$upload_dir = wp_upload_dir();
-			$wp_filesystem = Themify_Filesystem::get_instance();
-			$path = '/' . trim( $upload_dir['basedir'], '/' ) . '/themify-css';
-			$result['regenerate'] = $wp_filesystem->execute->exists( $path );
-		}else{
-			$result['regenerate'] = $css_version !== self::$latest_CSS_version;
-		}
-		$result['update'] = $css_version !== self::$latest_CSS_version;
-		return $result;
-	}
 	
 	/**
 	 * Save the builder in post meta
@@ -709,25 +621,24 @@ class ThemifyBuilder_Data_Manager {
 	 * @param int $post_id 
 	 * @param json string $data 
 	 */
-	private function update_builder_meta($post_id,$data){
-
+	private static function update_builder_meta($post_id,$data){
 	    $data = apply_filters( 'themify_builder_data_before_update_meta', $data, $post_id );
 	    $isRevision=wp_is_post_revision( $post_id );
-	    if($isRevision || $this->save_builder_text_only($post_id, $data)){
+	    if($isRevision || self::save_builder_text_only($post_id, $data)){
 		//Don't use delete_post_meta will remove revision parent builder data
-		delete_metadata( 'post', $post_id,$this->meta_key );
+		delete_metadata( 'post', $post_id,self::$meta_key );
 		if(!$isRevision){
 		    /* remove the old data format */
-		    delete_metadata( 'post', $post_id,$this->old_meta_key );
+		    delete_metadata( 'post', $post_id,self::$old_meta_key );
 		}
 		if(!empty($data)){
 		    global $wpdb;
-		    do_action( 'add_post_meta', $post_id, $this->meta_key, $data);
+		    do_action( 'add_post_meta', $post_id, self::$meta_key, $data);
 		    $result = $wpdb->insert(
 			    _get_meta_table('post'),
 			    array(
 				    'post_id'      => $post_id,
-				    'meta_key'   =>  $this->meta_key,
+				    'meta_key'   =>  self::$meta_key,
 				    'meta_value' =>$data
 			    ),
 			    array('%d','%s','%s')
@@ -735,16 +646,21 @@ class ThemifyBuilder_Data_Manager {
 		    if ( ! $result ) {
 				return false;
 		    }
+			unset($result);
 		    $mid = (int) $wpdb->insert_id;
 		}
 		
 		if(!$isRevision){
 		    Themify_Builder_Model::remove_cache($post_id);
-			wp_cache_delete( $post_id,'post_meta' );
+		    wp_cache_delete( $post_id,'post_meta' );
+		    TFCache::remove_cache($post_id);
+		    themify_clear_menu_cache();
+            TFCache::clear_3rd_plugins_cache($post_id);
 		}
 		if(!empty($data)){
-		    do_action( 'added_post_meta', $mid, $post_id, $this->meta_key, $data );
+		    do_action( 'added_post_meta', $mid, $post_id, self::$meta_key, $data );
 		}
+		unset($data);
 		if(!$isRevision){
 		    // update the post modified date time, to indicate the post has been modified
 		    self::update_post($post_id,array('post_modified'=>current_time('mysql'),'post_modified_gmt'=>current_time('mysql', 1)));
@@ -760,5 +676,4 @@ class ThemifyBuilder_Data_Manager {
 
 	}
 }
-
-$GLOBALS['ThemifyBuilder_Data_Manager'] = new ThemifyBuilder_Data_Manager();
+ThemifyBuilder_Data_Manager::init();

@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Template Slider Blog
  *
@@ -25,6 +26,7 @@ if (isset($args['settings'][$type . '_category_slider'])) {
 }
 $fields_args = wp_parse_args($args['settings'], $fields_default);
 unset($args['settings']);
+$fields_default=null;
 if ($type !== 'blog') {
     $fields_args['post_type'] = $type;
     $fields_args['taxonomy'] = $type . '-category';
@@ -52,40 +54,45 @@ $temp_post = $post;
 $posts = get_posts($args);
 $args=null;
 if (!empty($posts)):
-    $param_image = 'w=' . $fields_args['img_w_slider'] . '&h=' . $fields_args['img_h_slider'] . '&ignore=true';
+    $param_image=array(
+	'w'=>$fields_args['img_w_slider'],
+	'h'=>$fields_args['img_h_slider'] ,
+	'is_slider'=>true
+    );
     $attr_link_target = 'yes' === $fields_args['open_link_new_tab_slider'] ? ' target="_blank" rel="noopener"' : '';
-    if ($fields_args['image_size_slider'] !== '' && Themify_Builder_Model::is_img_php_disabled()) {
-        $param_image .= '&image_size=' . $fields_args['image_size_slider'];
+    if ($fields_args['image_size_slider'] !== '') {
+	$param_image['image_size']=$fields_args['image_size_slider'];
     }
     $isLoop=$ThemifyBuilder->in_the_loop===true;
     $ThemifyBuilder->in_the_loop=true;
     foreach ($posts as $post): setup_postdata($post);
         ?>
-        <li>
+        <div class="swiper-slide">
             <div class="slide-inner-wrap"<?php if ($fields_args['margin'] !== ''): ?> style="<?php echo $fields_args['margin']; ?>"<?php endif; ?>>
                 <?php
-                if (($ext_link = themify_builder_get('external_link'))) {
+                if (($ext_link = themify_builder_get('external_link',false,false))) {
                     $ext_link_type = 'external';
-                } elseif (($ext_link = themify_builder_get('lightbox_link'))) {
+                } elseif (($ext_link = themify_builder_get('lightbox_link',false,false))) {
                     $ext_link_type = 'lightbox';
                 } else {
-                    $ext_link = themify_get_featured_image_link();
+                    $ext_link = themify_permalink_attr(array(),false);
+					$ext_link=$ext_link['href'];
                     $ext_link_type = false;
                 }
                 if ($fields_args['hide_feat_img_slider'] !== 'yes') {
 
                     // Check if there is a video url in the custom field
-                    if (($vurl = themify_builder_get('video_url'))) {
+                    if (($vurl = themify_builder_get('video_url',false,false))) {
                         global $wp_embed;
 
                         $post_image = $wp_embed->run_shortcode('[embed]' . esc_url($vurl) . '[/embed]');
                     } else {
-                        $post_image = themify_get_image($param_image);
+						$post_image = themify_get_image($param_image);
                     }
                     if ($post_image) {
                         ?>
                         <?php themify_before_post_image(); // Hook ?>
-                        <figure class="slide-image">
+                        <figure class="tf_lazy slide-image">
                             <?php if ($fields_args['unlink_feat_img_slider'] === 'yes'): ?>
                                 <?php echo $post_image; ?>
                             <?php else: ?>
@@ -103,20 +110,20 @@ if (!empty($posts)):
                 <?php if ($fields_args['hide_post_title_slider'] !== 'yes' || $fields_args['display_slider'] !== 'none'): ?>
                     <div class="slide-content tb_text_wrap">
                         <?php if ($fields_args['hide_post_title_slider'] !== 'yes'): ?>
+			     <h3 class="slide-title">
                             <?php if ($fields_args['unlink_post_title_slider'] === 'yes'): ?>
-                                <h3 class="slide-title"><?php the_title(); ?></h3>
+                               <?php the_title(); ?>
                             <?php else: ?>
-                                <h3 class="slide-title">
                                     <a href="<?php echo $ext_link; ?>"  
                                        <?php if ('lightbox' !== $ext_link_type && 'yes' === $fields_args['open_link_new_tab_slider']): ?> target="_blank" rel="noopener"<?php endif; ?>
                                        <?php if ('lightbox' === $ext_link_type) : ?> class="themify_lightbox" rel="prettyPhoto[slider]"<?php endif; ?>>
                                        <?php the_title(); ?>
                                     </a>
-                                </h3>
                             <?php endif; //unlink post title     ?>
+			    </h3>
                         <?php endif; // hide post title  ?>
 						<?php if ($fields_args['hide_post_date'] !== 'yes'): ?>
-                            <time datetime="<?php the_time('o-m-d') ?>" class="post-date" pubdate><?php echo get_the_date(apply_filters('themify_loop_date', '')) ?></time>
+                            <time datetime="<?php the_time('o-m-d') ?>" class="post-date"><?php echo get_the_date(apply_filters('themify_loop_date', '')) ?></time>
 						<?php endif; //post date   ?>
                         <?php
                         // fix the issue more link doesn't output
@@ -139,7 +146,7 @@ if (!empty($posts)):
                     <!-- /slide-content -->
                 <?php endif; ?>
             </div>
-        </li>
+        </div>
         <?php
     endforeach;
     wp_reset_postdata();

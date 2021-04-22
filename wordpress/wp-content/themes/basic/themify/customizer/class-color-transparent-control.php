@@ -1,5 +1,7 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 
 /**
  * Class to create a control to set the color of an element or set the transparent CSS property.

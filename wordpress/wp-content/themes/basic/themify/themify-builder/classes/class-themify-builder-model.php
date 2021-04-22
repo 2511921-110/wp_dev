@@ -38,7 +38,7 @@ final class Themify_Builder_Model {
      */
     public static $lightbox_link = array();
     public static $modules = array();
-    public static $layouts_version_name = 'tbuilder_layouts_version';
+    private static $layouts_version_name = 'tbuilder_layouts_version';
     private static $transient_name = 'tb_edit_';
 
     /**
@@ -104,7 +104,7 @@ final class Themify_Builder_Model {
     public static function is_frontend_editor_page() {
 	static $is = NULL;
 	if ($is === null) {
-	    $is = is_user_logged_in() && current_user_can('edit_pages', self::get_id());
+	    $is = is_user_logged_in() && current_user_can('edit_pages', self::get_ID());
 	    $is = apply_filters('themify_builder_is_frontend_editor', $is);
 	}
 	return $is;
@@ -116,7 +116,11 @@ final class Themify_Builder_Model {
     public static function is_front_builder_activate() {
 	static $is = NULL;
 	if ($is === null) {
-	    $is = isset($_GET['tb-preview']) && self::is_frontend_editor_page();
+	    $is = Themify_Builder::$frontedit_active===true || (isset($_GET['tb-preview']) && self::is_frontend_editor_page());
+	    if($is===true){
+		add_filter('lazyload_is_enabled','__return_false',1,100);//disable jetpack lazy load
+		add_filter( 'rocket_use_native_lazyload','__return_false',1,100 );
+	    }
 	}
 	return $is;
     }
@@ -363,6 +367,11 @@ final class Themify_Builder_Model {
 	    if (!empty($exclude_pages)) {
 		unset($types['page']);
 	    }
+		// Exclude posts /////////////////
+		$exclude_posts = themify_builder_get('setting-search_exclude_post');
+		if (!empty($exclude_posts)) {
+			unset($types['post']);
+		}
 	    // Exclude custom post types /////
 	    $exclude_types = apply_filters('themify_types_excluded_in_search', get_post_types(array(
 		'_builtin' => false,
@@ -388,15 +397,12 @@ final class Themify_Builder_Model {
      * @return boolean
      */
     public static function is_animation_active() {
-	static $is = NULL;
-	if ($is === null) {
-	    // check if mobile exclude disabled OR disabled all transition
-	    $val = themify_builder_get('setting-page_builder_animation_appearance', 'builder_animation_appearance');
-	    $disable_all = $val === 'all';
-	    $disable_mobile = $disable_all===true || $val === 'mobile';
-	    $is = self::is_front_builder_activate() || !(  $disable_all===true || ( $disable_mobile===true && themify_is_touch() ) );
-	}
-	return $is;
+		static $is = NULL;
+		if ($is === null) {
+			$val = themify_builder_get('setting-page_builder_animation_appearance', 'builder_animation_appearance');
+			$is = self::is_front_builder_activate() || $val === 'all' ? false : ('mobile'===$val?'m':true);
+		}
+	    return $is;
     }
 
     /**
@@ -404,15 +410,12 @@ final class Themify_Builder_Model {
      * @return boolean
      */
     public static function is_parallax_active() {
-	static $is = NULL;
-	if ($is === null) {
-	    // check if mobile exclude disabled OR disabled all transition
-	    $val = themify_builder_get('setting-page_builder_animation_parallax_bg', 'builder_animation_parallax_bg');
-	    $disable_all = $val === 'all';
-	    $disable_mobile = $disable_all===true || $val === 'mobile';
-	    $is = !($disable_all===true  || ( $disable_mobile===true && themify_is_touch() ));
-	}
-	return $is;
+		static $is = NULL;
+		if ($is === null) {
+			$val = themify_builder_get('setting-page_builder_animation_parallax_bg', 'builder_animation_parallax_bg');
+			$is = self::is_front_builder_activate()?true:($val === 'all' ? false : ('mobile'===$val?'m':true));
+		}
+		return $is;
     }
 
     /**
@@ -424,9 +427,7 @@ final class Themify_Builder_Model {
 		if ( $is === null ) {
 			// check if mobile exclude disabled OR disabled all transition
 			$val = themify_builder_get( 'setting-page_builder_animation_scroll_effect', 'builder_animation_scroll_effect' );
-			$disable_all = $val === 'all';
-			$disable_mobile = $disable_all===true || $val === 'mobile';
-			$is = !($disable_all===true || ( $disable_mobile===true && themify_is_touch() ));
+			$is = self::is_front_builder_activate() || $val === 'all' ? false : ('mobile'===$val?'m':true);
 		}
 		return $is;
 	}
@@ -436,15 +437,13 @@ final class Themify_Builder_Model {
      * @return boolean
      */
     public static function is_sticky_scroll_active() {
-	static $is = NULL;
-	if ($is === null) {
-	    // check if mobile exclude disabled OR disabled all transition
-	    $val = themify_builder_get('setting-page_builder_animation_sticky_scroll', 'builder_animation_sticky_scroll');
-	    $disable_all = $val === 'all';
-	    $disable_mobile = $disable_all===true || $val === 'mobile';
-	    $is = !($disable_all===true || ( $disable_mobile===true && themify_is_touch() ));
-	}
-	return $is;
+		static $is = NULL;
+		if ($is === null) {
+			$val = themify_builder_get('setting-page_builder_animation_sticky_scroll', 'builder_animation_sticky_scroll');
+			$is = self::is_front_builder_activate() || $val === 'all' ? false : ('mobile'===$val?'m':true);
+			$is=apply_filters( 'tb_sticky_scroll_active', $is );
+		}
+		return $is;
     }
 
     /**
@@ -588,9 +587,9 @@ final class Themify_Builder_Model {
     public static function get_border_radius_styles() {
 	return array(
 		array( 'id' => 'top', 'label' => __( 'Top Left', 'themify' ) ),
-		array( 'id' => 'bottom', 'label' => __( 'Bottom Right', 'themify' ) ),
-		array( 'id' => 'right', 'label' => __( 'Top right', 'themify' ) ),
-		array( 'id' => 'left', 'label' => __( 'Bottom Left', 'themify' ) ),
+        array( 'id' => 'right', 'label' => __( 'Top right', 'themify' ) ),
+        array( 'id' => 'left', 'label' => __( 'Bottom Left', 'themify' ) ),
+        array( 'id' => 'bottom', 'label' => __( 'Bottom Right', 'themify' ) )
 	);
     }
 
@@ -601,10 +600,10 @@ final class Themify_Builder_Model {
      */
     public static function get_text_aligment() {
 	return array(
-	    array('value' => 'left', 'name' => __('Left', 'themify'), 'icon' => '<span class="ti-align-left"></span>'),
-	    array('value' => 'center', 'name' => __('Center', 'themify'), 'icon' => '<span class="ti-align-center"></span>'),
-	    array('value' => 'right', 'name' => __('Right', 'themify'), 'icon' => '<span class="ti-align-right"></span>'),
-	    array('value' => 'justify', 'name' => __('Justify', 'themify'), 'icon' => '<span class="ti-align-justify"></span>')
+	    array('value' => 'left', 'name' => __('Left', 'themify'), 'icon' => themify_get_icon('align-left','ti')),
+	    array('value' => 'center', 'name' => __('Center', 'themify'), 'icon' => themify_get_icon('align-center','ti')),
+	    array('value' => 'right', 'name' => __('Right', 'themify'), 'icon' => themify_get_icon('align-right','ti')),
+	    array('value' => 'justify', 'name' => __('Justify', 'themify'), 'icon' => themify_get_icon('align-justify','ti'))
 	);
     }
 
@@ -750,14 +749,11 @@ final class Themify_Builder_Model {
      * @return string
      */
     public static function get_alt_by_url($image_url) {
-	$upload_dir = wp_upload_dir();
-	$attachment_id = themify_get_attachment_id_from_url($image_url, $upload_dir['baseurl']);
-	if ($attachment_id) {
-	    if ($alt = get_post_meta($attachment_id, '_wp_attachment_image_alt', true)) {
-		return $alt;
-	    }
-	}
-	return '';
+		$attachment_id = themify_get_attachment_id_from_url($image_url);
+		if ($attachment_id && ($alt = get_post_meta($attachment_id, '_wp_attachment_image_alt', true))) {
+		   return $alt;
+		}
+		return '';
     }
 
     /**
@@ -767,25 +763,33 @@ final class Themify_Builder_Model {
      * @return array
      */
     public static function get_modules_localize_settings() {
-	$return = array();
+		$return = array();
 
-	foreach (self::$modules as $module) {
-	    $default = $module->get_default_settings();
-	    $return[$module->slug]['name'] = $module->name;
-	    $return[$module->slug]['category'] = $module->category;
-	    if ($module->favorite) {
-		$return[$module->slug]['favorite'] = 1;
-	    }
-	    if ($default) {
-		$return[$module->slug]['defaults'] = $default;
-	    }
-	    $type = $module->get_visual_type();
-	    if ($type) {
-		$return[$module->slug]['type'] = $type;
-	    }
-	}
-	uasort($return, array(__CLASS__, 'sortBy'));
-	return $return;
+		foreach (self::$modules as $module) {
+			$default = $module->get_live_default();
+			$icon=$module->get_icon();
+			$return[$module->slug]['name'] = $module->name;
+			$return[$module->slug]['category'] = $module->category;
+			if($icon!==false){
+				if($icon===''){
+					$icon=$module->slug;
+				}
+				$return[$module->slug]['icon']=$icon;
+				themify_get_icon($icon,'ti');
+			}
+			if ($module->favorite) {
+			$return[$module->slug]['favorite'] = 1;
+			}
+			if ($default) {
+			$return[$module->slug]['defaults'] = $default;
+			}
+			$type = $module->get_visual_type();
+			if ($type) {
+			$return[$module->slug]['type'] = $type;
+			}
+		}
+		uasort($return, array(__CLASS__, 'sortBy'));
+		return $return;
     }
 
     private static function sortBy($a, $b) {
@@ -840,9 +844,9 @@ final class Themify_Builder_Model {
 		$pattern = '|<p>\s*(https?://[^\s"]+)\s*</p>|im'; // pattern to check embed url
 		$to = '<p>' . PHP_EOL . '$1' . PHP_EOL . '</p>'; // add line break
 		$content = $wp_embed->run_shortcode($content);
-		$content = do_shortcode(shortcode_unautop($content));
 		$content = preg_replace($pattern, $to, $content);
 		$content = $wp_embed->autoembed($content);
+		$content = do_shortcode(shortcode_unautop($content));
 		$ThemifyBuilder->in_the_loop = $isLoop;
 		$content = convert_smilies( $content );
 		$content = self::generate_read_more( $content );
@@ -857,17 +861,13 @@ final class Themify_Builder_Model {
      * @return string generated load more link in the text.
 	 */
     public static function generate_read_more($content) {
-		if ( preg_match('/(<|&lt;)!--more(.*?)?--(>|&gt;)/', $content, $matches ) ) {
-			$text = trim( $matches[2] );
-			if ( ! empty( $text ) ) {
-				$read_more_text = $text;
-			} else {
-				$read_more_text = apply_filters( 'themify_builder_more_text', __( 'More ', 'themify' ) );
-			}
-			$content = str_replace( $matches[0], '<div class="more-text" style="display: none">', $content );
-			$content .= '</div><a href="#" class="tb-text-more-link module-text-more tb-more-tag">' . $read_more_text . '</a>';
-		}
-		return $content;
+	if (!empty($content) && strpos($content,'!--more')!==false && preg_match('/(<|&lt;)!--more(.*?)?--(>|&gt;)/', $content, $matches ) ) {
+		$text = trim( $matches[2] );
+		$read_more_text = ! empty( $text )?$text:apply_filters( 'themify_builder_more_text', __( 'More ', 'themify' ) );
+		$content = str_replace( $matches[0], '<div class="more-text" style="display: none">', $content );
+		$content .= '</div><a href="#" class="module-text-more">' . $read_more_text . '</a>';
+	}
+	return $content;
     }
 
     /**
@@ -879,6 +879,18 @@ final class Themify_Builder_Model {
 	return themify_is_themify_theme();
     }
 
+	public static function is_module_active( $mod_name ) {
+		if ( themify_is_themify_theme() ) {
+			$data = themify_get_data();
+			$pre = 'setting-page_builder_exc_';
+	    } else {
+			$pre = 'builder_exclude_module_';
+			$data = self::get_builder_settings();
+	    }
+
+		return empty( $data[ $pre . $mod_name ] );
+	}
+
     /**
      * Get module php files data
      * @param string $select
@@ -887,17 +899,9 @@ final class Themify_Builder_Model {
     public static function get_modules($select = 'all') {
 	$modules = array();
 	$directories = self::get_directory_path('modules');
-	if ('active' === $select) {
-	    if (themify_is_themify_theme()) {
-		$data = themify_get_data();
-		$pre = 'setting-page_builder_exc_';
-	    } else {
-		$pre = 'builder_exclude_module_';
-		$data = self::get_builder_settings();
-	    }
-	}
+
 	foreach ($directories as $dir) {
-	    if (file_exists($dir)) {
+	    if (is_dir($dir)) {
 		$d = dir($dir);
 		while (( false !== ( $entry = $d->read() ))) {
 		    if ($entry !== '.' && $entry !== '..' && $entry !== '.svn') {
@@ -906,7 +910,7 @@ final class Themify_Builder_Model {
 			    $path_info = pathinfo($path);
 			    if (strpos($path_info['filename'], 'module-') === 0) {
 				$id = str_replace('module-', '', $path_info['filename']);
-				if ($select === 'active' && !empty($data[$pre . $id])) {
+				if ( $select === 'active' && ! self::is_module_active( $id ) ) {
 				    continue;
 				}
 				$modules[$id] = array(
@@ -964,7 +968,7 @@ final class Themify_Builder_Model {
     }
 
     public static function remove_cache($post_id, $tag = false, array $args = array()) {
-	TFCache::remove_cache($tag, $post_id, $args);
+	//TFCache::remove_cache($tag, $post_id, $args);
     }
 
     public static function is_cpt_active($post_type) {
@@ -972,24 +976,27 @@ final class Themify_Builder_Model {
     }
 
     public static function builder_cpt_check() {
-
-	foreach (array('slider', 'highlight', 'testimonial') as $post_type) {
-	    if (post_type_exists($post_type)) {
-		self::$builder_cpt[] = $post_type;
-	    } else {
-		$posts = get_posts(array(
-		    'post_type' => $post_type,
-		    'posts_per_page' => 1,
-		    'post_status' => 'any',
-		    'no_found_rows' => true,
-		    'ignore_sticky_posts'=>true,
-		    'update_post_term_cache' => false,
-		    'update_post_meta_cache' => false,
-		    'cache_results' => false,
-		    'orderby' => 'none'
-		));
-		if (!empty($posts)) {
-		    self::$builder_cpt[] = $post_type;
+	static $done=null;
+	if($done===null){
+	    $done=true;
+	    foreach (array('slider', 'highlight', 'testimonial') as $cpt) {
+		if (post_type_exists($cpt)) {
+		    self::$builder_cpt[] = $cpt;
+		} else {
+		    $posts = get_posts(array(
+			'post_type' => $cpt,
+			'posts_per_page' => 1,
+			'post_status' => 'any',
+			'no_found_rows' => true,
+			'ignore_sticky_posts'=>true,
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
+			'cache_results' => false,
+			'orderby' => 'none'
+		    ));
+		    if (!empty($posts)) {
+			self::$builder_cpt[] = $cpt;
+		    }
 		}
 	    }
 	}
@@ -1043,50 +1050,6 @@ final class Themify_Builder_Model {
 	return apply_filters('builder_get_public_taxonomies', $result);
     }
 
-    /**
-     * Get images from gallery shortcode
-     * @return object
-     */
-    public static function get_images_from_gallery_shortcode($shortcode) {
-	preg_match('/\[gallery.*ids=.(.*).\]/', $shortcode, $ids);
-	if (isset($ids[1])) {
-	    $ids = trim($ids[1], '\\');
-	    $ids = trim($ids, '"');
-	    $image_ids = explode(',', $ids);
-	    $orderby = self::get_gallery_param_option($shortcode, 'orderby');
-	    $orderby = $orderby != '' ? $orderby : 'post__in';
-	    $order = self::get_gallery_param_option($shortcode, 'order');
-	    $order = $order != '' ? $order : 'ASC';
-
-	    // Check if post has more than one image in gallery
-	    return get_posts(array(
-		'post__in' => $image_ids,
-		'post_type' => 'attachment',
-		'post_mime_type' => 'image',
-		'numberposts' => -1,
-		'no_found_rows' => true,
-		'cache_results' => false,
-		'update_post_term_cache' => false,
-		'update_post_meta_cache' => false,
-		'orderby' => $orderby,
-		'order' => $order
-	    ));
-	}
-	return array();
-    }
-
-    /**
-     * Get gallery shortcode options
-     * @param $shortcode
-     * @param $param
-     */
-    public static function get_gallery_param_option($shortcode, $param = 'link') {
-	$pattern = '/\[gallery .*?(?=' . $param . ')' . $param . '=.([^\']+)./si';
-	preg_match($pattern, $shortcode, $out);
-
-	$out = isset($out[1]) ? explode('"', $out[1]) : array('');
-	return $out[0];
-    }
 
     public static function parse_slug_to_ids($slug_string, $post_type = 'post') {
 	$slug_arr = explode(',', $slug_string);
@@ -1173,13 +1136,7 @@ final class Themify_Builder_Model {
      * Get ID
      */
     public static function get_ID() {
-	if (themify_is_woocommerce_active() && is_shop()) {
-	    $page_id = version_compare(WOOCOMMERCE_VERSION, '3.0.0', '>=') ? wc_get_page_id('shop') : woocommerce_get_page_id('shop');
-	} else {
-	    $page_id = get_the_id();
-	}
-
-	return $page_id;
+	return themify_is_shop()?themify_shop_pageId():get_the_id();
     }
 
     /**
@@ -1198,11 +1155,11 @@ final class Themify_Builder_Model {
 		<?php foreach ($breakpoints as $b => $v): ?>
 	    	<li title="<?php echo $b === 'tablet_landscape' ? __('Tablet Landscape', 'themify') : ucfirst($b); ?>"
 	    	    data-id="<?php echo $b ?>"
-	    	    class="tab_<?php echo $b ?><?php if ($b === 'tablet_landscape'): ?> ti-tablet<?php endif; ?> ti-<?php echo $b ?>"></li>
+	    	    class="tab_<?php echo $b ?>"><?php echo themify_get_icon(($b==='tablet_landscape'?'tablet':$b),'ti')?></li>
 		    <?php endforeach; ?>
 	    </ul>
 	    <div class="tb_grid_tab tb_grid_desktop">
-		<ul class="tb_grid_list clearfix">
+		<ul class="tb_grid_list tf_clearfix">
 		    <?php foreach ($grid_lists as &$li): ?>
 			<?php $li['col'] = count($li['data']); ?>
 	    	    <li class="grid-layout-<?php echo esc_attr(implode('-', $li['data'])); ?>"
@@ -1252,7 +1209,7 @@ final class Themify_Builder_Model {
 		    </ul>
 		</div>
 	    </div>
-	    <div class="tb_grid_tab tb_grid_reposnive clearfix tb_grid_tablet_landscape">
+	    <div class="tb_grid_tab tb_grid_reposnive tb_grid_tablet_landscape">
 		<ul class="tb_grid_list" data-type="tablet_landscape">
 		    <li class="tb1 tablet_landscape-auto selected" data-grid='["-auto"]'><span
 			    class="tb_grids tb_auto"></span></li>
@@ -1271,7 +1228,7 @@ final class Themify_Builder_Model {
 			unset($li);
 			?>
 		</ul>
-		<ul class="tb_column_direction clearfix tb_actions">
+		<ul class="tb_column_direction tf_clearfix tb_actions">
 		    <?php foreach ($column_direction as $v): ?>
 	    	    <li<?php if ($v['value'] === 'ltr') echo ' class="selected"' ?>
 	    		data-dir="<?php echo $v['value']; ?>">
@@ -1292,7 +1249,7 @@ final class Themify_Builder_Model {
 	    		    class="tb_grids tb_<?php echo $li1['img'] ?>"></span></li>
 			<?php endforeach; ?>
 		</ul>
-		<ul class="tb_column_direction clearfix tb_actions">
+		<ul class="tb_column_direction tf_clearfix tb_actions">
 		    <?php foreach ($column_direction as $v): ?>
 	    	    <li<?php if ($v['value'] === 'ltr') echo ' class="selected"' ?>
 	    		data-dir="<?php echo $v['value']; ?>">
@@ -1313,7 +1270,7 @@ final class Themify_Builder_Model {
 	    		    class="tb_grids tb_<?php echo $li1['img'] ?>"></span></li>
 			<?php endforeach; ?>
 		</ul>
-		<ul class="tb_column_direction clearfix tb_actions">
+		<ul class="tb_column_direction tf_clearfix tb_actions">
 		    <?php foreach ($column_direction as $v): ?>
 	    	    <li<?php if ($v['value'] === 'ltr') echo ' class="selected"' ?>
 	    		data-dir="<?php echo $v['value']; ?>">
@@ -1455,398 +1412,495 @@ final class Themify_Builder_Model {
 	}
     }
 
-    public static function get_animation() {
-	return apply_filters('themify_builder_animation_settings_fields', array(
-	    //Animation
-	    array(
-		'type' => 'separator',
-		'label' => __('Animation', 'themify')
-	    ),
-	    array(
-		'type' => 'multi',
-		'label' => __('Entrance Animation', 'themify'),
-		'options' => array(
-		    array(
-			'id' => 'animation_effect',
-			'type' => 'animation_select'
-		    ),
-		    array(
-			'id' => 'animation_effect_delay',
-			'type' => 'number',
-			'after' => __('Delay', 'themify'),
-			'step'=>0.1
-		    ),
-		    array(
-			'id' => 'animation_effect_repeat',
-			'type' => 'number',
-			'after' => __('Repeat', 'themify')
-		    )
-		)
-	    ),
-	    array(
-		'type' => 'animation_select',
-		'label' => __('Hover Animation', 'themify'),
-		'id' => 'hover_animation_effect'
-	    ),
-	    //Float Scrolling
-	    array(
-		'type' => 'separator',
-		'label' => __('Effects', 'themify')
-	    ),
-	    array(
-		'type' => 'tabs',
-		'isRadio'=>true,
-		'id' => 'animation_effect_tab',
-		'options' => array(
-			's_e_m' => array(
-				'options' => array(
-					array(
-						'id'      => 'motion_effects',
-						'type'    => 'accordion',
-						'options' => array(
-							'v'     => array(
-								'label'   => __( 'Vertical Scroll', 'themify' ),
-								'options' => array(
-									array(
-										'id'      => 'v_dir',
-										'type'    => 'select',
-										'label'   => __( 'Direction', 'themify' ),
-										'options' => array(
-											'' => '',
-											'up'   => __( 'Up', 'themify' ),
-											'down' => __( 'Down', 'themify' )
-										)
-									),
-									array(
-										'id'    => 'v_speed',
-										'type'  => 'slider_range',
-										'label' => __( 'Speed', 'themify' ),
-										'options' => array(
-											'min'  => '1',
-											'max'  => '10',
-											'unit' => '',
-                                            'range' => false,
-                                            'default' => '5'
-										)
-									),
-									array(
-										'id'      => 'v_vp',
-										'type'    => 'slider_range',
-										'label'   => __( 'Viewport', 'themify' )
-									),
-								)
-							),
-							'h'   => array(
-								'label'   => __( 'Horizontal Scroll', 'themify' ),
-								'options' => array(
-									array(
-										'id'      => 'h_dir',
-										'type'    => 'select',
-										'label'   => __( 'Direction', 'themify' ),
-										'options' => array(
-											'' => '',
-											'toleft'  => __( 'To Left', 'themify' ),
-											'toright' => __( 'To Right', 'themify' )
-										)
-									),
-									array(
-										'id'    => 'h_speed',
-										'type'  => 'slider_range',
-										'label' => __( 'Speed', 'themify' ),
-			'options' => array(
-											'min'  => '1',
-											'max'  => '10',
-											'unit' => '',
-											'range' => false,
-                                            'default' => '5'
-										)
-									),
-									array(
-										'id'      => 'h_vp',
-										'type'    => 'slider_range',
-										'label'   => __( 'Viewport', 'themify' )
-									),
-								)
-							),
-							't' => array(
-								'label'   => __( 'Transparency', 'themify' ),
-								'options' => array(
-									array(
-										'id'      => 't_dir',
-										'type'    => 'select',
-										'label'   => __( 'Direction', 'themify' ),
-										'options' => array(
-											'' => '',
-											'fadein'    => __( 'Fade In', 'themify' ),
-											'fadeout'   => __( 'Fade Out', 'themify' ),
-											'fadeoutin' => __( 'Fade Out In', 'themify' ),
-											'fadeinout' => __( 'Fade In Out', 'themify' )
-										)
-									),
-									array(
-										'id'      => 't_vp',
-										'type'    => 'slider_range',
-										'label'   => __( 'Viewport', 'themify' )
-									),
-								)
-							),
-							'b'         => array(
-								'label'   => __( 'Blur', 'themify' ),
-								'options' => array(
-									array(
-										'id'      => 'b_dir',
-										'type'    => 'select',
-										'label'   => __( 'Direction', 'themify' ),
-										'options' => array(
-											'' => '',
-											'fadein'  => __( 'Fade In', 'themify' ),
-											'fadeout' => __( 'Fade Out', 'themify' )
-										)
-									),
-									array(
-										'id'    => 'b_level',
-										'type'  => 'slider_range',
-										'label' => __( 'Level', 'themify' ),
-										'options' => array(
-											'min'  => '1',
-											'max'  => '10',
-											'unit' => '',
-											'range' => false,
-											'default' => '5'
-										)
-									),
-									array(
-										'id'      => 'b_vp',
-										'type'    => 'slider_range',
-										'label'   => __( 'Viewport', 'themify' )
-									),
-								)
-							),
-							'r'       => array(
-								'label'   => __( 'Rotate', 'themify' ),
-								'options' => array(
-			    array(
-										'id'      => 'r_dir',
-				'type' => 'select',
-										'label'   => __( 'Direction', 'themify' ),
-				'options' => array(
-											'' => '',
-											'toleft'  => __( 'To Left', 'themify' ),
-											'toright' => __( 'To Right', 'themify' )
-				    )
-				),
-									array(
-										'id'    => 'r_num',
-										'type'  => 'range',
-										'label' => __( 'Number of Spins', 'themify' ),
-										'units' => array(
-											'' => array(
-												'min' => '0.05',
-												'max' => '100',
-                                                'increment' => '0.1'
-											)
-										)
-			    ),
-			    array(
-										'id'    => 'r_origin',
-										'type'  => 'position_box',
-										'label' => __( 'Transform Origin', 'themify' )
-									),
-									array(
-										'id'      => 'r_vp',
-										'type'    => 'slider_range',
-										'label'   => __( 'Viewport', 'themify' )
-									),
-								)
-							),
-							's'        => array(
-								'label'   => __( 'Scale', 'themify' ),
-				'options' => array(
-			    array(
-										'id'      => 's_dir',
-										'type'    => 'select',
-										'label'   => __( 'Direction', 'themify' ),
-				'options' => array(
-											'' => '',
-											'up'   => __( 'Scale Up', 'themify' ),
-											'down' => __( 'Scale Down', 'themify' )
-										)
-									),
-									array(
-										'id'    => 's_ratio',
-										'type'  => 'range',
-										'label' => __( 'Scale Ratio', 'themify' ),
-										'units' => array(
-											'' => array(
-												'min' => '1',
-												'max' => '30',
-												'increment' => '0.1'
-											)
-										)
-									),
-									array(
-										'id'    => 's_origin',
-										'type'  => 'position_box',
-										'label' => __( 'Transform Origin', 'themify' )
-									),
-									array(
-										'id'      => 's_vp',
-										'type'    => 'slider_range',
-										'label'   => __( 'Viewport', 'themify' )
-				),
-								)
-							),
+
+	public static function get_animation(){
+		
+		$bp=array('desktop'=>'')+themify_get_breakpoints();
+		$sticky=array();
+		foreach($bp as $b=>$v){
+			if($b==='desktop'){
+				$postfix='';
+				$checkbox=array(
+					'id'=>'stick_at_check',
+					'type'=>'checkbox',
+					'new_line'=>false,
+					'options'=>array(
+						array('name'=>'stick_at_check','value'=>__( 'Stick at','themify' ))
+					),
+					'binding'=>array(
+						'not_checked'=>array(
+							'hide'=>array('unstick_wr','stick_wr')
+						),
+						'checked'=>array(
+							'show'=>array('unstick_wr','stick_wr')
 						)
-			    ),
-			)
-		    ),
-		    's_e_s' => array(
-			'options' => array(
-			    array(
-				'type' => 'multi',
-				'wrap_class' => 'stick_middle_wrapper',
-				'options' => array(
-				    array(
-					'id' => 'stick_at_check',
-					'type' => 'checkbox',
-					'options' => array(
-					    array('name' => 'stick_at_check', 'value' => __('Stick at', 'themify'))
+					)
+				);
+			}
+			else{
+				$postfix=$b==='tablet_landscape'?'_tl':'_'.$b[0];
+				$checkbox=array(
+					'id'=>'stick_at_check'.$postfix,
+					'type'=>'radio',
+					'option_js' => true,
+					'options'=>array(
+						array('value'=>'','name'=>__( 'Inherit','themify' )),
+						array('value'=>'1','name'=>__( 'Enable','themify' )),
+						array('value'=>'0','name'=>__( 'Disable','themify' ))
+					)
+				);
+			}
+			$sticky[$b]=array(
+				'icon'=>'ti-'.($b==='tablet_landscape'?'tablet':$b),
+				'title'=>$b === 'tablet_landscape' ? __('Tablet Landscape', 'themify') : ucfirst($b),
+				'class'=>$b === 'tablet_landscape'?'tab_tablet_landscape':'',
+				'label'=>'',
+				'options'=>array(
+					array(
+						'type'=>'group',
+						'wrap_class'=>'stick_middle_wrapper',
+						'options'=>array(
+							$checkbox,
+							array(
+								'type'=>'group',
+								'wrap_class'=>'stick_wr tb_group_element_1',
+								'options'=>array(
+									array(
+										'id'=>'stick_at_position'.$postfix,
+										'type'=>'select',
+										'options'=>array(
+											'top'=>__( 'Top Position','themify' ),
+											'bottom'=>__( 'Bottom Position','themify' )
+										)
+									),
+									array(
+										'id'=>'stick_at_pos_val'.$postfix,
+										'type'=>'range',
+										'units'=>array(
+											'px'=>array(
+												'max'=>1000000
+											),
+											'%'=>''
+										)
+									)
+								)
+							)
+						)
 					),
-					'binding' => array(
-					    'not_checked' => array(
-						'hide' => array('unstick_when_wrapper')
-					    ),
-					    'checked' => array(
-						'show' => array('unstick_when_wrapper')
-					    )
+					array(
+						'type'=>'group',
+						'wrap_class'=>'stick_middle_wrapper unstick_wr tb_group_element_1',
+						'options'=>array(
+							array(
+								'id'=>'unstick_when_check'.$postfix,
+								'type'=>'checkbox',
+								'new_line'=>false,
+								'options'=>array(
+									array('name'=>'unstick_when_check','value'=>__( 'Un-stick when','themify' ))
+								),
+								'binding'=>array(
+									'not_checked'=>array(
+										'hide'=>'unstick_when_wr'
+									),
+									'checked'=>array(
+										'show'=>'unstick_when_wr'
+									)
+								)
+							),
+							array(
+								'type'=>'group',
+								'wrap_class'=>'unstick_when_wr',
+								'options'=>array(
+										array(
+											'id'=>'unstick_when_element'.$postfix,
+											'type'=>'select',
+											'options'=>array(
+												'builder_end'=>__( 'Builder Content End','themify' ),
+												'row'=>__( 'Row','themify' ),
+												'module'=>__( 'Module','themify' )
+											),
+											'binding'=>array(
+												'builder_end'=>array(
+													'hide'=>'unstick_opt_wr'
+												),
+												'row'=>array(
+													'show'=>array('unstick_opt_wr','unstick_row'),
+													'hide'=>'unstick_module'
+												),
+												'module'=>array(
+													'show'=>array('unstick_opt_wr','unstick_module'),
+													'hide'=>'unstick_row'
+												)
+											)
+										),
+										array(
+											'type'=>'group',
+											'wrap_class'=>'unstick_opt_wr tf_inline_b',
+											'options'=>array(
+												array(
+													'id'=>'unstick_when_el_row_id'.$postfix,
+													'type'=>'sticky',
+													'wrap_class'=>'unstick_row',
+													'key'=>'row'
+												),
+												array(
+													'id'=>'unstick_when_el_mod_id'.$postfix,
+													'type'=>'sticky',
+													'wrap_class'=>'unstick_module',
+													'key'=>'module'
+												),
+												array(
+													'id'=>'unstick_when_condition'.$postfix,
+													'type'=>'select',
+													'options'=>array(
+														'hits'=>__( 'Hits','themify' ),
+														'passes'=>__( 'Passes','themify' )
+													)
+												),
+												array(
+													'id'=>'unstick_when_pos'.$postfix,
+													'type'=>'select',
+													'options'=>array(
+														'this'=>__( 'This element','themify' ),
+														'top'=>__( 'Viewport Top','themify' ),
+														'bottom'=>__( 'Viewport Bottom','themify' )
+													),
+													'binding'=>array(
+														'this'=>array(
+															'hide'=>'unstick_when_pos_val'.$postfix
+														),
+														'top'=>array(
+															'show'=>'unstick_when_pos_val'.$postfix
+														),
+														'bottom'=>array(
+															'show'=>'unstick_when_pos_val'.$postfix
+														)
+													)
+												),
+												array(
+													'id'=>'unstick_when_pos_val'.$postfix,
+													'type'=>'range',
+													'units'=>array(
+														'px'=>array(
+															'max'=>100000
+														),
+														'%'=>''
+													)
+												)
+											
+										)
+									)
+								)
+							)
+						)
 					)
-				    ),
-				    array(
-					'id' => 'stick_at_position',
-					'type' => 'select',
-					'options' => array(
-					    'top' => __('Top Position', 'themify'),
-					    'bottom' => __('Bottom Position', 'themify')
-					)
-				    ),
-				    array(
-					'id' => 'stick_at_pos_val',
-					'type' => 'range',
-					'units' => array(
-					    'px' => array(
-						'min' => 0,
-						'max' => 1000000
-					    ),
-					    '%' => array(
-						'min' => 0,
-						'max' => 100
-					    )
-					)
-				    )
 				)
-			    ),
-			    array(
-				'type' => 'multi',
-				'wrap_class' => 'stick_middle_wrapper unstick_when_wrapper',
-				'options' => array(
-				    array(
-					'id' => 'unstick_when_check',
-					'type' => 'checkbox',
-					'options' => array(
-					    array('name' => 'unstick_when_check', 'value' => __('Un-stick when', 'themify'))
-					)
-				    ),
-				    array(
-					'id' => 'unstick_when_element',
-					'type' => 'select',
-					'options' => array(
-					    'builder_end' => __('Builder Content End', 'themify'),
-					    'row' => __('Row', 'themify'),
-					    'module' => __('Module', 'themify')
+			);
+		}
+		unset($bp);
+		return apply_filters( 'themify_builder_animation_settings_fields',array(
+			//Animation
+			array(
+				'type'=>'separator',
+				'label'=>__( 'Animation','themify' )
+			),
+			array(
+				'type'=>'multi',
+				'label'=>__( 'Entrance Animation','themify' ),
+				'options'=>array(
+					array(
+						'id'=>'animation_effect',
+						'type'=>'animation_select'
 					),
-					'binding' => array(
-					    'builder_end' => array(
-						'hide' => array('unstick_wrapper_extend_option', 'unstick_when_el_row_select', 'unstick_when_el_module_select')
-					    ),
-					    'row' => array(
-						'show' => array('unstick_wrapper_extend_option', 'unstick_when_el_row_select'),
-						'hide' => array('unstick_when_el_module_select')
-					    ),
-					    'module' => array(
-						'show' => array('unstick_wrapper_extend_option', 'unstick_when_el_module_select'),
-						'hide' => array('unstick_when_el_row_select')
-					    ),
-					    'select' => array(
-						'value' => 'builder_end',
-						'hide' => array('unstick_wrapper_extend_option', 'unstick_when_el_row_select', 'unstick_when_el_module_select')
-					    ),
-					)
-				    ),
-				    array(
-					'id' => 'unstick_when_el_row_id',
-					'type' => 'sticky',
-					'wrap_class' => 'unstick_when_el_row_select',
-					'key' => 'row'
-				    ),
-				    array(
-					'id' => 'unstick_when_el_mod_id',
-					'type' => 'sticky',
-					'wrap_class' => 'unstick_when_el_module_select',
-					'key' => 'module'
-				    ),
-				    array(
-					'id' => 'unstick_when_condition',
-					'type' => 'select',
-					'wrap_class' => 'unstick_wrapper_extend_option',
-					'options' => array(
-					    'hits' => __('Hits', 'themify'),
-					    'passes' => __('Passes', 'themify')
-					)
-				    ),
-				    array(
-					'id' => 'unstick_when_pos',
-					'type' => 'select',
-					'wrap_class' => 'unstick_wrapper_extend_option',
-					'options' => array(
-					    'this' => __('This element', 'themify'),
-					    'top' => __('Top Position', 'themify'),
-					    'bottom' => __('Bottom Position', 'themify')
+					array(
+						'id'=>'animation_effect_delay',
+						'type'=>'number',
+						'after'=>__( 'Delay','themify' ),
+						'step'=>.1
 					),
-					'binding' => array(
-					    'this' => array(
-						'hide' => array('unstick_wrapper_position_unit')
-					    ),
-					    'top' => array(
-						'show' => array('unstick_wrapper_position_unit')
-					    ),
-					    'bottom' => array(
-						'show' => array('unstick_wrapper_position_unit')
-					    )
+					array(
+						'id'=>'animation_effect_repeat',
+						'type'=>'number',
+						'after'=>__( 'Repeat','themify' )
 					)
-				    ),
-				    array(
-					'id' => 'unstick_when_pos_val',
-					'type' => 'range',
-					'wrap_class' => 'unstick_wrapper_position_unit',
-					'units' => array(
-					    'px' => array(
-						'min' => 0,
-						'max' => 100000
-					    ),
-					    '%' => array(
-						'min' => 0,
-						'max' => 100
-					    )
-					)
-				    )
 				)
-			    ),
+			),
+			array(
+				'type'=>'animation_select',
+				'label'=>__( 'Hover Animation','themify' ),
+				'id'=>'hover_animation_effect'
+			),
+			//Float Scrolling
+			array(
+				'type'=>'separator',
+				'label'=>__( 'Scroll Effects','themify' )
+			),
+			array(
+				'type'=>'tabs',
+				'isRadio'=>true,
+				'id'=>'animation_effect_tab',
+				'options'=>array(
+					's_e_m'=>array(
+						'options'=>array(
+							array(
+								'id'=>'motion_effects',
+								'type'=>'accordion',
+								'options'=>array(
+									'v'=>array(
+										'label'=>__( 'Vertical Scroll','themify' ),
+										'options'=>array(
+											array(
+												'id'=>'v_dir',
+												'type'=>'select',
+												'label'=>__( 'Direction','themify' ),
+												'options'=>array(
+													''=>'',
+													'up'=>__( 'Up','themify' ),
+													'down'=>__( 'Down','themify' )
+												),
+												'binding'=>array(
+													'empty'=>array(
+														'hide'=>array('v_speed','v_vp')
+													),
+													'not_empty'=>array(
+														'show'=>array('v_speed','v_vp')
+													)
+												)
+											),
+											array(
+												'id'=>'v_speed',
+												'type'=>'slider_range',
+												'label'=>__( 'Speed','themify' ),
+												'options'=>array(
+													'min'=>1,
+													'max'=>10,
+													'unit'=>'',
+													'range'=>false,
+													'default'=>1
+												)
+											),
+											array(
+												'id'=>'v_vp',
+												'type'=>'slider_range',
+												'label'=>__( 'Viewport','themify' )
+											)
+										)
+									),
+									'h'=>array(
+										'label'=>__( 'Horizontal Scroll','themify' ),
+										'options'=>array(
+											array(
+												'id'=>'h_dir',
+												'type'=>'select',
+												'label'=>__( 'Direction','themify' ),
+												'options'=>array(
+													''=>'',
+													'toleft'=>__( 'To Left','themify' ),
+													'toright'=>__( 'To Right','themify' )
+												),
+												'binding'=>array(
+													'empty'=>array(
+														'hide'=>array('h_speed','h_vp')
+													),
+													'not_empty'=>array(
+														'show'=>array('h_speed','h_vp')
+													)
+												)
+											),
+											array(
+												'id'=>'h_speed',
+												'type'=>'slider_range',
+												'label'=>__( 'Speed','themify' ),
+												'options'=>array(
+													'min'=>1,
+													'max'=>10,
+													'unit'=>'',
+													'range'=>false,
+													'default'=>1
+												)
+											),
+											array(
+												'id'=>'h_vp',
+												'type'=>'slider_range',
+												'label'=>__( 'Viewport','themify' )
+											)
+										)
+									),
+									't'=>array(
+										'label'=>__( 'Transparency','themify' ),
+										'options'=>array(
+											array(
+												'id'=>'t_dir',
+												'type'=>'select',
+												'label'=>__( 'Direction','themify' ),
+												'options'=>array(
+													''=>'',
+													'fadein'=>__( 'Fade In','themify' ),
+													'fadeout'=>__( 'Fade Out','themify' ),
+													'fadeoutin'=>__( 'Fade Out In','themify' ),
+													'fadeinout'=>__( 'Fade In Out','themify' )
+												),
+												'binding'=>array(
+													'empty'=>array(
+														'hide'=>'t_vp'
+													),
+													'not_empty'=>array(
+														'show'=>'t_vp'
+													)
+												)
+											),
+											array(
+												'id'=>'t_vp',
+												'type'=>'slider_range',
+												'label'=>__( 'Viewport','themify' )
+											)
+										)
+									),
+									'b'=>array(
+										'label'=>__( 'Blur','themify' ),
+										'options'=>array(
+											array(
+												'id'=>'b_dir',
+												'type'=>'select',
+												'label'=>__( 'Direction','themify' ),
+												'options'=>array(
+													''=>'',
+													'fadein'=>__( 'Fade In','themify' ),
+													'fadeout'=>__( 'Fade Out','themify' )
+												),
+												'binding'=>array(
+													'empty'=>array(
+														'hide'=>array('b_level','b_vp')
+													),
+													'not_empty'=>array(
+														'show'=>array('b_level','b_vp')
+													)
+												)
+											),
+											array(
+												'id'=>'b_level',
+												'type'=>'slider_range',
+												'label'=>__( 'Level','themify' ),
+												'options'=>array(
+													'min'=>1,
+													'max'=>10,
+													'unit'=>'',
+													'range'=>false,
+													'default'=>1
+												)
+											),
+											array(
+												'id'=>'b_vp',
+												'type'=>'slider_range',
+												'label'=>__( 'Viewport','themify' )
+											),
+										)
+									),
+									'r'=>array(
+										'label'=>__( 'Rotate','themify' ),
+										'options'=>array(
+											array(
+												'id'=>'r_dir',
+												'type'=>'select',
+												'label'=>__( 'Direction','themify' ),
+												'options'=>array(
+													''=>'',
+													'toleft'=>__( 'To Left','themify' ),
+													'toright'=>__( 'To Right','themify' )
+												),
+												'binding'=>array(
+													'empty'=>array(
+														'hide'=>array('r_num','r_origin','r_vp')
+													),
+													'not_empty'=>array(
+														'show'=>array('r_num','r_origin','r_vp')
+													)
+												)
+											),
+											array(
+												'id'=>'r_num',
+												'type'=>'range',
+												'label'=>__( 'Number of Spins','themify' ),
+												'units'=>array(
+													''=>array(
+														'min'=>.05,
+														'increment'=>.1
+													)
+												)
+											),
+											array(
+												'id'=>'r_origin',
+												'type'=>'position_box',
+												'label'=>__( 'Transform Origin','themify' )
+											),
+											array(
+												'id'=>'r_vp',
+												'type'=>'slider_range',
+												'label'=>__( 'Viewport','themify' )
+											),
+										)
+									),
+									's'=>array(
+										'label'=>__( 'Scale','themify' ),
+										'options'=>array(
+											array(
+												'id'=>'s_dir',
+												'type'=>'select',
+												'label'=>__( 'Direction','themify' ),
+												'options'=>array(
+													''=>'',
+													'up'=>__( 'Scale Up','themify' ),
+													'down'=>__( 'Scale Down','themify' )
+												),
+												'binding'=>array(
+													'empty'=>array(
+														'hide'=>array('s_ratio','s_origin','s_vp')
+													),
+													'not_empty'=>array(
+														'show'=>array('s_ratio','s_origin','s_vp')
+													)
+												)
+											),
+											array(
+												'id'=>'s_ratio',
+												'type'=>'range',
+												'label'=>__( 'Scale Ratio','themify' ),
+												'units'=>array(
+													''=>array(
+														'min'=>1,
+														'max'=>30,
+														'increment'=>.1
+													)
+												)
+											),
+											array(
+												'id'=>'s_origin',
+												'type'=>'position_box',
+												'label'=>__( 'Transform Origin','themify' )
+											),
+											array(
+												'id'=>'s_vp',
+												'type'=>'slider_range',
+												'label'=>__( 'Viewport','themify' )
+											)
+										)
+									)
+								)
+							)
+						)
+					),
+					's_e_s'=>array(
+						'options'=>array(
+							array(
+								'type'=>'tabs',
+								'options'=>$sticky
+							)
+						)
+					)
+				)
 			)
-	    ),
-	    )
-	    ),
-	));
-    }
+		) );
+	}
 
     /**
      * Append visibility controls to row/modules.
@@ -1871,17 +1925,17 @@ final class Themify_Builder_Model {
 		'options' => $options,
 		'wrap_class' => 'tb_module_visibility_control'
 	    ),
-	    array(
+        array(
+            'id' => 'visibility_tablet_landscape',
+            'label' => __('Tablet Landscape', 'themify'),
+            'type' => 'toggle_switch',
+            'default' => 'on',
+            'options' => $options,
+            'wrap_class' => 'tb_module_visibility_control'
+        ),
+        array(
 		'id' => 'visibility_tablet',
-		'label' => __('Tablet', 'themify'),
-		'type' => 'toggle_switch',
-		'default' => 'on',
-		'options' => $options,
-		'wrap_class' => 'tb_module_visibility_control'
-	    ),
-	    array(
-		'id' => 'visibility_tablet_landscape',
-		'label' => __('Tablet Landscape', 'themify'),
+		'label' => __('Tablet Portrait', 'themify'),
 		'type' => 'toggle_switch',
 		'default' => 'on',
 		'options' => $options,
@@ -1914,10 +1968,10 @@ final class Themify_Builder_Model {
 		),
 		'binding' => array(
 		    'not_checked' => array(
-			'show' => array('tb_module_visibility_control')
+			'show' => 'tb_module_visibility_control'
 		    ),
 		    'checked' => array(
-			'hide' => array('tb_module_visibility_control')
+			'hide' => 'tb_module_visibility_control'
 		    )
 		),
 		'help' => __('Hide this in all devices', 'themify')
@@ -1949,7 +2003,29 @@ final class Themify_Builder_Model {
 
     public static function get_slider_options() {
 
-	return array(array(
+	return array(
+	    array(
+		'id' => 'effect_slider',
+		'type' => 'select',
+		'options' => array(
+		    'scroll' => __('Slide', 'themify'),
+		    'fade' => __('Fade', 'themify'),
+		    'cube' => __('Cube', 'themify'),
+		    'flip' => __('Flip', 'themify'),
+		    'coverflow' => __('Coverflow', 'themify'),
+		    'continuously' => __('Continuously', 'themify')
+		),
+        'binding' => array(
+            'flip' => array( 'hide' => array( 'visible_opt_slider','tab_visible_opt_slider','mob_visible_opt_slider','scroll_opt_slider' ),'show' =>'auto_scroll_opt_slider'),
+            'fade' => array( 'hide' => array( 'visible_opt_slider','tab_visible_opt_slider','mob_visible_opt_slider','scroll_opt_slider' ),'show' =>'auto_scroll_opt_slider'),
+            'cube' => array( 'hide' => array( 'visible_opt_slider','tab_visible_opt_slider','mob_visible_opt_slider','scroll_opt_slider' ),'show' =>'auto_scroll_opt_slider' ),
+            'coverflow' => array( 'show' => array( 'visible_opt_slider','tab_visible_opt_slider','mob_visible_opt_slider','auto_scroll_opt_slider','scroll_opt_slider' ) ),
+            'scroll' => array( 'show' => array( 'visible_opt_slider','tab_visible_opt_slider','mob_visible_opt_slider','auto_scroll_opt_slider','scroll_opt_slider' ) ),
+            'continuously' => array( 'show' => array( 'visible_opt_slider','tab_visible_opt_slider','mob_visible_opt_slider','scroll_opt_slider' ),'hide' => 'auto_scroll_opt_slider' )
+        ),
+		'after' => __('Effect', 'themify')
+	    ),
+		array(
 		'id' => 'visible_opt_slider',
 		'type' => 'select',
 		'options' => array(1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6, 7 => 7),
@@ -2013,21 +2089,6 @@ final class Themify_Builder_Model {
 		'after' => __('Speed', 'themify')
 	    ),
 	    array(
-		'id' => 'effect_slider',
-		'type' => 'select',
-		'options' => array(
-		    'scroll' => __('Slide', 'themify'),
-		    'fade' => __('Fade', 'themify'),
-		    'crossfade' => __('Cross Fade', 'themify'),
-		    'cover' => __('Cover', 'themify'),
-		    'cover-fade' => __('Cover Fade', 'themify'),
-		    'uncover' => __('Uncover', 'themify'),
-		    'uncover-fade' => __('Uncover Fade', 'themify'),
-		    'continuously' => __('Continuously', 'themify')
-		),
-		'after' => __('Effect', 'themify')
-	    ),
-	    array(
 		'id' => 'pause_on_hover_slider',
 		'type' => 'toggle_switch',
 		'options' => array(
@@ -2065,11 +2126,11 @@ final class Themify_Builder_Model {
 		'options' => 'simple',
 		'binding' => array(
 		    'no' => array(
-			'hide' => array('show_arrow_buttons_vertical')
+			'hide' => 'show_arrow_buttons_vertical'
 		    ),
 		    'select' => array(
 			'value' => 'no',
-			'show' => array('show_arrow_buttons_vertical')
+			'show' => 'show_arrow_buttons_vertical'
 		    )
 		),
 		'default' => 'on',
@@ -2202,4 +2263,179 @@ final class Themify_Builder_Model {
 	    );
 	}
     }
+    
+    public static function get_popular_devices( $device = 'all' ) {
+	    $result = array();
+	    if ( 'all' === $device || 'mobile' === $device ) {
+		    $result['mobile'] = array(
+			    __( 'iPhone 7 Plus', 'themify' ) => array( 414, 736 ),
+			    __( 'iPhone XR', 'themify' ) => array( 414, 896 ),
+			    __( 'iPhone XS', 'themify' ) => array( 375, 812 ),
+			    __( 'iPhone 8', 'themify' ) => array( 375, 667 ),
+			    __( 'Galaxy S9+', 'themify' ) => array( 412, 846 ),
+			    __( 'Galaxy S8+', 'themify' ) => array( 360, 740 ),
+			    __( 'Galaxy S7', 'themify' ) => array( 360, 640 ),
+			    __( 'Huawei P20', 'themify' ) => array( 360, 748 ),
+			    __( 'Huawei P10', 'themify' ) => array( 360, 640 ),
+		    );
+	    }
+	    if ( 'all' === $device || 'tablet' === $device ) {
+		    $result['tablet'] = array(
+			    __( 'iPad Air', 'themify' ) => array( 768, 1024 ),
+			    __( 'Nexus 9', 'themify' ) => array( 768, 1024 ),
+			    __( 'iPad Mini', 'themify' ) => array( 768, 1024 ),
+			    __( 'Galaxy Tab 10', 'themify' ) => array( 800, 1280 ),
+			    __( 'iPad Pro', 'themify' ) => array( 1024, 1366 ),
+		    );
+	    }
+	    return $result;
+    }
+	
+	
+    public static function load_appearance_css($data){
+		if($data!=='' && $data!='bordered' && $data!=='circle'){
+			$data = explode(' ',$data);
+			if(!empty($data)){
+				foreach($data as $v){
+					$v=trim($v);
+					if($v==='shadow' || $v==='rounded' || $v==='gradient' || $v==='glossy'|| $v==='embossed'){
+						$key='tb_'.$v;
+						themify_enque_style($key,THEMIFY_BUILDER_CSS_MODULES.'appearance/'.$v.'.css',null,THEMIFY_VERSION);
+						Themify_Enqueue_Assets::addLocalization('done',$key,true);
+					}
+				}
+			}
+		}
+    }
+	
+    public static function load_color_css($color){
+	if($color!='' && $color!=='transparent' && $color!=='white' && $color!=='outline' && Themify_Builder::$frontedit_active===false){
+		if($color==='default'){
+			$color='tb_default_color';
+		}
+	    $key='tb_'.$color;
+	    themify_enque_style($key,THEMIFY_BUILDER_CSS_MODULES.'colors/'.$color.'.css',null,THEMIFY_VERSION);
+	    Themify_Enqueue_Assets::addLocalization('done',$key,true);
+	}
+    }
+    
+    public static function load_module_self_style($slug,$css,$alter_url=false){
+		if(Themify_Builder::$frontedit_active===false){
+		    $key='tb_'.$slug.'_'.str_replace('/','_',$css);
+		    if($alter_url===false){
+			    $alter_url=THEMIFY_BUILDER_CSS_MODULES.$slug.'_styles/'.$css;
+		    }
+		    self::loadCssModules($key,$alter_url.'.css',THEMIFY_VERSION);
+		}
+    }
+    
+    public static function loadCssModules($key,$url,$v,$media='all'){
+	themify_enque_style($key,$url,null,$v,$media);
+	Themify_Enqueue_Assets::addLocalization('done',$key,true);
+    }
+    
+    public static function getTranslate($data){//need later
+	
+    }
+    
+    public static function get_images_from_gallery_shortcode($shortcode){//deprecated from 2020.06.02,instead of use themify_get_gallery_shortcode 
+	return themify_get_gallery_shortcode($shortcode);
+    }
+	
+		
+	public static function check_plugins_compatible(){//check compatible of plugins
+
+		if(isset($_GET['page']) && $_GET['page']==='themify-license'){
+			return;
+		}
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+		$plugins=get_plugins();
+		$plugin_root = WP_PLUGIN_DIR;
+		$needUpdate=false;
+		$hasUpdater=null;
+		$updaterUrl=null;
+		$_messages=array();
+		$fw=THEMIFY_VERSION;
+		$dependceFW=array('announcement-bar','themify-audio-dock','themify-builder-pro','themify-icons','themify-shortcodes','themify-popup','themify-portfolio-post','themify-event-post','themify-store-locator','themify-tiles');
+		foreach($plugins as $k=>&$p){
+			if(isset($p['Author']) && $p['Author']==='Themify'){
+				$slug=dirname($k);
+				if(strpos($slug,'builder-')===0 || $slug==='themify-updater' || in_array($slug,$dependceFW,true)){
+					if($slug==='themify-updater'){
+						if($hasUpdater===null){
+							$hasUpdater=is_plugin_active($k);
+							$updaterUrl=$k;
+						}
+					}
+					else{
+						if(!isset($p['Compatibility'])){
+							$data = get_file_data($plugin_root.'/'.$k, array('v'=>'Compatibility'),false);
+							$v=$p['Compatibility']=$data['v'];
+							$needUpdate=true;
+						}
+						else{
+							$v=$p['Compatibility'];
+						}
+						$up = '';
+						if (
+							! $v // Compatibility header missing, plugin is older than FW 5.0.0 update
+						) {
+							$up = 'plugin';
+						} else {
+							if ( $v
+								&& version_compare( $v, $fw, '>' ) // plugin requires a higher version of FW
+							) {
+								$up = 'theme';
+							}
+						}
+						if( $up !== '' ) {
+							if(!isset($_messages[$up])){
+								$_messages[$up]=array();
+							}
+							$_messages[$up][]=$p['Name'];
+						}
+					}
+				}
+			}
+		}
+		if($needUpdate===true){
+			wp_cache_set( 'plugins', $plugins, 'plugins' );
+		}
+		if($hasUpdater===false &&  $updaterUrl!==null && !empty($_GET['tf-activate-updater'])){
+			$tab=!empty($_messages['theme'])?1:2;
+			$hasUpdater=activate_plugins($updaterUrl,add_query_arg(array('page'=>'themify-license','promotion'=>$tab),admin_url()));
+		}
+		unset($needUpdate,$plugins,$dependceFW);
+
+		if(!empty($_messages)){
+			foreach($_messages as $k=>$msg):?>	
+				<div class="notice notice-error tf_compatible_erros tf_<?php echo $k?>_erros">
+					<p><strong><?php echo $k==='plugin'?__('The following plugin(s) are not compatible with the activated theme. Please update your plugins:','themify'):__('Please update your theme. The activated theme is incompatible with the following plugin(s):','themify');?></strong></p>
+					<p><?php echo implode(', ',$msg); ?></p>
+					<p>
+					<?php if($hasUpdater===true):?>
+						<?php $tab=$k==='plugin'?2:1;?>
+						<a role="button" class="button button-primary" href="<?php echo add_query_arg(array('page'=>'themify-license','promotion'=>$tab),admin_url())?>"><?php _e('Update them','themify')?></a>
+					<?php elseif($hasUpdater===false):?>
+						<?php printf(__('%s','themify'),'<a role="button" class="button" href="'.add_query_arg(array('tf-activate-updater'=>1)).'">'.__('Activate Themify Updater','themify').'</a>')?></a>	
+					<?php else:?>
+						<?php printf(__('Install %s plugin to auto update them.','themify'),'<a href="'.add_query_arg(array('page'=>'themify-install-plugins'),admin_url('admin.php')).'">'.__('Themify Updater','themify').'</a>')?></a>
+					<?php endif;?>
+					</p>
+				</div>
+			<?php
+			endforeach;
+		}
+	}
+
+    public static function get_heading_tags(){//check compatible of plugins
+        $options = array();
+        for($i=1;$i<=6;$i++){
+            $options['h'.$i]='H'.$i;
+        }
+        return $options;
+    }
+	
 }

@@ -1,5 +1,7 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
 class Themify_Builder_Component_Row extends Themify_Builder_Component_Base {
 
     public function get_name() {
@@ -65,7 +67,7 @@ class Themify_Builder_Component_Row extends Themify_Builder_Component_Base {
 				$selector .= ':not(.module-title)';
 			}
 			$heading = array_merge( $heading, array(
-				self::get_expand( sprintf( __( 'Heading %s Font', 'themify' ), $i ), array(
+				self::get_expand($h.'_f', array(
 					self::get_tab( array(
 						'n' => array(
 							'options' => array(
@@ -118,9 +120,7 @@ class Themify_Builder_Component_Row extends Themify_Builder_Component_Base {
 	    ),
 	    'styling' => array(
 		'options' => $styles
-	    ),
-	    'visibility' => true,
-	    'animation' => true
+	    )
 	);
 	return apply_filters( 'themify_builder_row_lightbox_form_settings', $row_form_settings );
     }
@@ -136,6 +136,7 @@ class Themify_Builder_Component_Row extends Themify_Builder_Component_Base {
      * @return string
      */
     public static function template($rows, $row, $builder_id, $echo = false) {
+		$row = apply_filters( 'tf_builder_row', $row, $builder_id );
         // prevent empty rows from being rendered
 	global $ThemifyBuilder;
 	if(Themify_Builder::$frontedit_active===false || $ThemifyBuilder->in_the_loop===true){
@@ -154,75 +155,59 @@ class Themify_Builder_Component_Row extends Themify_Builder_Component_Base {
 	    $count=0;
 	}
 	$row['row_order'] = isset($row['row_order']) ? $row['row_order'] : '';
-	$row_classes = array('themify_builder_row module_row', 'clearfix');
+	$row_classes = array('module_row themify_builder_row');
 	$row_attributes = array();
 	$is_styling = !empty($row['styling']);
 	$video_data = '';
 	if ($is_styling===true) {
 	    // @backward-compatibility
 	    if (!isset($row['styling']['background_type']) && !empty($row['styling']['background_video'])) {
-		$row['styling']['background_type'] = 'video';
+			$row['styling']['background_type'] = 'video';
 		} elseif ( ( empty($row['styling']['background_type']) || (isset($row['styling']['background_type']) && $row['styling']['background_type'] === 'image' )) && isset($row['styling']['background_zoom']) && $row['styling']['background_zoom'] === 'zoom' && $row['styling']['background_repeat'] === 'repeat-none') {
-		$row_classes[] = 'themify-bg-zoom';
+			$row_classes[] = 'themify-bg-zoom';
 	    }
-	    $class_fields = array('custom_css_row', 'background_repeat', 'animation_effect', 'row_height', 'hover_animation_effect','animation_effect_delay','animation_effect_repeat');
-	    $is_active = Themify_Builder::$frontedit_active===false && Themify_Builder_Model::is_animation_active();
+	    $class_fields = array('custom_css_row', 'background_repeat',  'row_height');
 	    foreach ($class_fields as $field) {
-		if (!empty($row['styling'][$field])) {
-		    if ('animation_effect' === $field || 'hover_animation_effect' === $field || 'animation_effect_delay' === $field || 'animation_effect_repeat' === $field) {
-			if($is_active===true){
-			    if('animation_effect' === $field){
-					$row_classes[] = 'wow';
-					$row_classes[] = $row['styling'][$field];
-			    }
-			    else if('animation_effect_delay' === $field){
-					if(!empty($row['styling']['animation_effect'])){
-						$row_classes[] = 'animation_effect_delay_' . $row['styling'][$field];
-					}
-			    }
-			    else if('animation_effect_repeat' === $field){
-					if(!empty($row['styling']['animation_effect'])){
-						$row_classes[] = 'animation_effect_repeat_' . $row['styling'][$field];
-					}
-			    }
-			    else{
-					$row_classes[] = 'hover-wow hover-animation-' . $row['styling'][$field];
-			    }
-			}
-		    } else {
+			if (!empty($row['styling'][$field])) {
 				$row_classes[] = $row['styling'][$field];
-		    }
-		}
+			}
 	    }
+		if(in_array('builder-parallax-scrolling',$row_classes,true)){
+			Themify_Enqueue_Assets::addPrefetchJs(THEMIFY_BUILDER_JS_MODULES.'parallax.js',THEMIFY_VERSION);
+		}
 	    $class_fields=null;
 	    /**
 	     * Row Width class
 	     * To provide backward compatibility, the CSS classname and the option label do not match. See #5284
 	     */
 	    if (isset($row['styling']['row_width'])) {
-		if ('fullwidth' === $row['styling']['row_width']) {
-		    $row_classes[] = 'fullwidth_row_container';
-		} elseif ('fullwidth-content' === $row['styling']['row_width']) {
-		    $row_classes[] = 'fullwidth';
-		}
-		$breakpoints = themify_get_breakpoints(null, true);
-		$breakpoints['desktop'] = 1;
-		$prop = 'fullwidth' === $row['styling']['row_width'] ? 'padding' : 'margin';
-		foreach ($breakpoints as $k => $v) {
-		    $styles = $k === 'desktop' ? $row['styling'] : (!empty($row['styling']['breakpoint_' . $k]) ? $row['styling']['breakpoint_' . $k] : false);
-		    if ($styles) {
-				$val = self::getDataValue($styles, $prop);
-				if ($val) {
-					$row_attributes['data-' . $k . '-' . $prop] = $val;
+			if ('fullwidth' === $row['styling']['row_width']) {
+				$row_classes[] = 'fullwidth_row_container';
+			} elseif ('fullwidth-content' === $row['styling']['row_width']) {
+				$row_classes[] = 'fullwidth';
+			}
+			$breakpoints = themify_get_breakpoints(null, true);
+			$breakpoints['desktop'] = 1;
+			$prop = 'fullwidth' === $row['styling']['row_width'] ? 'padding' : 'margin';
+			foreach ($breakpoints as $k => $v) {
+				$styles = $k === 'desktop' ? $row['styling'] : (!empty($row['styling']['breakpoint_' . $k]) ? $row['styling']['breakpoint_' . $k] : false);
+				if ($styles) {
+					$val = self::getDataValue($styles, $prop);
+					if ($val) {
+						$row_attributes['data-' . $k . '-' . $prop] = $val;
+					}
 				}
-		    }
-		}
-		$breakpoints=null;
+			}
+			$breakpoints=null;
 	    }
 	    // background video
-	    $video_data = ' '.self::get_video_background($row['styling']);
+	    $video_data = self::get_video_background($row['styling']);
+		if($video_data!==''){
+			$video_data=' '.$video_data;
+		}
 	    // Class for Scroll Highlight
-	    if (!empty($row['styling']['row_anchor'])) {
+	    if (!empty($row['styling']['row_anchor']) && $row['styling']['row_anchor']!=='#') {
+			$row_classes[] = 'tb_has_section';
 			$row_classes[] = 'tb_section-' . $row['styling']['row_anchor'];
 			$row_attributes['data-anchor'] = $row['styling']['row_anchor'];
 	    }
@@ -234,16 +219,15 @@ class Themify_Builder_Component_Row extends Themify_Builder_Component_Base {
 		    $row_classes = Themify_Global_Styles::add_class_to_components( $row_classes, $row['styling'],$builder_id);
 		}
 	}
-
+	else{
+	    $row['styling']=array();
+	}
 	if (!$echo) {
 	    $output = PHP_EOL; // add line break
 	    ob_start();
 	}
 	if (Themify_Builder::$frontedit_active===false) {
 	    $row_content_classes = array();
-	    if($row['row_order']!==''){
-		$row_classes[] = 'module_row_' . $row['row_order'] . ' themify_builder_' . $builder_id . '_row module_row_' . $builder_id . '-' . $row['row_order'];
-	    }
 	    // Set column alignment
 	    $row_content_classes[] = !empty($row['column_alignment']) ? $row['column_alignment'] : (function_exists('themify_theme_is_fullpage_scroll') && themify_theme_is_fullpage_scroll() ? 'col_align_middle' : 'col_align_top');
 	    if (!empty($row['gutter']) && $row['gutter'] !== 'gutter-default') {
@@ -278,22 +262,32 @@ class Themify_Builder_Component_Row extends Themify_Builder_Component_Base {
 	    }
 	    $row_content_classes = implode(' ', $row_content_classes);
 	    if (isset($row['element_id'])) {
-		$row_classes[] = 'tb_'.$row['element_id'];
-	    }
+			if(isset($row['styling']['row_width']) && ('fullwidth'===$row['styling']['row_width'] || 'fullwidth-content' === $row['styling']['row_width'])){
+				$row_attributes['data-css_id']=$row['element_id'];
+			}
+			$row_classes[] = 'tb_'.$row['element_id'];
+	    }	
 	    if($is_styling===true){
-		$row_attributes = self::sticky_element_props($row_attributes,$row['styling']);
+			$row_attributes = self::sticky_element_props($row_attributes,$row['styling']);
 	    }
+		$row_attributes['data-lazy']=1;
+		static $done=false;
+		if($done===false){//need for lazy loadd, load first row bg image
+			$row_classes[]='tb_first';
+			$done=true;
+		}
 	}
-	$row_classes = apply_filters('themify_builder_row_classes', $row_classes, $row, $builder_id);
-	$row_attributes['class'] = implode(' ', $row_classes);
-	$row_classes=null;
-	$row_attributes = apply_filters('themify_builder_row_attributes', $row_attributes, $is_styling===true ? $row['styling'] : array(), $builder_id);
 	do_action('themify_builder_row_start', $builder_id, $row, $row['row_order']);
+	$row_classes[]='tf_clearfix';
+	$row_attributes['class'] = implode(' ', apply_filters('themify_builder_row_classes', $row_classes, $row, $builder_id));
+	$row_classes=null;
+	$row_attributes = apply_filters('themify_builder_row_attributes', self::parse_animation_effect($row['styling'],$row_attributes), $row['styling'], $builder_id);
+
 
 	echo (strpos($row_attributes['class'], 'tb-page-break') !== false) ? '<!-- tb_page_break -->' : '';
 	?>
 	<!-- module_row -->
-	<div <?php echo $video_data, self::get_element_attributes($row_attributes); ?>>
+	<div <?php echo self::get_element_attributes($row_attributes),$video_data; ?>>
 	    <?php
 	    $row_attributes=$video_data=null;
 	    if ($is_styling===true) {
@@ -301,7 +295,7 @@ class Themify_Builder_Component_Row extends Themify_Builder_Component_Base {
 			self::background_styling($row, 'row',$builder_id);
 	    }
 	    ?>
-	    <div class="row_inner<?php if (Themify_Builder::$frontedit_active===false): ?> <?php echo $row_content_classes ?><?php $row_content_classes=null;endif; ?>" <?php if (!empty($row_content_attr)): ?> <?php echo self::get_element_attributes($row_content_attr); ?><?php $row_content_attr=null;endif; ?>>
+		<div class="row_inner<?php if (Themify_Builder::$frontedit_active===false): ?> <?php echo $row_content_classes ?><?php $row_content_classes=null;endif; ?> tf_box tf_w tf_rel"<?php if (!empty($row_content_attr)){ echo ' ',self::get_element_attributes($row_content_attr);$row_content_attr=null;}?>>
 		<?php
 		if ($count > 0) {
 		    foreach ($row['cols'] as $cols => $col) {

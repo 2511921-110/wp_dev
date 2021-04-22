@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Video
  * Description: Display Video content
@@ -17,11 +17,20 @@ class TB_Video_Module extends Themify_Builder_Component_Module {
 	    'slug' => 'video'
 	));
     }
-
+    
+    public function get_icon(){
+	return 'video-clapper';
+    }
+    
     public function get_title($module) {
 	return isset($module['mod_settings']['title_video']) ? esc_html($module['mod_settings']['title_video']) : '';
     }
-
+	
+	public function get_assets() {
+		return array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+    }
     public function get_options() {
 	return array(
 	    array(
@@ -42,7 +51,7 @@ class TB_Video_Module extends Themify_Builder_Component_Module {
 	    ),
 	    array(
 		'id' => 'url_video',
-		'type' => 'url',
+		'type' => 'video',
 		'label' => __('Video URL', 'themify'),
 		'class' => 'fullwidth',
 		'help' =>__('YouTube, Vimeo, etc. video <a href="https://themify.me/docs/video-embeds" target="_blank">embed link</a>', 'themify')
@@ -53,8 +62,8 @@ class TB_Video_Module extends Themify_Builder_Component_Module {
 		'label' => __('Autoplay', 'themify'),
 			'options' => 'simple',
 			'binding' => array(
-				'checked'     => array( 'show' => array( 'autoplay_text' ) ),
-				'not_checked' => array( 'hide' => array( 'autoplay_text' ) ),
+				'checked'     => array( 'show' =>  'autoplay_text' ),
+				'not_checked' => array( 'hide' =>'autoplay_text'),
 			)
 		),
 		array(
@@ -123,7 +132,14 @@ class TB_Video_Module extends Themify_Builder_Component_Module {
 		    )
 		)
 	    ),
-	    array(
+        array(
+            'id' => 'title_tag',
+            'type' => 'select',
+            'label' => __('Video Title Tag', 'themify'),
+            'h_tags' => true,
+            'default' => 'h3'
+        ),
+        array(
 		'id' => 'title_video',
 		'type' => 'text',
 		'label' => self::$texts['title_video'],
@@ -154,7 +170,7 @@ class TB_Video_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
 			'url_video' => 'https://www.youtube.com/watch?v=FPPce2D8pYI',
 			'mute_video' => 'no'
@@ -291,6 +307,21 @@ class TB_Video_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Width
+		self::get_expand('w', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_width('', 'w')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_width('', 'w', 'h')
+					)
+				)
+			))
+		)),
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -330,6 +361,8 @@ class TB_Video_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 
 	$video_title = array(
@@ -405,6 +438,99 @@ class TB_Video_Module extends Themify_Builder_Component_Module {
 	    ))
 	);
 
+	$overlay_image = array(
+	    // Background
+	    self::get_expand('bg', array(
+			self::get_tab(array(
+				'n' => array(
+				'options' => array(
+					self::get_color(' .tb_video_overlay', 'b_c_i_o', __('Background Color', 'themify'), 'background-color')
+				)
+				),
+				'h' => array(
+				'options' => array(
+					self::get_color(' .tb_video_overlay:hover', 'b_c_o_i_h', __('Background Color', 'themify'), 'background-color')
+				)
+				)
+			))
+		)),
+	    // Border
+	    self::get_expand('b', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_border(' .tb_video_overlay', 'b_o_i')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_border(' .tb_video_overlay', 'b_o_i', 'h')
+					)
+				)
+			))
+	    )),
+	    // Padding
+	    self::get_expand('p', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_padding(' .tb_video_overlay', 'p_o_i')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_padding(' .tb_video_overlay', 'p_o_i', 'h')
+					)
+				)
+			))
+	    )),
+	    // Margin
+	    self::get_expand('m', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_margin(' .tb_video_overlay', 'm_o_i')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_margin(' .tb_video_overlay', 'm_o_i', 'h')
+					)
+				)
+			))
+	    )),
+		// Rounded Corners
+		self::get_expand('r_c', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_border_radius(' .tb_video_overlay', 'r_c_o_i')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_border_radius(' .tb_video_overlay', 'r_c_o_i', 'h')
+					)
+				)
+			))
+		)),
+		// Shadow
+		self::get_expand('sh', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_box_shadow(' .tb_video_overlay', 'b_sh_o_i')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_box_shadow(' .tb_video_overlay', 'b_sh_o_i', 'h')
+					)
+				)
+			))
+		))
+	);
+
 	return array(
 	    'type' => 'tabs',
 	    'options' => array(
@@ -421,36 +547,13 @@ class TB_Video_Module extends Themify_Builder_Component_Module {
 		'c' => array(
 		    'label' => __('Video Caption', 'themify'),
 		    'options' => $video_caption
+		),
+		'oi' => array(
+		    'label' => __('Overlay Image', 'themify'),
+		    'options' => $overlay_image
 		)
 	    )
 	);
-    }
-
-    public static function autoplay_callback($match) {
-	return str_replace($match[1], add_query_arg('autoplay', 1, $match[1]), $match[0]);
-    }
-
-	public static function muted_callback( $match ) {
-		return str_replace( $match[1], add_query_arg( 'mute', 1, $match[1] ), $match[0] );
-	}
-
-	public static function modify_youtube_embed_url( $html, $url, $args ) {
-		$parse_url = parse_url( $url );
-		if ( !empty( $parse_url['query'] ) || !empty( $parse_url['fragment'] ) ) {
-			$parse_url['host'] = str_replace( 'www.', '', $parse_url['host'] );
-			$query = !empty( $parse_url['query'] ) ? $parse_url['query'] : false;
-			$query .= !empty( $parse_url['fragment'] ) ? $parse_url['fragment'] : '';
-			if ( trim( $parse_url['path'], '/' ) !== 'playlist' && ( $parse_url['host'] === 'youtu.be' || $parse_url['host'] === 'youtube.com' ) ) {
-				$query = preg_replace( '@v=([^"&]*)@', '', $query );
-				$query = str_replace( '&038;', '&', $query );
-				$query = empty($query) ? '?' : '&'.$query;
-				return $query ? preg_replace( '@embed/([^"&]*)@', 'embed/$1' . $query, $html ) : $html;
-			} elseif ( $parse_url['host'] === 'vimeo.com' ) {
-				$query = str_replace( '&038;', '&', $query );
-				return $query ? preg_replace( '@video/([^"&]*)@', 'video/$1?' . $query, $html ) : $html;
-			}
-		}
-	return $html;
     }
 
 }

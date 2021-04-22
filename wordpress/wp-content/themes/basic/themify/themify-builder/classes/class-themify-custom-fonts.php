@@ -43,14 +43,14 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 		 *
 		 * @access public
 		 */
-		public function __construct() {
+		public static function init() {
 			self::$api_url = site_url( '/?tb_load_cf=' );
 			self::load_fonts_api();
 			self::register_cpt();
 			if ( is_admin() ) {
 				add_filter( 'themify_metaboxes', array( __CLASS__, 'meta_box' ) );
 				add_filter( 'themify_metabox/fields/tm-cf', array( __CLASS__, 'meta_box_fields' ), 10, 2 );
-				add_filter( 'upload_mimes', array( __CLASS__, 'upload_mimes' ), 1, 1 );
+				add_filter( 'upload_mimes', array( __CLASS__, 'upload_mimes' ), 99, 1 );
 				add_action( 'admin_head', array( __CLASS__, 'clean_admin_listing_page' ) );
 			}else{
 				add_action( 'wp_enqueue_scripts', array(__CLASS__,'enqueue_custom_fonts'),30 );
@@ -113,6 +113,15 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 				'name' => __( 'Font Variations', 'themify' ),
 				'id' => 'tm-cf',
 				'options' => array(
+					array(
+						'name' => 'custom_fonts_notice',
+						'title' => '',
+						'description' => '',
+						'type' => 'separator',
+						'meta' => array(
+						'html' => '<div class="themify-info-link">' . __('To add custom fonts: select the font weight/style and upload the font files accordingly. You don\'t need to upload all formats. The common support format is .ttf or .woff (just upload either .tff or .woff file is fine, depending on the font files you have). The custom fonts will appear on Builder and Customizer font select.', 'themify') . '</div>'
+						),
+					),
 					array(
 						'name' => 'variations',
 						'type' => 'repeater',
@@ -198,7 +207,7 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 			$ext = array(
 				'woff' => 'application/x-font-woff',
 				'woff2' => 'application/x-font-woff2',
-				'ttf' => 'application/x-font-ttf',
+				'ttf' => 'font/sfnt',
 				'svg' => 'image/svg+xml',
 				'eot' => 'application/x-font-eot'
 			);
@@ -288,7 +297,7 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 		 * Returns a list of variants
 		 * @return array
 		 */
-		public static function get_variants( $variants ) {
+		private static function get_variants( $variants ) {
 			$vars = array();
 			if ( !empty( $variants ) && is_array( $variants ) ) {
 				foreach ( $variants as $var ) {
@@ -305,7 +314,7 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 		 * @param array $args arguments of get posts
 		 * @return array
 		 */
-		public static function get_posts( $args = array() ) {
+		private static function get_posts( $args = array() ) {
 			$limit = empty( $args['limit'] ) ? 10 : $args['limit'];
 			$post_names = empty( $args['post_names'] ) ? array() : $args['post_names'];
 			$cf_posts = array();
@@ -319,6 +328,7 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 				'post_name__in' => $post_names
 			);
 			$posts = get_posts( $posts_args );
+			unset($posts_args);
 			if ( $posts ) {
 				foreach ( $posts as $post ) {
 					setup_postdata( $post );
@@ -343,7 +353,7 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 		 *
 		 * @return void
 		 */
-		public static function load_fonts_api() {
+		private static function load_fonts_api() {
 			if ( ! empty( $_GET['tb_load_cf'] ) ) {
 				header( 'Content-Type: text/css' );
 				header( 'Expires: 0' );
@@ -363,9 +373,8 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 		 * @return string Generated CSS code to load the fonts
 		 */
 		public static function load_fonts( $post_id ) {
-			$fonts = explode( '|', Themify_Custom_Fonts::get_fonts( $post_id ) );
-			$font_css = self::get_font_face_css( $fonts );
-			return $font_css;
+			$fonts = explode( '|', self::get_fonts( $post_id ) );
+			return self::get_font_face_css( $fonts );
 		}
 
 		/**
@@ -374,16 +383,19 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 		 * @param array $fonts
 		 * @return string
 		 */
-		public static function get_font_face_css( $fonts ) {
+		private static function get_font_face_css( $fonts ) {
 			$font_css = '';
 			$api_fonts = array();
 
 			foreach ( $fonts as $font ) {
-				$font = explode( ':', $font );
-				$font_family = $font[0];
-				$variations = empty( $font[1] ) ? array() : explode( ',', $font[1] );
-				$api_fonts[ $font_family ] = $variations;
+				if(!empty($font)){
+					$font = explode( ':', $font );
+					$font_family = $font[0];
+					$variations = empty( $font[1] ) ? array() : explode( ',', $font[1] );
+					$api_fonts[ $font_family ] = $variations;
+				}
 			}
+			unset($fonts);
 			if ( !empty( $api_fonts ) ) {
 				$cf_fonts = self::get_posts( array( 'post_names' => array_keys( $api_fonts ), 'limit' => -1 ) );
 				if ( !empty( $cf_fonts ) ) {
@@ -391,13 +403,14 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 						if ( empty( $cf_fonts[ $font_family ] ) ) {
 							continue;
 						}
-						$variations = empty( $variations ) ? $cf_fonts[ $font_family ]['variants'] : $variations;
+						if(empty( $variations ) ){
+							$variations = $cf_fonts[ $font_family ]['variants'];
+						}
 						foreach ( $variations as $var ) {
-							foreach ( $cf_fonts[ $font_family ]['data'] as $K => $v ) {
+							foreach ( $cf_fonts[ $font_family ]['data'] as $k => $v ) {
 								if ( $v['weight'] === $var ) {
-									$font_css .= self::get_font_face_from_data( $font_family, $cf_fonts[ $font_family ]['data'][ $K ] ) . PHP_EOL;
-									unset( $cf_fonts[ $font_family ]['data'][ $K ] );
-									break;
+									$font_css .= self::get_font_face_from_data( $font_family, $cf_fonts[ $font_family ]['data'][ $k ] ) . PHP_EOL;
+									unset( $cf_fonts[ $font_family ]['data'][ $k ] );
 								}
 							}
 						}
@@ -415,10 +428,10 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 		 * @param array $data variations data
 		 * @return string
 		 */
-		public static function get_font_face_from_data( $font_family, $data ) {
+		private static function get_font_face_from_data( $font_family, $data ) {
 			$font_face = '';
 			$src = array();
-			$types = array( 'eot', 'woff2', 'woff', 'ttf', 'svg' );
+			$types = array('woff2', 'woff','eot', 'ttf', 'svg' );
 			foreach ( $types as $type ) {
 				if ( empty( $data[ $type ] ) ) {
 					continue;
@@ -432,16 +445,17 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 			if ( empty( $src ) ) {
 				return $font_face;
 			}
-			$font_face = '@font-face {' . PHP_EOL;
-			$font_face .= "\tfont-family: '" . $font_family . "';" . PHP_EOL;
-			$font_face .= "\tfont-style: " . $data['style'] . ';' . PHP_EOL;
-			$font_face .= "\tfont-weight: " . $data['weight'] . ';' . PHP_EOL;
+			$font_face = '@font-face{' . PHP_EOL;
+			$font_face .= "\tfont-family:'" . $font_family . "';" . PHP_EOL;
+			$font_face .= "\tfont-style:" . $data['style'] . ';' . PHP_EOL;
+			$font_face .= "\tfont-weight:" . $data['weight'] . ';' . PHP_EOL;
+			$font_face .= "\tfont-display:swap;". PHP_EOL;
 
 			if ( !empty( $data['eot'] ) ) {
-				$font_face .= "\tsrc: url('" . esc_attr( $data['eot'] ) . "');" . PHP_EOL;
+				$font_face .= "\tsrc:url('" . esc_attr( $data['eot'] ) . "');" . PHP_EOL;
 			}
 
-			$font_face .= "\tsrc: " . implode( ',' . PHP_EOL . "\t\t", $src ) . ';' . PHP_EOL . '}';
+			$font_face .= "\tsrc:" . implode( ',' . PHP_EOL . "\t\t", $src ) . PHP_EOL . '}';
 
 			return $font_face;
 		}
@@ -453,7 +467,7 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 		 * @param string $url font file url
 		 * @return string
 		 */
-		public static function get_font_src_per_type( $type, $url ) {
+		private static function get_font_src_per_type( $type, $url ) {
 			$src = 'url(\'' . esc_attr( $url ) . '\') ';
 			switch ( $type ) {
 				case 'woff':
@@ -468,7 +482,6 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 					$src = 'url(\'' . esc_attr( $url ) . '?#iefix\') format(\'embedded-opentype\')';
 					break;
 			}
-
 			return $src;
 		}
 
@@ -477,20 +490,13 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 		 */
 		public static function get_fonts( $post_id = null ) {
 			$entry_cf_fonts = get_option( 'themify_builder_cf_fonts' );
-			$cf_fonts = array();
 			if ( !empty( $entry_cf_fonts ) && is_array( $entry_cf_fonts ) ) {
 				$entry_id = $post_id ? $post_id : Themify_Builder_Model::get_ID();
 				if ( isset( $entry_cf_fonts[ $entry_id ] ) ) {
-					$fonts = explode( '|', $entry_cf_fonts[ $entry_id ] );
-					foreach ( $fonts as $font ) {
-						if ( !empty( $font ) && !in_array( $font, Themify_Builder_Stylesheet::$isLoadedFonts, true ) ) {
-							$cf_fonts[] = $font;
-							Themify_Builder_Stylesheet::$isLoadedFonts[] = $font;
-						}
-					}
+				    return $entry_cf_fonts[ $entry_id ];
 				}
 			}
-			return implode( '|', $cf_fonts );
+			return false;
 		}
 
 		/**
@@ -504,6 +510,7 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 				themify_enque_style( 'themify-custom-fonts', $path,null,null,null,true );
 			}
 		}
+
 		public static function get_cf_fonts_url(array $fonts=array()){
 			$res = array();
 			static $isLoaded=array();
@@ -513,7 +520,8 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 						reset the delimiter between font name and first variant */
 					$font=preg_replace( '/,/', ':', str_replace( ':', ',', $font ), 1 );
 					if(!in_array($font,$isLoaded,true)){
-						$res[ $key ] = $font;
+					    $isLoaded[]=$font;
+					    $res[ $key ] = $font;
 					}
 				}
 			}
@@ -522,5 +530,6 @@ if ( !class_exists( 'Themify_Custom_Fonts' ) ) {
 			}
 			return false;
 		}
+
 	}
 }

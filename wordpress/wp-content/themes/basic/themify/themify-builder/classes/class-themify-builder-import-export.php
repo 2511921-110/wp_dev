@@ -20,22 +20,22 @@
  * @subpackage Themify_Builder/classes
  * @author     Themify
  */
-class Themify_Builder_Import_Export {
+final class Themify_Builder_Import_Export {
 
-    private $builder;
+    private static $builder;
 
     /**
      * Class constructor.
      * 
      * @access public
      */
-    public function __construct($builder) {
-        $this->builder = $builder;
-	$this->do_export_file();
+    public static function init($builder) {
+        self::$builder = $builder;
+	self::do_export_file();
         if (defined('DOING_AJAX')) {
             
-            add_action('wp_ajax_builder_import_submit', array($this, 'builder_import_submit_ajaxify'), 10);
-            add_action('wp_ajax_builder_import', array($this, 'builder_import_ajaxify'), 10);
+            add_action('wp_ajax_builder_import_submit', array(__CLASS__, 'builder_import_submit_ajaxify'), 10);
+            add_action('wp_ajax_builder_import', array(__CLASS__, 'builder_import_ajaxify'), 10);
         }
     }
 
@@ -44,7 +44,7 @@ class Themify_Builder_Import_Export {
 	 *
 	 * @access public
 	 */
-	static function prepare_builder_data($builder_data){
+	public static function prepare_builder_data($builder_data){
 		if (!empty($builder_data) && is_array($builder_data)) {
 			foreach ($builder_data as &$row) {
 				if (isset($row['styling']) && !empty($row['styling']['background_slider'])) {
@@ -89,7 +89,7 @@ class Themify_Builder_Import_Export {
      * 
      * @access public
      */
-    public function do_export_file() {
+    public static function do_export_file() {
 
         if ( isset( $_GET['postid'] ) && ! empty( $_GET['postid'] ) && ! empty( $_GET['themify_builder_export_file'] ) && is_user_logged_in() &&  check_admin_referer('themify_builder_export_nonce') ) {
 
@@ -124,7 +124,7 @@ class Themify_Builder_Import_Export {
 						unset($usedGS[$gsID]['id'],$usedGS[$gsID]['url']);
 						$styling = self::prepare_builder_data($gsPost['data']);
 						$styling = $styling[0];
-						if($gsPost['type'] === 'row'){
+						if ( $gsPost['type'] === 'row' || $gsPost['type'] === 'subrow' ) {
 							$styling = $styling['styling'];
 						}elseif($gsPost['type'] === 'column'){
 							$styling = $styling['cols'][0]['styling'];
@@ -143,7 +143,7 @@ class Themify_Builder_Import_Export {
             }
 
             if (!empty($result)) {
-                if (isset($file)  && ( file_exists($file) )) {
+                if (isset($file)  &&  is_file($file)) {
                     header($_SERVER['SERVER_PROTOCOL'] . ' 200 OK');
                     header("Pragma: public");
                     header("Expires: 0");
@@ -235,8 +235,8 @@ class Themify_Builder_Import_Export {
      * @param string $shortcode
      * @return string
      */
-    public static function replace_with_image_path($shortcode) {
-        $images = Themify_Builder_Model::get_images_from_gallery_shortcode($shortcode);
+    private static function replace_with_image_path($shortcode) {
+        $images = themify_get_gallery_shortcode($shortcode);
         if (!empty($images)) {
             preg_match('/\[gallery.*ids=.(.*).\]/', $shortcode, $ids);
             $ids = trim($ids[1], '\\');
@@ -260,7 +260,7 @@ class Themify_Builder_Import_Export {
      * @param string $url 
      * @return string
      */
-    public static function get_attachment_id_by_url($url) {
+    private static function get_attachment_id_by_url($url) {
         // Split the $url into two parts with the wp-content directory as the separator
         $parsed_url = explode(parse_url(WP_CONTENT_URL, PHP_URL_PATH), $url);
         // Get the host of the current site and the host of the $url, ignoring www
@@ -286,16 +286,16 @@ class Themify_Builder_Import_Export {
      * @param int $post_id 
      * @return string
      */
-    public static function replace_ids_image_path($shortcode, $post_id = false) {
+    private static function replace_ids_image_path($shortcode, $post_id = false) {
 
         preg_match('/\[gallery.*path.*?=.*?[\'"](.+?)[\'"].*?\]/i', $shortcode, $path);
         if (!empty($path[1])) {
             $path = trim($path[1], '\\');
             $path = trim($path, '"');
-            $image_path = explode(",", $path);
+            $image_path = explode(',', $path);
             if (!empty($image_path)) {
                 $attachment_id = array();
-                $wp_upload_dir = wp_upload_dir();
+                $wp_upload_dir = themify_upload_dir();
                 require_once( ABSPATH . 'wp-admin/includes/image.php' );
                 foreach ($image_path as $img) {
 
@@ -369,7 +369,7 @@ class Themify_Builder_Import_Export {
     /**
      * Builder Import Lightbox
      */
-    function builder_import_ajaxify() {
+    public static function builder_import_ajaxify() {
         check_ajax_referer('tb_load_nonce', 'nonce');
         $type = $_POST['type'];
 	if ('post' === $type || 'page' === $type) {
@@ -431,7 +431,7 @@ class Themify_Builder_Import_Export {
     /**
      * Process import builder
      */
-    function builder_import_submit_ajaxify() {
+    public static function builder_import_submit_ajaxify() {
         check_ajax_referer('tb_load_nonce', 'nonce');
         $imports = $_POST['data'];
         $import_to = isset( $_POST['importTo'] ) ? (int) $_POST['importTo'] : 0;
@@ -442,12 +442,12 @@ class Themify_Builder_Import_Export {
 
             if ('append' === $import_type) {
                 // get current page builder data
-                $meta_values[] = $this->builder->get_builder_data($import_to);
+                $meta_values[] = self::$builder->get_builder_data($import_to);
             }
 
             foreach ($imports as $post_id) {
                 if (!empty($post_id)) {
-                    $builder_data = $this->builder->get_builder_data($post_id);
+                    $builder_data = self::$builder->get_builder_data($post_id);
 		    
                     $meta_values[] = Themify_Builder_Model::removeElementIds($builder_data);
                 }
@@ -458,7 +458,7 @@ class Themify_Builder_Import_Export {
                 foreach ($meta_values as $meta) {
                     $result = array_merge($result, (array) $meta);
                 }
-                $response = $GLOBALS['ThemifyBuilder_Data_Manager']->save_data($result, $import_to,'import_post');
+                $response = ThemifyBuilder_Data_Manager::save_data($result, $import_to,'import_post');
             }
         }
 	wp_send_json( $response );

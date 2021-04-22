@@ -1,3 +1,8 @@
+<?php
+
+defined( 'ABSPATH' ) || exit;
+?>
+
 <div id="tb_help_lightbox" onclick="return false;">
 <div class="tb_help_lightbox_inner_wrapper" data-active-tab="videos">
     <ul class="tb_help_tabs">
@@ -113,6 +118,6 @@
             </tr>
         </table>
     </div>
-    <div class="tb_close_lightbox"><i class="ti-close"></i></div>
+    <div class="tb_close_lightbox tf_close"></div>
 </div>
 </div>

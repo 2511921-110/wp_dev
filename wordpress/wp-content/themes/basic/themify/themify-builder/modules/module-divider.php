@@ -1,5 +1,7 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Divider
  * Description: Display Divider
@@ -11,7 +13,16 @@ class TB_Divider_Module extends Themify_Builder_Component_Module {
 			'slug' => 'divider'
 		));
 	}
-
+	
+	public function get_icon(){
+	    return 'line-dashed';
+	}
+    
+	public function get_assets() {
+		return array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+    }
 	public function get_options() {
 		return array(
 			array(
@@ -37,7 +48,6 @@ class TB_Divider_Module extends Themify_Builder_Component_Module {
 				'class' => 'xsmall',
 				'units' => array(
 					'px' => array(
-						'min' => 0,
 						'max' => 500
 					)
 				)
@@ -54,8 +64,8 @@ class TB_Divider_Module extends Themify_Builder_Component_Module {
 				'class' => 'xsmall',
 				'units' => array(
 					'px' => array(
-						'min' => -500,
-						'max' => 500
+						'min' => -2500,
+						'max' => 3500
 					)
 				)
 			),
@@ -66,8 +76,8 @@ class TB_Divider_Module extends Themify_Builder_Component_Module {
 				'class' => 'xsmall',
 				'units' => array(
 					'px' => array(
-						'min' => -500,
-						'max' => 500
+						'min' => -2500,
+						'max' => 3500
 					)
 				)
 			),
@@ -89,7 +99,6 @@ class TB_Divider_Module extends Themify_Builder_Component_Module {
 				'wrap_class' => 'tb_group_element_custom',
 				'units' => array(
 					'px' => array(
-						'min' => 0,
 						'max' => 500
 					)
 				)
@@ -98,11 +107,7 @@ class TB_Divider_Module extends Themify_Builder_Component_Module {
 				'id' => 'divider_align',
 				'type' => 'icon_radio',
 				'label' => __('Alignment', 'themify'),
-				'options' => array(
-					array('value' => 'left', 'name' => __('Left', 'themify'),'icon'=> '<span class="ti-align-left"></span>'),
-					array('value' => 'center', 'name' => __('Center', 'themify'),'icon'=> '<span class="ti-align-center"></span>'),
-					array('value' => 'right', 'name' => __('Right', 'themify'),'icon'=> '<span class="ti-align-right"></span>')
-				),
+				'aligment2' => true,
 				'wrap_class' => 'tb_group_element_custom'
 			),
 			array(
@@ -124,10 +129,10 @@ class TB_Divider_Module extends Themify_Builder_Component_Module {
 		);
 	}
 
-	public function get_default_settings() {
+	public function get_live_default() {
 		return array(
 			'stroke_w_divider' => 1,
-			'color_divider' => '000000',
+			'color_divider' => '000',
 			'divider_width' => 150
 		);
 	}
@@ -139,14 +144,14 @@ class TB_Divider_Module extends Themify_Builder_Component_Module {
 		var style = '',
 			align = 'custom' === data.divider_type && data.divider_align ? 'divider-' + data.divider_align : '';
 		if ( data.stroke_w_divider ) style += 'border-width:'+ data.stroke_w_divider +'px; ';
-		if ( data.color_divider ) style += 'border-color:' + data.color_divider + '; ';
+		if ( data.color_divider ) style += 'border-color:' + tb_app.Utils.toRGBA(data.color_divider) + '; ';
 		if ( data.top_margin_divider ) style += 'margin-top:' + data.top_margin_divider + 'px; ';
 		if ( data.bottom_margin_divider ) style += 'margin-bottom:'+ data.bottom_margin_divider +'px; ';
 		if ( 'custom' === data.divider_type && data.divider_width > 0 ) style += 'width:'+ data.divider_width +'px; ';
 		if (!data.style_divider ) data.style_divider = 'solid';
                 if (!data.divider_type ) data.divider_type = 'fullwidth';
 		#>
-		<div class="module module-<?php echo $this->slug ; ?> divider-{{ data.divider_type }} {{ data.style_divider }} {{ align }} {{ data.css_divider }}" style="{{ style }}">
+		<div class="module module-<?php echo $this->slug ; ?> divider-{{ data.divider_type }} {{ data.style_divider }} {{ align }} {{ data.css_divider }} tf_mw" style="{{ style }}">
             <# if ( data.mod_title_divider ) { #>
 			<?php echo $module_args['before_title']; ?>{{{ data.mod_title_divider }}}<?php echo $module_args['after_title']; ?>
 			<# } #>

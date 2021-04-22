@@ -73,12 +73,10 @@ class Themify_Menu_Toggle_Dropdown {
 	 * Add a css class to toggle dropdown menu items
 	 */
 	function nav_menu_css_class( $classes, $item ) {
-		if (in_array('menu-item-has-children', $item->classes) && !empty(get_post_meta( $item->ID, '_themify_toggle_dropdown', true ))) {
+		if (in_array('menu-item-has-children', $item->classes,true) && !empty(get_post_meta( $item->ID, '_themify_toggle_dropdown', true ))) {
 			$classes[] = 'themify_toggle_dropdown';
 		}
 		return $classes;
 	}
 
 }
-
-Themify_Menu_Toggle_Dropdown::get_instance();

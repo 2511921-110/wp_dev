@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 if( ! function_exists( 'themify_builder_tabs' ) ) {
 function themify_builder_tabs($field, $module_name, $styling = false) {
 
@@ -9,7 +10,7 @@ function themify_builder_tabs($field, $module_name, $styling = false) {
     ?>
     <div class="tb_tabs<?php if(isset($field['tabs_class'])):?> <?php echo $field['tabs_class']?><?php endif;?>" id="tb_tabs_<?php echo $id; ?>">
         <span class="tb_ui_dropdown_label" tabindex="-1"></span>
-        <ul class="clearfix">
+        <ul class="tf_clearfix">
             <?php foreach ($field['tabs'] as $key => $tab) : ?>
                 <li <?php if ($first === true): ?><?php $first = false; ?> class="current"<?php endif; ?>><a href="#tb_<?php echo $id . '_' . $key; ?>"> <?php echo esc_html($tab['label']); ?> </a></li>
             <?php endforeach; ?>
@@ -234,11 +235,11 @@ function themify_builder_module_settings_field_builder($field) {
                     <?php if (!empty($option['colorpicker'])) : ?>
                         <div class="minicolors_wrapper">
                             <div class="minicolors minicolors-theme-default">
-                                <input type="text" class="<?php echo isset($option['class']) ? $option['class'] : ''; ?> minicolors-input tb_lb_option_child" data-input-id="<?php echo $option['id']; ?>" <?php
+                                <input type="text" class="<?php echo isset($option['class']) ? $option['class'] : ''; ?> minicolors-input tb_lb_option_child" autocomplete="off" data-input-id="<?php echo $option['id']; ?>" <?php
                                 echo $data,$control;
                                 ?> />
                                 <span class="minicolors-swatch">
-                                    <span class="minicolors-swatch-color"></span>
+                                    <span class="minicolors-swatch-color tf_abs"></span>
                                 </span>
                             </div> 
                             <input type="text" class="<?php echo isset($option['class']) ? $option['class'] : ''; ?> color_opacity" <?php echo $data; ?> />
@@ -318,7 +319,7 @@ function themify_builder_module_settings_field_builder($field) {
                                 <?php if (isset($option['mode']) && $option['mode'] === 'sprite' && strpos($opt['img'], '.png') === false): ?>
                                     <span class="tb_sprite tb_<?php echo $opt['img'] ?>"></span>
                                 <?php else: ?>
-                                    <?php $image_url = ( filter_var($opt['img'], FILTER_VALIDATE_URL) ) ? $opt['img'] : THEMIFY_BUILDER_URI . '/img/builder/' . $opt['img']; ?>
+                                    <?php $image_url = ( filter_var($opt['img'], FILTER_VALIDATE_URL) ) ? $opt['img'] : THEMIFY_BUILDER_URI . '/editor/img/' . $opt['img']; ?>
                                     <img src="<?php echo esc_url($image_url); ?>" alt="<?php esc_attr_e($opt['label']); ?>" />
                                 <?php endif; ?>
                                 <span class="themify_tooltip"><?php echo $opt['label']; ?></span>
@@ -499,7 +500,7 @@ if (!function_exists('themify_builder_module_settings_field')) {
 
                         <div id="<?php echo $field['id']; ?>" class="tb_row_js_wrapper tb_lb_option"<?php echo themify_builder_get_control_binding_data($field); ?>>
 
-                            <div class="tb_repeatable_field clearfix">
+                            <div class="tb_repeatable_field tf_clearfix">
 
                                 <div class="tb_repeatable_field_top">
                                     <div class="row_menu">
@@ -569,12 +570,13 @@ if (!function_exists('themify_builder_module_settings_field')) {
                                     $input_props['class'] = '';
                                 }
                                 $input_props['class'] .= ' minicolors-input';
+                                $input_props['autocomplete'] = 'off';
                                 ?>
                                 <div class="minicolors_wrapper">
                                     <div class="minicolors minicolors-theme-default">
                                         <input type="text" <?php echo Themify_Builder_Component_Base::get_element_attributes($input_props); ?> value="<?php if (isset($field['value'])) echo esc_attr($field['value']); ?>"<?php echo $control; ?> />
                                         <span class="minicolors-swatch">
-                                            <span class="minicolors-swatch-color"></span>
+                                            <span class="minicolors-swatch-color tf_abs"></span>
                                         </span>
                                     </div> 
                                     <input type="text" class="<?php
@@ -589,6 +591,7 @@ if (!function_exists('themify_builder_module_settings_field')) {
                                         if( isset( $field[ 'datepicker' ] ) ) {
                                                 $input_props['class'] .= ' themify-datepicker';
                                                 $input_props['readonly'] = '1';
+                                                $input_props['autocomplete'] = 'off';
                                                 if(isset($field['picker'])){
                                                     $input_props = array_merge($input_props,$field['picker']);
                                                 }
@@ -667,7 +670,7 @@ if (!function_exists('themify_builder_module_settings_field')) {
                                                 <span class="tb_sprite tb_<?php echo $opt['img'] ?>"></span>
                                             <?php endif; ?>
                                         <?php else: ?>
-                                            <?php $image_url = ( filter_var($opt['img'], FILTER_VALIDATE_URL) ) ? $opt['img'] : THEMIFY_BUILDER_URI . '/img/builder/' . $opt['img']; ?>
+                                            <?php $image_url = ( filter_var($opt['img'], FILTER_VALIDATE_URL) ) ? $opt['img'] : THEMIFY_BUILDER_URI . '/editor/img/' . $opt['img']; ?>
                                             <img src="<?php echo esc_url($image_url); ?>" alt="<?php esc_attr_e($opt['label']); ?>" />
                                         <?php endif; ?>
                                         <span class="themify_tooltip"><?php echo $opt['label']; ?></span>
@@ -1129,12 +1132,12 @@ if (!function_exists('themify_builder_styling_field')) {
             case 'color':
                 ?>  <div class="minicolors_wrapper">
                     <div class="minicolors minicolors-theme-default">
-                        <input id="<?php echo $styling['id'] ?>" type="text" class="<?php
+                        <input id="<?php echo $styling['id'] ?>" type="text" autocomplete="off" class="<?php
                         if (isset($styling['class'])) {
                             echo $styling['class'];
                         }
                         ?> minicolors-input tb_lb_option"/>
-                        <span class="minicolors-swatch"><span class="minicolors-swatch-color"></span></span>
+                        <span class="minicolors-swatch"><span class="minicolors-swatch-color tf_abs"></span></span>
                     </div>
                     <input type="text" class="color_opacity" />
                 </div>
@@ -1168,7 +1171,7 @@ if (!function_exists('themify_builder_styling_field')) {
                     ?>
                     <div tabindex="-1" class="tb_gradient_container"></div>
                     <input type="hidden" class="themify-gradient tb_lb_option" data-id="<?php echo $styling['id'] ?>" id="<?php echo $styling['id'] ?>-gradient" <?php if (isset($styling['default-gradient'])): ?>data-default-gradient="<?php echo $styling['default-gradient']; ?>"<?php endif; ?> />
-                    <a href="#" title="<?php _e('Clear Gradient', 'themify'); ?>" class="tb_clear_gradient"><i class="ti-close"></i></a>
+                    <a href="#" title="<?php _e('Clear Gradient', 'themify'); ?>" class="tb_clear_gradient"><i class="tf_close"></i></a>
                 </div>
                 <?php
                 break;
@@ -1290,7 +1293,7 @@ if (!function_exists('themify_builder_styling_field')) {
             case 'builder':
                 ?>
                 <div id="<?php echo $styling['id'] ?>" class="tb_row_opt_builder_wrap tb_row_js_wrapper tb_lb_option">
-                    <div class="tb_repeatable_field clearfix">
+                    <div class="tb_repeatable_field tf_clearfix">
                         <div class="tb_repeatable_field_top">
                             <div class="row_menu">
                                 <div class="menu_icon"></div>
@@ -1319,7 +1322,7 @@ if (!function_exists('themify_builder_styling_field')) {
                 $range['units'] = array(
                         'PX' => array(
                                 'min' => 'margin' === $styling['type'] ? -500 : 0,
-                                'max' => 500
+                                'max' => 3500
                         ),
                         'EM' => array(
                                 'min' => 'margin' === $styling['type'] ? -10 : 0,
@@ -1332,7 +1335,7 @@ if (!function_exists('themify_builder_styling_field')) {
                 );
                 unset($range['prop']);
                 ?>
-                <ul class="tb_seperate_items tb_inline_list">
+                <ul class="tb_seperate_items tf_inline_b">
                     <?php foreach ($values as $v): ?>
                         <li>
                             <?php 
@@ -1401,7 +1404,7 @@ if (!function_exists('themify_builder_styling_field')) {
                                 $select['units'] = array(
                                         'PX' => array(
                                                 'min' => 0,
-                                                'max' => 30
+                                                'max' => 300
                                         )
                                 );
                                 themify_builder_styling_field($select);

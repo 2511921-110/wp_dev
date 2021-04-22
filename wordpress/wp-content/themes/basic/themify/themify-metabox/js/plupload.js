@@ -7,7 +7,6 @@ function themify_create_pluploader(obj) {
 		imgId = id1.replace("plupload-upload-ui", ""),
 		haspreset = false,
 		haspreview = false,
-		topost = false,
 		$j = jQuery;
 	
 	var pconfig = JSON.parse(JSON.stringify(global_plupload_init));
@@ -30,7 +29,6 @@ function themify_create_pluploader(obj) {
 		pconfig["multipart_params"]['tomedia'] = 'tomedia';
 	}
 	if($this.data('postid')) {
-		topost = true;
 		pconfig["multipart_params"]['topost'] = $this.data('postid');
 	}
 	if($this.data('fields')) {
@@ -45,7 +43,7 @@ function themify_create_pluploader(obj) {
 
 	pconfig['multipart_params']['action'] = $this.data( 'action' );
 
-	var uploader = new plupload.Uploader(pconfig);
+	const uploader = new plupload.Uploader(pconfig);
 	
 	uploader.bind('Init', function(up) { });
 	uploader.init();
@@ -65,8 +63,8 @@ function themify_create_pluploader(obj) {
 		$j('.prompt-box .show-error').show();
 		
 		if( -600 == error.code ){
-			var errorMessage = themify_lang.filesize_error,
-				errorMessageFix = themify_lang.filesize_error_fix;
+			var errorMessage = themify_plupload_lang.filesize_error,
+				errorMessageFix = themify_plupload_lang.filesize_error_fix;
 		}
 		
 		if($j('.prompt-box .show-error').length > 0){
@@ -75,7 +73,9 @@ function themify_create_pluploader(obj) {
 				$j('.prompt-box .show-error').append('<p>' + errorMessageFix + '</p>');
 		}
 		$j(".overlay, .prompt-box").fadeIn(500);
-		
+		document.getElementsByClassName('overlay')[0].addEventListener('click',function (){
+			$j(".overlay, .prompt-box").fadeOut(500);
+		},{'once':true})
 		return;
 	});
 	
@@ -99,9 +99,12 @@ function themify_create_pluploader(obj) {
 			
 			if($j('.prompt-box .show-error').length > 0){
 				$j('.prompt-box .show-error').html('<p class="prompt-error">' + json.error + '</p>');
-				$j('.prompt-box .show-error').append('<p>' + themify_lang.enable_zip_upload + '</p>');
+				$j('.prompt-box .show-error').append('<p>' + themify_plupload_lang.enable_zip_upload + '</p>');
 			}
 			$j(".overlay, .prompt-box").fadeIn(500);
+			document.getElementsByClassName('overlay')[0].addEventListener('click',function (){
+				$j(".overlay, .prompt-box").fadeOut(500);
+			},{'once':true, passive:true});
 			return;
 		}
 		
@@ -124,9 +127,8 @@ function themify_create_pluploader(obj) {
 		if(haspreset){
 			$j('#' + imgId).closest('fieldset').children('.preset').find('img').removeClass('selected');
 			
-			var title = response_url.replace(/^.*[\\\/]/, '');
-			//<span title="' + title + '"></span>
-			var new_preset = $j('<a href="#" title="' + title + '"><span title="' + response_file + '"></span><img src="' + response_url + '" alt="' + response_url + '" class="backgroundThumb selected" /></a>')
+			const title = response_url.replace(/^.*[\\\/]/, ''),
+			 new_preset = $j('<a href="#" title="' + title + '"><span title="' + response_file + '"></span><img src="' + response_url + '" alt="' + response_url + '" class="backgroundThumb selected" /></a>')
 			.css('display', 'inline-block');
 			$j('#' + imgId).closest('fieldset').children('.preset').append(new_preset);
 		}
@@ -136,16 +138,19 @@ function themify_create_pluploader(obj) {
 		}
 	});
 }
-
-jQuery(document).ready(function($) {
-
+(function ($) {
 	'use strict';
-
-	var $pluploadUIC = $('.plupload-upload-uic');
-
-	if ( $pluploadUIC.length > 0 ) {
-		$pluploadUIC.each(function() {
-			themify_create_pluploader($(this));
-		});
+	const windowLoad=function(){
+		const $pluploadUIC = $('.plupload-upload-uic');
+		if ( $pluploadUIC.length > 0 ) {
+			$pluploadUIC.each(function() {
+				themify_create_pluploader($(this));
+			});
+		}
+	};
+	if (document.readyState === 'complete') {
+		windowLoad();
+	} else {
+		window.addEventListener('load', windowLoad, {once:true, passive:true});
 	}
-});
+}(jQuery));

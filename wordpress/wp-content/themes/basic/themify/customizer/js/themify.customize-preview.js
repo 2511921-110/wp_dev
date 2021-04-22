@@ -70,7 +70,7 @@
 
 	function themifyParseJSON(data, device) {
 		device = device || parent.wp.customize.previewedDevice.get();
-		var rawJson = $.parseJSON( data ) || {},
+		var rawJson = JSON.parse( data ) || {},
 			jsonDesktop = _.omit( rawJson, ['tablet_landscape', 'tablet', 'mobile'] ),
 			currentDeviceData, copyData;
 
@@ -613,7 +613,7 @@
 		media = media || '';
 
 		if ( $('#themify-customize').length == 0 ) {
-			$('head').append('<style id="themify-customize"></style>'); // create empty stylesheet
+			$('body').append('<style id="themify-customize"></style>'); // create empty stylesheet
 		}
 
 		var mysheet= $('#themify-customize').get(0).sheet,
@@ -831,26 +831,26 @@
 					} else {
 						styles[$id]['display'] = 'block';
 
-						var $img = $('img', $selector);
+						var $img = $('img:not(.tf_sticky_logo)', $selector);
+						if ( $img.length > 0 ) {
+							$img.remove();
+						}
 
 						if (values.mode && 'image' === values.mode) {
 							$selector.find('span').hide();
 							if ('undefined' !== typeof values.src && values.src) {
-								if ($img.length > 0) {
-									$img.remove();
-								}
 								if ($('a', $selector).length > 0) {
-									$selector.find('a').prepend('<img src="' + values.src + '" />');
+									$selector.find('a').append('<img src="' + values.src + '" />');
 									if (values.link) {
 										$selector.find('a').attr('href', values.link);
 									}
 								} else {
-									$selector.prepend('<img src="' + values.src + '" />');
+									$selector.append('<img src="' + values.src + '" />');
 								}
 							}
 							var imgwidth = values.imgwidth ? values.imgwidth : '',
 								imgheight = values.imgheight ? values.imgheight : '';
-							$selector.find('img').css({
+							$selector.find('img:not(.tf_sticky_logo)').css({
 								'width': imgwidth,
 								'height': imgheight
 							});
@@ -1040,31 +1040,32 @@
 		$.each(themifyCustomizer.imageselectControls, function (index, selector) {
 			api(index, function (value) {
 				value.bind(function (imageData) {
-					var values = $.parseJSON(imageData),
-                                                    $selector = $(selector);
-
+					var values = $.parseJSON(imageData);
 					if (values) {
-                                                var $id = getStyleId(selector),
-                                                    $img = $('img#'+$id, $selector);
-						if ($img.length > 0) {
-                                                    $img.remove();
+						var $img = $( '.tf_sticky_logo' );
+						if ( $img.length > 0 ) {
+							$img.remove();
 						}
 						if (values.src) {
-                                                    var img = '<img id="'+$id+'" src="' + values.src + '"';
-                                                    if(values.imgwidth){
-                                                        img+=' width="'+values.imgwidth+'"';
-                                                    }
-                                                    if(values.imgheight){
-                                                        img+=' height="'+values.imgheight+'"';
-                                                    }
-                                                    img+='/>';
-                                                    $($selector).prepend(img);
+							var img = '<img class="tf_sticky_logo" src="' + values.src + '"';
+							var style = '';
+							if(values.imgwidth){
+								img+=' width="'+values.imgwidth+'"';
+								style += 'width: ' + values.imgwidth + 'px;';
+							}
+							if(values.imgheight){
+								img+=' height="'+values.imgheight+'"';
+								style += 'height: ' + values.imgheight + 'px;';
+							}
+							img += ' style="' + style + '" />';
+							$( '#headerwrap #site-logo a' ).prepend( img );
 						}
 					}
 				});
 			});
 		});
 	}
+
 	////////////////////////////////////////////////////////////////////////////
 	// Image Control End
 	////////////////////////////////////////////////////////////////////////////

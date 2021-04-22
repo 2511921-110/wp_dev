@@ -380,19 +380,27 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 			if ( ! $template ) {
 				return '';
 			}
+			unset($args);
+			global $ThemifyBuilder;
 			$id = $template[0]->ID;
-
+			if ($id == Themify_Builder::$builder_active_id && Themify_Builder_Model::is_front_builder_activate()) {
+				static $isDone=false;//return only for first element
+				if($isDone===false){
+					$isDone=true;
+					return $ThemifyBuilder->get_builder_output($id);
+				}
+			}
 			// infinite-loop prevention
 			static $stack = array();
-			if ( in_array( $id, $stack ) ) {
+			if ( isset($stack[$id])) {
 				$message = sprintf( __( 'Layout Part %s is in an infinite loop.', 'themify' ), $id );
 				return "<!-- {$message} -->";
-			} else {
-				$stack[ $id ] = $id;
+			} 
+			else {
+				$stack[ $id ] = true;
 			}
-
+			
 			$output = '';
-			global $ThemifyBuilder;
 			$builder_data = $ThemifyBuilder->get_builder_data( $id );
 			// Check For page break module
 			if ( !Themify_Builder::$frontedit_active ) {
@@ -403,21 +411,28 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 						++$page_breaks;
 					}
 				}
+				unset($module_list);
 				$template_args = array();
 				if ( $page_breaks > 0 ) {
 					$pb_result = $ThemifyBuilder->load_current_inner_page_content( $builder_data, $page_breaks );
 					$builder_data = $pb_result['builder_data'];
 					$template_args['pb_pagination'] = $pb_result['pagination'];
 					$pb_result = null;
+
 				}
 			}
 			if ( !empty( $builder_data ) ) {
+				$isLoop = $ThemifyBuilder->in_the_loop === true;
+				$ThemifyBuilder->in_the_loop = true;
 				$template_args['builder_output'] = $builder_data;
 				$template_args['builder_id'] = $id;
+				$template_args['l_p'] = true;
 				$output = Themify_Builder_Component_Base::retrieve_template( 'builder-layout-part-output.php', $template_args, '', '', false );
-				if ( !TFCache::is_ajax() ) {
-					$output = $ThemifyBuilder->get_builder_stylesheet( $output ) . $output;
+				if ( !themify_is_ajax() ) {
+					$ThemifyBuilder->get_builder_stylesheet( $output );
 				}
+				unset($template_args);
+				$ThemifyBuilder->in_the_loop = $isLoop;
 			}
 
 			unset( $stack[ $id ] );
@@ -451,7 +466,7 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 						'post_title' => $title,
 					) );
 
-					$GLOBALS['ThemifyBuilder_Data_Manager']->save_data( $builder_data, $new_id );
+					ThemifyBuilder_Data_Manager::save_data( $builder_data, $new_id );
 
 					// Set image as Featured Image
 					if ( !empty( $data['layout_img_field_id'] ) ) {
@@ -557,7 +572,7 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 						unset( $usedGS[ $gsID ]['url'] );
 						$styling = Themify_Builder_Import_Export::prepare_builder_data( $gsPost['data'] );
 						$styling = $styling[0];
-						if ( $gsPost['type'] === 'row' ) {
+						if ( $gsPost['type'] === 'row' || $gsPost['type'] === 'subrow' ) {
 							$styling = $styling['styling'];
 						} elseif ( $gsPost['type'] === 'column' ) {
 							$styling = $styling['cols'][0]['styling'];
@@ -649,7 +664,7 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 				}
 
 				global $wp_filesystem;
-				$base_path = wp_upload_dir();
+				$base_path = themify_upload_dir();
 				$base_path = trailingslashit( $base_path['path'] );
 
 				if ( 'zip' === $ext[1] || 'rar' === $ext[1] ) {
@@ -724,44 +739,44 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 				)
 			);
 			?>
-            <style type="text/css">
-                .tbuilder-layout-import {
-                    display: inline-block;
-                    top: 0px;
-                    margin: 0px;
-                    vertical-align: bottom;
-                    border: none;
-                    margin-left: 5px;
+            <style>
+                .tbuilder-layout-import{
+                    display:inline-block;
+                    top:0;
+                    margin:0;
+                    vertical-align:bottom;
+                    border:none;
+                    margin-left:5px
                 }
-                .tbuilder-layout-import .plupload-button {
-                    padding: 4px 10px;
-                    position: relative;
-                    top: -4px;
-                    text-decoration: none;
-                    border: none;
-                    border: 1px solid #ccc;
-                    border-radius: 2px;
-                    background: #f7f7f7;
-                    text-shadow: none;
-                    font-weight: 600;
-                    font-size: inherit;
-                    line-height: normal;
-                    color: #0073aa;
-                    cursor: pointer;
-                    outline: 0;
-                    box-shadow: none;
-                    height: auto;
+                .tbuilder-layout-import .plupload-button{
+                    padding:4px 10px;
+                    position:relative;
+                    top:-4px;
+                    text-decoration:none;
+                    border:none;
+                    border:1px solid #ccc;
+                    border-radius:2px;
+                    background:#f7f7f7;
+                    text-shadow:none;
+                    font-weight:600;
+                    font-size:inherit;
+                    line-height:normal;
+                    color:#0073aa;
+                    cursor:pointer;
+                    outline:0;
+                    box-shadow:none;
+                    height:auto
                 }
-                .tbuilder-layout-import .plupload-button:hover {
-                    border-color: #008EC2;
-                    background: #00a0d2;
-                    color: #fff;
+                .tbuilder-layout-import .plupload-button:hover{
+                    border-color:#008EC2;
+                    background:#00a0d2;
+                    color:#fff
                 }
             </style>
-            <script type="text/javascript">
-				jQuery( document ).ready( function ( $ ) {
-					$( '.page-title-action' ).after( '<div class="tbuilder-layout-import" style="display:inline-block"><?php echo preg_replace( '~[\r\n\t]+~', '', addslashes( $button ) ); ?></div>' );
-				} );
+            <script>
+				window.addEventListener('load', function(){
+					jQuery( '.page-title-action' ).after( '<div class="tbuilder-layout-import" style="display:inline-block"><?php echo preg_replace( '~[\r\n\t]+~', '', addslashes( $button ) ); ?></div>' );
+				}, {once:true, passive:true});
             </script>
 			<?php
 		}
@@ -782,7 +797,6 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 				}
 
 				if ( !$error ) {
-					global $ThemifyBuilder_Data_Manager;
 
 					foreach ( $data['content'] as $psot ) {
 						$new_id = wp_insert_post( array(
@@ -793,7 +807,7 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 							'post_content' => ''
 						) );
 						if ( !empty( $psot['settings'] ) ) {
-							$ThemifyBuilder_Data_Manager->save_data( json_decode( $psot['settings'], true ), $new_id );
+							ThemifyBuilder_Data_Manager::save_data( json_decode( $psot['settings'], true ), $new_id );
 						}
 					}
 				}
@@ -828,14 +842,14 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 		 * @return array
 		 */
 		static public function get_cache_dir() {
-			$upload_dir = wp_upload_dir();
+			$upload_dir = themify_upload_dir();
 
 			$dir_info = array(
 				'path' => $upload_dir['basedir'] . '/themify-builder/',
 				'url' => $upload_dir['baseurl'] . '/themify-builder/'
 			);
 
-			if ( !file_exists( $dir_info['path'] ) ) {
+			if ( !is_file( $dir_info['path'] ) ) {
 				wp_mkdir_p( $dir_info['path'] );
 			}
 
@@ -898,7 +912,7 @@ if( !class_exists( 'Themify_Builder_Layouts' ) ) {
 		public function load_predesigned_layouts_ajaxify() {
 			check_ajax_referer( 'tb_load_nonce', 'nonce' );
 			$selected = '';
-			if('' === $_POST['src']){
+			if(empty($_POST['src'])){
 				$data = apply_filters('themify_load_predesigned_templates',array());
 				$selected = $data['selected'];
 				$data = json_encode($data['data']);
@@ -1164,11 +1178,12 @@ if( !class_exists( 'Themify_Builder_Layouts_Provider_Pre_Designed' ) ) {
                     <div class="tb-layout-search-container">
                         <input type="text" placeholder="<?php _e( 'Search', 'themify' ); ?>" data-search="true"
                                autofocus id="tb_layout_search" required/>
-                        <i class="tb_clear_input"></i>
+                        <span class="tb_clear_input tf_close"></span>
+			<?php echo themify_get_icon('search','ti')?>
                     </div>
                     <div class="tb_ui_dropdown">
                         <span class="tb_ui_dropdown_label" tabindex="-1"><?php _e( 'All', 'themify' ) ?></span>
-                        <ul class="tb_ui_dropdown_items">
+                        <ul class="tb_ui_dropdown_items tf_scrollbar">
                             <li class="all"><?php _e( 'All', 'themify' ); ?></li>
                         </ul>
                     </div>

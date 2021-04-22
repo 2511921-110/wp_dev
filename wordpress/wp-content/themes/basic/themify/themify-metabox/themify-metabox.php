@@ -11,6 +11,8 @@ License:      GNU General Public License v2.0
 License URI:  http://www.gnu.org/licenses/gpl-2.0.html
 */
 
+defined( 'ABSPATH' ) || exit;
+
 if( ! defined( 'THEMIFY_METABOX_DIR' ) ) {
 	define( 'THEMIFY_METABOX_DIR', trailingslashit( plugin_dir_path( __FILE__ ) ) );
 }

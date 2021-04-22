@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Template Testimonial
  * 
@@ -8,26 +9,17 @@ if (!defined('ABSPATH'))
  * @author Themify
  */
 if (!empty($args['settings']['tab_content_testimonial'])):
-    $is_img_disabled = Themify_Builder_Model::is_img_php_disabled(); 
     $image_w = $args['settings']['img_w_slider'];
     $image_h = $args['settings']['img_h_slider'];
-    if ($is_img_disabled) {
-        // get image preset
-        global $_wp_additional_image_sizes;
-        $preset = $args['settings']['image_size_slider'] !== '' ? $args['settings']['image_size_slider'] : themify_builder_get('setting-global_feature_size', 'image_global_size_field');
-        if (isset($_wp_additional_image_sizes[$preset]) && $image_size_slider !== '') {
-            $image_w = (int) $_wp_additional_image_sizes[$preset]['width'];
-            $image_h = (int) $_wp_additional_image_sizes[$preset]['height'];
-        } else {
-            $image_w = $image_w !== '' ? $image_w : get_option($preset . '_size_w');
-            $image_h = $image_h !== '' ? $image_h : get_option($preset . '_size_h');
-        }
-    } else {
-        $param_image_src = array('w' => $image_w, 'h' => $image_h, 'ignore' => true);
-    }
+	$isSlider=!isset($args['settings']['type_testimonial']) || $args['settings']['type_testimonial']==='slider';
+	$image_size = $args['settings']['image_size_slider'] !== '' ? $args['settings']['image_size_slider'] : themify_builder_get('setting-global_feature_size', 'image_global_size_field');
+	$param_image_src = array('w' => $image_w, 'h' => $image_h,'image_size'=>$image_size);
+	if($isSlider===true){
+		$param_image_src['is_slider']=true;
+	}
     foreach ($args['settings']['tab_content_testimonial'] as $content):
         ?>
-        <li class="post">
+        <div class="post<?php echo $isSlider===true?' swiper-slide':'' ?>">
             <div class="testimonial-item" <?php if ($args['settings']['margin'] !== ''): ?> style="<?php echo $args['settings']['margin']; ?>"<?php endif; ?>>
                 <?php
                 $image = '';
@@ -39,21 +31,12 @@ if (!empty($args['settings']['tab_content_testimonial'])):
                     } else {
                         $image_alt = $image_title;
                     }
-                    if ($is_img_disabled) {
-                        $image = '<img src="' . $image_url . '" alt="' . esc_attr($image_alt) . '" class="person-picture" width="' . $image_w . '" height="' . $image_h . '"/>';
-                    } else {
-                        $param_image_src['src'] = $image_url;
-                        $param_image_src['alt'] = $image_alt;
-                        $image = themify_get_image($param_image_src);
-                    }
+                    
+					$param_image_src['src'] = $image_url;
+					$param_image_src['alt'] = $image_alt;
+					$image = themify_get_image($param_image_src);
                 }
                 ?>	
-
-                <?php if ($args['settings']['layout_slider'] === 'image-top' && !empty($image)): ?>
-                    <figure class="testimonial-image">
-                        <?php echo $image; ?>
-                    </figure>
-                <?php endif; ?>
 
                 <div class="testimonial-content">
                     <?php if (!empty($content['title_testimonial'])): ?>
@@ -61,11 +44,13 @@ if (!empty($args['settings']['tab_content_testimonial'])):
                     <?php endif; ?>
                     <?php if (!empty($content['content_testimonial'])): ?>
 						<div class="testimonial-entry-content">
- 							<?php echo apply_filters( 'themify_builder_module_content', $content['content_testimonial'] ); ?>
+							<?php echo apply_filters( 'themify_builder_module_content', $content['content_testimonial'] ); ?>
 						</div>
                     <?php endif; ?>
-                    <?php if ($args['settings']['layout_slider'] !== 'image-top' && !empty($image)): ?>
-                        <figure class="testimonial-image"><?php echo $image ?></figure>
+                    <?php if (!empty($image)): ?>
+						<figure class="tf_rel testimonial-image<?php if($isSlider===true):?> tf_lazy<?php endif;?>">
+							<?php echo $image ?>
+						</figure>
                     <?php endif; ?>
 
                     <?php if (!empty($content['person_name_testimonial'])): ?>
@@ -88,6 +73,6 @@ if (!empty($args['settings']['tab_content_testimonial'])):
                 </div>
                 <!-- /testimonial-content -->
             </div>
-        </li>
+        </div>
     <?php endforeach; ?>
-<?php endif; ?>
+<?php endif; 

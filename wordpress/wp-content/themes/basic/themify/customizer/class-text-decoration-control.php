@@ -1,5 +1,6 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class to create a select element for web safe fonts and Google Fonts.
@@ -44,12 +45,12 @@ class Themify_Text_Decoration_Control extends Themify_Control {
 				<?php endif;?>
 					<!-- TEXT STYLE & DECORATION -->
 					<div class="themify_font_style themify-customizer-brick">
-							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_italic, 'italic' ) ); ?>" data-style="italic"><?php _e( 'i', 'themify' ); ?></button>
-							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_normal, 'normal' ) ); ?>" data-style="normal"><?php _e( 'N', 'themify' ); ?></button>
-							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_weight, 'bold' ) ); ?>" data-style="bold"><?php _e( 'B', 'themify' ); ?></button>
-							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_underline, 'underline' ) ); ?>" data-style="underline"><?php _e( 'U', 'themify' ); ?></button>
-							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_linethrough, 'linethrough' ) ); ?>" data-style="linethrough"><?php _e( 'S', 'themify' ); ?></button>
-							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_nostyle, 'nostyle' ) ); ?>" data-style="nostyle"><?php _e( '&times;', 'themify' ); ?></button>
+							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_italic, 'italic' ) ); ?>" data-style="italic" data-title="<?php esc_attr_e( 'Italic', 'themify' ) ?>"><?php _e( 'i', 'themify' ); ?></button>
+							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_normal, 'normal' ) ); ?>" data-style="normal" data-title="<?php esc_attr_e( 'Normal', 'themify' ) ?>"><?php _e( 'N', 'themify' ); ?></button>
+							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_weight, 'bold' ) ); ?>" data-style="bold" data-title="<?php esc_attr_e( 'Bold', 'themify' ) ?>"><?php _e( 'B', 'themify' ); ?></button>
+							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_underline, 'underline' ) ); ?>" data-style="underline" data-title="<?php esc_attr_e( 'Underline', 'themify' ) ?>"><?php _e( 'U', 'themify' ); ?></button>
+							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_linethrough, 'linethrough' ) ); ?>" data-style="linethrough" data-title="<?php esc_attr_e( 'Line Through', 'themify' ) ?>"><?php _e( 'S', 'themify' ); ?></button>
+							<button type="button" class="button <?php echo esc_attr( $this->style_is( $font_nostyle, 'nostyle' ) ); ?>" data-style="nostyle" data-title="<?php esc_attr_e( 'No Styles', 'themify' ) ?>"><?php _e( '&times;', 'themify' ); ?></button>
 					</div>
 					<input <?php $this->link(); ?> value='<?php echo esc_attr( $v ); ?>' type="hidden" class="<?php echo esc_attr( $this->type ); ?>_control themify-customizer-value-field"/>
 				<?php if ($label) : ?>

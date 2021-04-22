@@ -12,11 +12,26 @@
 #themify .social-link-item .label{
     float:right;
 }
+#themify .label {
+    padding-right:0;
+}
+#themify input[type=text], 
+#themify textarea,
+#themify .selectwrapper,
+#themify label, #themify-meta-boxes label,
+.themify-admin-lightbox input[type=checkbox], 
+#themify input[type=checkbox] {
+   margin-right:0;
+}
 .themify_field_row{
     padding:5px 0 10px 5px;
 }
+#themify .preview-icon-wrapper > a.preview-icon:first-of-type,
+#themify p > a.preview-icon:first-of-type{
+    margin-right:0;
+}
 #themify .pushlabel{
-    margin-right: 26%;
+    margin-right:26%;
     margin-left:0;
     padding-left:0;
 }
@@ -88,6 +103,10 @@ object{
 .minicolors-hidden{
     left:9999em !important;
 }
+#themify .minicolors-swatch{
+	top:5px;
+	left:5px
+}
 .themify_upload_preview{
     margin-left:10px;
 }
@@ -110,26 +129,43 @@ object{
 
 #themify .biggest-transfer-btn .export,
 #themify .biggest-transfer-btn .plupload-import {
-    float: right;
-    width: auto;
+    float:right;
+    width:auto;
 }
 #themify .skin-preview {
-    text-align: inherit;
+    text-align:inherit;
 }
 #themify input[type=radio]:checked:before {
-	margin-right: 3px;
+	margin-right:3px;
 }
 #themify #maintabnav li {
-    float: right;
+    float:right;
 }
 .tf-icon-group-select {
-    display: flex;
+    display:flex;
 }
 .social-drag {
-    left: 22px;
-    right: auto;
+    left:22px;
+    right:auto;
 }
-
+#themify .themify-modal .close,
+.themify-admin-lightbox .close_lightbox {
+    right:auto;
+    left:25px;
+}
+.themify-admin-lightbox .close_lightbox i{
+    padding:13px;
+    display:inline-block
+}
+.themify_lightbox_uncheck_container{
+	float:right
+}
+.themify-admin-lightbox .button.uncheck-all:before{
+	margin:0 0 0 5px
+}
+.themify_lightbox_visibility .themify-visibility-options label input[type=checkbox]{
+    margin-left: 10px;
+}
 /**
  * FontAwesome-lightbox specifics */
 #themify_lightbox_fa .lightbox_container a{

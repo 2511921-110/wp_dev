@@ -1,5 +1,7 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
 class Builder_Optin_Service_GetResponse extends Builder_Optin_Service {
 
 	function get_id() {

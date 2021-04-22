@@ -1,5 +1,7 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
 class Builder_Optin_Service_MailChimp extends Builder_Optin_Service {
 
 	function get_id() {
@@ -152,7 +154,7 @@ class Builder_Optin_Service_MailChimp extends Builder_Optin_Service {
 		$response = $this->make_request( sprintf( 'lists/%s/members', $args['mailchimp_list'] ), 'POST', array(
 			'body' => json_encode( array(
 				'email_address' => $args['email'],
-				'status' => 'subscribed',
+				'status' => 'pending',
 				'merge_fields' => array(
 					'FNAME' => $args['fname'],
 					'LNAME' => $args['lname']
@@ -163,7 +165,7 @@ class Builder_Optin_Service_MailChimp extends Builder_Optin_Service {
 			return $response;
 		} else {
 			if ( isset( $response['status'] ) ) {
-				if ( 'subscribed' === $response['status']
+				if ( 'pending' === $response['status'] || 'subscribed' === $response['status']
 					/* this user is already subscribed, no need to show any errors */
 					|| ( 400 === $response['status'] && $response['title'] === 'Member Exists' )
 				) {

@@ -9,6 +9,8 @@
  * @since 1.0
  */
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Register a custom meta box to display on Page post type
  *

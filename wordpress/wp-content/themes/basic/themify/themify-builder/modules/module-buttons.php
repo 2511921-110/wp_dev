@@ -1,28 +1,34 @@
 <?php
-if ( !defined( 'ABSPATH' ) )
-	exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Module Name: Button
  * Description: Display Button content
  */
-class TB_Buttons_Module extends Themify_Builder_Component_Module
-{
+class TB_Buttons_Module extends Themify_Builder_Component_Module{
 
-	function __construct()
-	{
+	public function __construct(){
 		self::$texts['label'] = __( 'Text', 'themify' );
 		parent::__construct( array(
 			'name' => __( 'Button', 'themify' ),
 			'slug' => 'buttons'
 		) );
 	}
-
+	
+	public function get_icon(){
+	    return 'mouse-alt';
+	}
+	
 	public function get_title( $module )
 	{
 		return isset( $module['mod_settings']['mod_title_button'] ) ? wp_trim_words( $module['mod_settings']['mod_title_button'], 100 ) : '';
 	}
-
+	public function get_assets() {
+	    return array(
+		'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+	    );
+	}
 	public function get_options()
 	{
 
@@ -33,7 +39,7 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 				'type' => 'layout',
 				'mode' => 'sprite',
 				'options' => array(
-					array( 'img' => 'normall_button', 'value' => 'normal', 'label' => __( 'Normal', 'themify' ) ),
+					array( 'img' => 'normall_button', 'value' => 'normal', 'label' => __( 'Default', 'themify' ) ),
 					array( 'img' => 'small_button', 'value' => 'small', 'label' => __( 'Small', 'themify' ) ),
 					array( 'img' => 'large_button', 'value' => 'large', 'label' => __( 'Large', 'themify' ) ),
 					array( 'img' => 'xlarge_button', 'value' => 'xlarge', 'label' => __( 'xLarge', 'themify' ) ),
@@ -45,6 +51,7 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 				'mode' => 'sprite',
 				'label' => __( 'Shape', 'themify' ),
 				'options' => array(
+					array( 'img' => 'normall_button', 'value' => 'normal', 'label' => __( 'Default', 'themify' ) ),
 					array( 'img' => 'squared_button', 'value' => 'squared', 'label' => __( 'Squared', 'themify' ) ),
 					array( 'img' => 'circle_button', 'value' => 'circle', 'label' => __( 'Circle', 'themify' ) ),
 					array( 'img' => 'rounded_button', 'value' => 'rounded', 'label' => __( 'Rounded', 'themify' ) ),
@@ -75,11 +82,7 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 				'id' => 'alignment',
 				'label' => __( 'Alignment', 'themify' ),
 				'type' => 'icon_radio',
-				'options' => array(
-					array( 'value' => 'left', 'name' => __( 'Left', 'themify' ), 'icon' => '<span class="ti-align-left"></span>' ),
-					array( 'value' => 'center', 'name' => __( 'Center', 'themify' ), 'icon' => '<span class="ti-align-center"></span>' ),
-					array( 'value' => 'right', 'name' => __( 'Right', 'themify' ), 'icon' => '<span class="ti-align-right"></span>' )
-				),
+				'aligment2' => true
 			),
 			array(
 				'id' => 'fullwidth_button',
@@ -138,10 +141,10 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 						'class' => 'fullwidth',
 						'binding' => array(
 							'empty' => array(
-								'hide' => array( 'link_options', 'button_color_bg' )
+								'hide' => array( 'link_options', 'button_color_bg','title' )
 							),
 							'not_empty' => array(
-								'show' => array( 'link_options', 'button_color_bg' )
+								'show' => array( 'link_options', 'button_color_bg','title' )
 							)
 						)
 					),
@@ -163,13 +166,9 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 								'control' => false,
 								'units' => array(
 									'px' => array(
-										'min' => 0,
 										'max' => 3000
 									),
-									'%' => array(
-										'min' => 0,
-										'max' => 100
-									)
+									'%' => ''
 								)
 							),
 							array(
@@ -179,13 +178,9 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 								'type' => 'range',
 								'units' => array(
 									'px' => array(
-										'min' => 0,
 										'max' => 3000
 									),
-									'%' => array(
-										'min' => 0,
-										'max' => 100
-									)
+									'%' => ''
 								)
 							)
 						),
@@ -207,10 +202,10 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 						'class' => 'fullwidth',
 						'binding' => array(
 							'empty' => array(
-								'hide' => array( 'icon_alignment' )
+								'hide' =>  'icon_alignment' 
 							),
 							'not_empty' => array(
-								'show' => array( 'icon_alignment' )
+								'show' => 'icon_alignment' 
 							)
 						)
 					),
@@ -222,7 +217,13 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 							'left' => __( 'Left', 'themify' ),
 							'right' => __( 'Right', 'themify' )
 						)
-					)
+					),
+                    array(
+                        'id' => 'title',
+                        'type' => 'text',
+                        'label' => __( 'Title Attribute', 'themify' ),
+                        'class' => 'fullwidth'
+                    ),
 				)
 			),
 			array(
@@ -233,8 +234,7 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 		);
 	}
 
-	public function get_default_settings()
-	{
+	public function get_live_default(){
 		return array(
 			'content_button' => array(
 				array(
@@ -246,8 +246,7 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 		);
 	}
 
-	public function get_styling()
-	{
+	public function get_styling(){
 		$general = array(
 			// Background
 			self::get_expand( 'bg', array(
@@ -269,30 +268,30 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 				self::get_tab( array(
 					'n' => array(
 						'options' => array(
-							self::get_font_family(),
+							self::get_font_family(' a'),
 							self::get_color_type( array( ' i', ' span' ) ),
 							self::get_font_size( array( ' i', ' span' ) ),
 							self::get_line_height( array( ' i', ' span' ) ),
 							self::get_letter_spacing( array( ' i', ' span' ) ),
 							self::get_text_align(),
 							self::get_text_transform(' span'),
-							self::get_font_style(),
+							self::get_font_style(' a'),
 							self::get_text_decoration( array( ' i', ' span' ), 'text_decoration_regular' ),
-							self::get_text_shadow()
+							self::get_text_shadow(' a')
 						)
 					),
 					'h' => array(
 						'options' => array(
-							self::get_font_family( '', 'f_f', 'h' ),
+							self::get_font_family( ' a', 'f_f', 'h' ),
 							self::get_color_type( array( ' .module-buttons-item:hover i', ' .module-buttons-item:hover span' ), 'h' ),
 							self::get_font_size( array( ' i', ' span' ), 'f_s', '', 'h' ),
 							self::get_line_height( array( ' i', ' span' ), 'l_h', 'h' ),
 							self::get_letter_spacing( array( ' i', ' span' ), 'l_s', 'h' ),
 							self::get_text_align( '', 't_a', 'h' ),
 							self::get_text_transform( ' span', 't_t', 'h' ),
-							self::get_font_style( '', 'f_st', 'f_w', 'h' ),
+							self::get_font_style( ' a', 'f_st', 'f_w', 'h' ),
 							self::get_text_decoration( array( ' i', ' span' ), 't_d_r', 'h' ),
-							self::get_text_shadow( '', 't_sh', 'h' )
+							self::get_text_shadow( ' a', 't_sh', 'h' )
 						)
 					)
 				) )
@@ -356,6 +355,21 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 					))
 				)
 			),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -396,7 +410,9 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 				)
 			),
 			// Position
-			self::get_expand('po', array( self::get_css_position()))
+			self::get_expand('po', array( self::get_css_position())),
+			// Display
+			self::get_expand('disp', self::get_display())
 		);
 
 		$button_link = array(
@@ -420,14 +436,14 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 				self::get_tab( array(
 					'n' => array(
 						'options' => array(
-							self::get_color( array( ' .module-buttons-item a span', ' .module-buttons-item a i' ), 'link_color' ),
-							self::get_text_decoration( array( ' .module-buttons-item a span', ' .module-buttons-item a i' ) )
+							self::get_color( array( ' .module-buttons-item a', ' .module-buttons-item a i' ), 'link_color' ),
+							self::get_text_decoration( array( ' .module-buttons-item a', ' .module-buttons-item a i', ' .module-buttons-item span' ) )
 						)
 					),
 					'h' => array(
 						'options' => array(
-							self::get_color( array( ' .module-buttons-item a:hover span', ' .module-buttons-item a:hover i' ), 'link_color_hover', null, null, '' ),
-							self::get_text_decoration( array( ' .module-buttons-item a:hover span', ' .module-buttons-item a:hover i' ), 't_d_h', '' )
+							self::get_color( array( ' .module-buttons-item a:hover', ' .module-buttons-item a:hover i' ), 'link_color_hover', null, null, '' ),
+							self::get_text_decoration( array( ' .module-buttons-item a:hover', ' .module-buttons-item a:hover i', ' .module-buttons-item:hover span' ), 't_d_h', '' )
 						)
 					)
 				) )
@@ -467,12 +483,12 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 				self::get_tab( array(
 					'n' => array(
 						'options' => array(
-							self::get_border( '.module .module-buttons .module-buttons-item a', 'link_border' )
+							self::get_border( '.module .module-buttons-item a', 'link_border' )
 						)
 					),
 					'h' => array(
 						'options' => array(
-							self::get_border( '.module .module-buttons .module-buttons-item a', 'l_b', 'h' )
+							self::get_border( '.module .module-buttons-item a', 'l_b', 'h' )
 						)
 					)
 				) )
@@ -645,35 +661,38 @@ class TB_Buttons_Module extends Themify_Builder_Component_Module
 	{
 		?>
         <# var downloadLink = ( data.download_link == 'yes' ) ? 'download' : '',
-        alignment = (!data.alignment || 'undefined' == data.alignment )? '' : 'tb-align-'+data.alignment,
+        alignment = (!data.alignment || 'undefined' == data.alignment )? '' : 'tf_text'+data.alignment[0],
 	display=data.display;
 	if(data.fullwidth_button){
 	    alignment=display='';
 	}
         #>
-        <div class="module module-<?php echo $this->slug; ?> {{ data.css_button }} {{ alignment }} {{ data.buttons_size }} {{ data.buttons_style }} {{ data.buttons_shape }}">
-            <# if ( data.content_button ) { #>
-            <div class="module-<?php echo $this->slug; ?>">
-                <# _.each( data.content_button, function( item,i ) { #>
-                <div class="module-buttons-item {{ data.fullwidth_button }} {{ display }}">
-                    <# if ( item.link ) { #>
-                    <# item.button_color_bg = undefined == item.button_color_bg ? 'tb_default_color' : item.button_color_bg; #>
-                    <a class="ui builder_button {{ item.button_color_bg }}" href="{{ item.link }}" {{downloadLink}}>
+        <div class="module module-<?php echo $this->slug; ?> {{ data.css_button }} {{ alignment }} {{ data.buttons_size!=='normal'?data.buttons_size:'' }} {{ data.buttons_style }} {{ data.buttons_shape!=='normal'?data.buttons_shape:'' }} {{ display }} {{ data.fullwidth_button }}">
+            <# if ( data.content_button ) {
+		_.each( data.content_button, function( item,i ) {
+			if ( ! item ) {
+				return;
+			}
+			#>
+                <div class="module-buttons-item tf_inline_b">
+                    <# if ( item.link ) { 
+			item.button_color_bg = undefined == item.button_color_bg || item.button_color_bg=='default' ? 'tb_default_color' : item.button_color_bg;
+                    var title = undefined == item.title || item.title=='' ? '' : "title='"+item.title+"'";#>
+                    <a class="ui builder_button {{ item.button_color_bg }}" href="{{ item.link }}" {{downloadLink}} <# print(title)#>>
                         <# }
                         if ( item.icon && (!item.icon_alignment || item.icon_alignment !== 'right') ) { #>
-                        <i class="<# print(tb_app.Utils.getIcon(item.icon))#>"></i>
+                        <i class="tf_inline_b tf_vmiddle"><# print(tb_app.Utils.getIcon(item.icon).outerHTML)#></i>
                         <# } #>
-                        <span contenteditable="false" data-name="label" data-index="{{i}}" data-repeat="content_button">{{{ item.label }}}</span>
+                        <span class="tf_inline_b tf_vmiddle" contenteditable="false" data-name="label" data-index="{{i}}" data-repeat="content_button">{{{ item.label }}}</span>
                         <# if ( item.icon && item.icon_alignment && item.icon_alignment === 'right' ) { #>
-                        <i class="<# print(tb_app.Utils.getIcon(item.icon))#>"></i>
+                        <i><# print(tb_app.Utils.getIcon(item.icon).outerHTML)#></i>
                         <# }
                         if ( item.link ) { #>
                     </a>
                     <# } #>
                 </div>
-                <# } );#>
-            </div>
-            <#} #>
+                <# } );
+            } #>
         </div>
 		<?php
 	}

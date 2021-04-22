@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Plain Text
  * Description: Display plain text
@@ -14,6 +15,10 @@ class TB_Plain_Text_Module extends Themify_Builder_Component_Module {
 	    'name' => __('Plain Text', 'themify'),
 	    'slug' => 'plain-text'
 	));
+    }
+    
+    public function get_icon(){
+	return 'text';
     }
 
     public function get_plain_text($module) {
@@ -217,7 +222,9 @@ class TB_Plain_Text_Module extends Themify_Builder_Component_Module {
 			)
 		),
 		// Position
-		self::get_expand('po', array( self::get_css_position()))
+		self::get_expand('po', array( self::get_css_position())),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
     }
 

@@ -5,6 +5,233 @@
  * @package Themify
  */
 
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Enqueue JS and CSS for Themify settings page and meta boxes
+ * @param String $page
+ * @since 1.1.1
+ *******************************************************/
+function themify_enqueue_scripts($page){
+	$pagenow = isset( $_GET['page'] ) ? $_GET['page'] : '';
+
+	// Don't do anything while updating the theme
+	if ( 'themify' === $pagenow && isset( $_GET['action'] ) && 'upgrade' === $_GET['action'] ) {
+		return;
+	}
+
+	global $typenow;
+
+	$types = themify_post_types();
+	$pages = apply_filters( 'themify_top_pages', array( 'post.php', 'post-new.php', 'toplevel_page_themify', 'nav-menus.php' ) );
+	$pagenows = apply_filters( 'themify_pagenow', array( 'themify' ) );
+	
+	wp_register_style( 'tf-base', THEMIFY_URI . '/css/base.min.css', null, THEMIFY_VERSION);
+	wp_register_style( 'themify-ui',  themify_enque(THEMIFY_URI . '/css/themify-ui.css'), array('tf-base'), THEMIFY_VERSION );
+	wp_register_style( 'themify-ui-rtl',  themify_enque(THEMIFY_URI . '/css/themify-ui-rtl.css'), array('themify-ui'), THEMIFY_VERSION );
+	wp_register_style( 'themify-colorpicker', themify_enque(THEMIFY_METABOX_URI . 'css/jquery.minicolors.css'), null, THEMIFY_VERSION );
+	wp_register_script( 'validate', THEMIFY_URI . '/js/admin/jquery.validate.pack.min.js', array('jquery'), THEMIFY_VERSION,true );
+	wp_register_script( 'markjs', THEMIFY_URI . '/js/admin/jquery.mark.min.js', array('jquery'), THEMIFY_VERSION,true );
+	wp_register_script( 'themify-colorpicker', themify_enque(THEMIFY_METABOX_URI . 'js/jquery.minicolors.js'), array('jquery'), THEMIFY_VERSION,true );
+	wp_localize_script( 'themify-colorpicker', 'themifyCM', Themify_Metabox::themify_localize_cm_data() );
+	wp_register_script( 'themify-scripts', themify_enque(THEMIFY_URI . '/js/admin/scripts.js'), array('jquery', 'jquery-ui-tabs'), THEMIFY_VERSION,true );
+	wp_register_script( 'themify-plupload', themify_enque(THEMIFY_METABOX_URI . 'js/plupload.js'), array('jquery', 'themify-scripts'), THEMIFY_VERSION,true);
+	wp_register_style ( 'magnific', themify_enque(THEMIFY_URI . '/css/lightbox.css'), array(), THEMIFY_VERSION );
+	wp_register_script( 'magnific', THEMIFY_URI . '/js/lightbox.min.js', array('jquery'), THEMIFY_VERSION, true );
+
+	// Custom Write Panel
+	if( ($page === 'post.php' || $page === 'post-new.php') && in_array($typenow, $types,true) ){
+		wp_enqueue_script( 'meta-box-tabs' );
+		wp_enqueue_script( 'media-library-browse' );
+	}
+
+	// Register icon assets for later enqueueing.
+	wp_register_style( 'themify-icons', themify_enque(THEMIFY_URI . '/themify-icons/themify-icons.css'), array(), THEMIFY_VERSION );
+
+	// Settings Panel
+	if( $page === 'toplevel_page_themify' ){
+		wp_enqueue_script( 'jquery-ui-sortable' );
+		// Load main.js for using fontawsome function
+		wp_enqueue_script( 'themify-main-script', themify_enque(THEMIFY_URI.'/js/main.js'), array('jquery'), THEMIFY_VERSION, true );
+		Themify_Enqueue_Assets::addLocalization('url', THEMIFY_URI, false);
+		$tf_code = wp_enqueue_code_editor( array( 'type' => 'text/html' ) );
+	}
+	else{
+	    $tf_code='';
+	}
+	if( in_array( $page, $pages,true ) ) {
+		//Enqueue styles
+		wp_enqueue_style( 'themify-ui' );
+		wp_enqueue_style( 'themify-metabox' );
+		if ( is_rtl() ) {
+			wp_enqueue_style( 'themify-ui-rtl' );
+		}
+		wp_enqueue_style( 'themify-colorpicker' );
+
+		//Enqueue scripts
+		wp_enqueue_script( 'jquery' );
+		wp_enqueue_script( 'jquery-ui-core' );
+		wp_enqueue_script( 'jquery-ui-tabs' );
+		wp_enqueue_script( 'jquery-ui-slider' );
+                if( 'themify' === $pagenow){
+                        wp_enqueue_script( 'jquery-ui-autocomplete' );
+                }
+		wp_enqueue_script( 'json2' );
+		wp_enqueue_script( 'plupload-all' );
+		wp_enqueue_script( 'validate' );
+		wp_enqueue_script( 'markjs' );
+		wp_enqueue_script( 'themify-colorpicker' );
+		if( in_array($typenow, $types,true) || in_array( $pagenow, $pagenows,true ) ){
+			//Don't include Themify JavaScript if we're not in one of the Themify-managed pages
+			wp_enqueue_script( 'themify-scripts' );
+			wp_enqueue_script( 'themify-plupload' );
+			Themify_Metabox::get_instance()->enqueue();
+		}
+		// Enqueue font icon assets.
+		
+		wp_enqueue_style( 'themify-icons' );
+		Themify_Icon_Font::enqueue();
+		wp_enqueue_style ( 'magnific' );
+		wp_enqueue_script( 'magnific' );
+	}
+
+	//Inject variable values to scripts.js previously enqueued
+	wp_localize_script('themify-scripts', 'themify_js_vars', array(
+			'nonce' 	=> wp_create_nonce('ajax-nonce'),
+			'admin_url' => admin_url( 'admin.php?page=themify' ),
+			'page_not_found' => esc_html__( 'Page not found', 'themify' ),
+			'code_editor'=>!empty($tf_code)?$tf_code:''
+		)
+	);
+	$tf_code=null;
+	wp_localize_script('themify-scripts', 'themify_lang', array(
+			'confirm_reset_styling'	=> __('Are you sure you want to reset your theme style?', 'themify'),
+			'confirm_reset_settings' => __('Are you sure you want to reset your theme settings?', 'themify'),
+			'check_backup' => __('Make sure to backup before upgrading. Files and settings may get lost or changed.', 'themify'),
+			'confirm_delete_image' => __('Do you want to delete this image permanently?', 'themify'),
+			'invalid_login' => __('Invalid username or password.<br/>Contact <a href="https://themify.me/contact">Themify</a> for login issues.', 'themify'),
+			'unsuscribed' => __('Your membership might be expired. Login to <a href="https://themify.me/member">Themify</a> to check.', 'themify'),
+			'confirm_demo' => __( 'This will import demo and override current Themify panel settings.', 'themify' )
+		)
+	);
+
+    wp_localize_script('themify-plupload', 'themify_plupload_lang', array(
+            'enable_zip_upload' => sprintf(
+                __('Install the "File Upload Types" plugin and add the file extension upload support.', 'themify'),
+                esc_url( network_admin_url('settings.php').'#upload_filetypes' )
+            ),
+            'filesize_error' => __('The file you are trying to upload exceeds the maximum file size allowed.', 'themify'),
+            'filesize_error_fix' => sprintf(
+                __('Go to your <a href="%s">Network Settings</a> and increase the value of the <strong>Max upload file size</strong>.', 'themify'),
+                esc_url( network_admin_url('settings.php').'#fileupload_maxk' )
+            )
+        )
+    );
+
+	// Enqueu admin widgets stuff
+	if( $page === 'index.php' && themify_is_themify_theme()) {
+		wp_enqueue_style( 'themify-admin-widgets-css' );
+		wp_enqueue_script( 'themify-admin-widgets-js' );
+	}
+}
+
+/**
+ * In this hook current user is authenticated so we can check for capabilities.
+ *
+ * @since 2.1.8
+ */
+function themify_after_user_is_authenticated() {
+	if ( current_theme_supports( 'themify-exclude-theme-from-wp-update' ) ) {
+	    add_filter( 'http_request_args', 'themify_hide_themes', 10, 2 );
+	}
+	if ( current_user_can( 'manage_options' ) ) {
+	    
+		/**
+	 	 * Themify - Admin Menu
+	 	 *******************************************************/
+		add_action( 'admin_menu', 'themify_admin_nav',1 );
+	}
+}
+
+
+
+/**
+ * Checks if there is styling data or custom CSS.
+ *
+ * 1.9.1 Removed cached option because it might be misleading on certain situations.
+ *		 Refactored to exit as soon as possible and minimize execution time and memory usage.
+ *
+ * @since 1.8.2
+ *
+ * @return bool
+ */
+function themify_has_styling_data() {
+	/* bypass the styling check */
+	$has_styling = apply_filters( 'themify_show_styling_panel', null );
+	if ($has_styling!==null) {
+		return $has_styling;
+	}
+
+	/**
+	 * @var array $themify_data Themify theme settings and styling.
+	 */
+	$themify_data = themify_get_data();
+
+	// Check Custom CSS
+	if ( ! empty( $themify_data['setting-custom_css'] ) ) {
+		return true;
+	}
+
+	// Check styling data
+	foreach ( $themify_data as $key => $val ) {
+		if ( false !== stripos( $key, 'styling-' ) ) {
+			$val = trim($val);
+			if ( ! empty( $val ) ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
+/**
+ * Checks if current user is allowed to view the update interface.
+ *
+ * @since 2.0.0
+ *
+ * @return bool
+ */
+function themify_allow_update() {
+	static $is=null;
+	if ($is===null ) {
+	    $is = current_user_can( 'update_themes' );
+	}
+	return $is;
+}
+
+/**
+ * Hijacks themes passed for upgrade checking and remove those from Themify
+ *
+ * This feature is only required for legacy themes without "themify-" prefix,
+ * to prevent updates from wp.org overwriting theme files.
+ *
+ * @param Bool
+ * @param Array $r List of themes
+ * @param String $url URL of upgrade check
+ * @return Array
+ * @since 1.1.8
+ */
+function themify_hide_themes( $response, $url ){
+	if ( 0 === strpos( $url, 'https://api.wordpress.org/themes/update-check' ) ) {
+		$themes = json_decode( $response['body']['themes'] );
+		unset( $themes->themes->{get_option( 'template' )},$themes->themes->{get_option( 'stylesheet' )} );
+		$response['body']['themes'] = json_encode( $themes );
+	}
+
+	return $response;
+}
 ///////////////////////////////////////////
 // Create Nav Options
 ///////////////////////////////////////////
@@ -15,13 +242,13 @@ function themify_admin_nav() {
 	 * Add Themify menu entry
 	 * @since 2.0.2
 	 */
-	add_menu_page( 'themify', $name , 'manage_options', 'themify', 'themify_page', get_template_directory_uri().'/themify/img/favicon.png', '49.3' );
+	add_menu_page( 'themify', $name , 'manage_options', 'themify', 'themify_page', THEMIFY_URI.'/img/favicon.png', '49.3' );
 	/**
 	 * Add Themify settings page
 	 * @since 2.0.2
 	 */
 	add_submenu_page( 'themify', $name, __('Themify Settings', 'themify'), 'manage_options', 'themify', 'themify_page' );
-	if ( Themify_Builder_Model::builder_check() ) {
+	if ( class_exists('Themify_Builder_Model') && Themify_Builder_Model::builder_check() ) {
 		/**
 		 * Add Themify Builder Layouts page
 		 * @since 2.0.2
@@ -95,8 +322,8 @@ function themify_page() {
 		wp_die( __( 'You do not have sufficient permissions to update this site.', 'themify' ) );
 
 	if (isset($_GET['action'])) {
-		$action = 'upgrade';
-		themify_updater();
+	    $action = 'upgrade';
+	    themify_updater();
 	}
 
 	$themify_config = themify_load_config();
@@ -120,7 +347,7 @@ function themify_page() {
 	$skins_and_demos = apply_filters( 'themify_show_skins_and_demos_admin', false );
 
 	/** whether the theme has sample data to import */
-	$sample_data = file_exists( THEME_DIR . '/sample/import.zip' );
+	$sample_data = is_file( THEME_DIR . '/sample/import.zip' );
 	?>
 	<!-- alerts -->
 	<div class="tb_alert"></div>
@@ -163,9 +390,9 @@ function themify_page() {
 
 			<ul class="subtabnav">
                 <div class="search-setting-holder">
-                    <label for="search-setting" class="search-icon ti-search"></label>
+                    <label for="search-setting" class="search-icon"><?php echo themify_get_icon('search','ti')?></label>
                     <input id="search-setting" type="text" class="search-setting" name="search-setting">
-                    <span class="ti-close clear-search"></span>
+                    <span class="clear-search"><?php echo themify_get_icon('close','ti')?></span>
                 </div>
 				<?php
 				$x = true;
@@ -240,7 +467,7 @@ function themify_page() {
 									'themify' ); ?></p>
 							<a href="#" class="button notice-dismiss" data-notice="customize"><?php _e( 'Start Customize', 'themify' ); ?></a>
 							<a href="#" class="close notice-dismiss" data-notice="customize">
-								<i class="ti-close"></i>
+							    <i class="tf_close"></i>
 							</a>
 						</div>
 					<?php endif; ?>
@@ -323,7 +550,7 @@ function themify_page() {
 						<div class="themify-info-link"><?php _e( 'Select a skin & import the demo content (demo import is optional). Import demo will import the content (posts/pages), Themify panel settings, menus and widgets as our demo. Erase demo will delete only the imported posts/pages (Themify panel settings, widgets, existing and modified imported posts/pages will not be affected).', 'themify' ); ?></div>
 					<?php endif; ?>
 					<div class="themify-skins">
-						<input type="hidden" name="skin" value="<?php echo themify_get( 'skin' ); ?>">
+						<input type="hidden" name="skin" value="<?php echo themify_get( 'skin','',true ); ?>">
 						<?php echo themify_get_skins_admin(); ?>
 					</div>
 				</div>
@@ -381,7 +608,7 @@ function themify_page() {
 				</div>
 				<p><small><?php _e( 'Import Demo will import the content (posts/pages), Themify panel settings, menus and widgets as our demo.', 'themify' ); ?></small></p>
 				<div>
-				<a href="#" class="themify_button big-button erase-sample-content" data-default="<?php _e( 'Erase Demo', 'themify' ); ?>" data-erasing="<?php _e( 'Erasing', 'themify' ); ?>" data-success="<?php _e( 'Done', 'themify' ); ?>"> <i class="ti-close"></i> <span><?php _e( 'Erase Demo', 'themify' ); ?></span> </a>
+				<a href="#" class="themify_button big-button erase-sample-content" data-default="<?php _e( 'Erase Demo', 'themify' ); ?>" data-erasing="<?php _e( 'Erasing', 'themify' ); ?>" data-success="<?php _e( 'Done', 'themify' ); ?>"> <i class="tf_close"></i> <span><?php _e( 'Erase Demo', 'themify' ); ?></span> </a>
 				</div>
 				<p><small><?php _e( 'Erase demo will delete the imported posts/pages. Existing and modified imported post/page will not be deleted. Themify panel settings and widgets will not be removed. You may import the content again later.', 'themify' ); ?></small></p>
 			</div>
@@ -430,7 +657,7 @@ function themify_page() {
 	<!--/content -->
 
 	<?php if( get_option( get_template() . '_themify_import_notice', 1 ) ) : ?>
-		<div id="demo-import-notice" class="themify-modal">
+		<div id="demo-import-notice" class="themify-modal tf_scrollbar">
 		<?php if( $skins_and_demos ) : ?>
 			<p><?php _e( 'Skins & Demos', 'themify' ); ?></p>
 			<p><?php _e( 'Select a skin and import the demo content as per our demo (optional). You can do this later at the Skins & Demos tab.', 'themify' ); ?></p>
@@ -444,7 +671,7 @@ function themify_page() {
 			<a href="#" class="themify_button import-sample-content" data-default="<?php _e( 'Import Demo', 'themify' ); ?>" data-success="<?php _e( 'Done', 'themify' ); ?>" data-importing="<?php _e( 'Importing', 'themify' ) ?>"> <i class="ti-arrow-down"></i> <span><?php _e( 'Yes, import', 'themify' ); ?></span> </a>
 			<a href="#" class="thanks-button dismiss-import-notice"> <?php _e( 'No, thanks', 'themify' ); ?> </a>
 		<?php endif; ?>
-			<a href="#" class="close dismiss-import-notice"><i class="ti-close"></i></a>
+			<a href="#" class="close dismiss-import-notice"><i class="tf_close"></i></a>
 		</div>
 		<?php
 		    // disable the demo import modal after first visit
@@ -487,7 +714,8 @@ function themify_page() {
 		$('#themify :checkbox').each(function(){
 			if ( $( this ).prev( 'input[type="hidden"]' ).length ) {
 				return;
-			}			$( this ).before( '<input type="hidden" name="' + $( this ).attr( 'name' ) + '" value="" />' );
+			}
+			$( this ).before( '<input type="hidden" name="' + $( this ).attr( 'name' ) + '" value="" />' );
 		});
 	});
 	</script>
@@ -508,39 +736,44 @@ function themify_get_skins(){
 	// Open Styles Folder
 	$dir = trailingslashit( get_template_directory() ) . '/skins';
 
-	$skins = array( array(
-		'name' => __( 'No Skin', 'themify' ),
-		'version' => null,
-		'description' => null,
-		'screenshot' => get_template_directory_uri() . '/themify/img/non-skin.gif',
-		'has_demo' => false,
-	) );
-	if ( is_dir( $dir ) ) {
-		if( $handle = opendir( $dir ) ){
-			// Grab Folders
-			while ( false !== ( $dirTwo = readdir($handle) ) ) {
-				if( $dirTwo !== '.' && $dirTwo !== '..' ) {
-					$path = trailingslashit( $dir ) . $dirTwo;
-					if( is_file( $path . '/style.css' ) ) {
-						$info = get_file_data( $path . '/style.css', array( 'Skin Name', 'Version', 'Description', 'Demo URI', 'Required Plugins' ) );
-						$skins[$dirTwo] = array(
-							'name' => $info[0],
-							'version' => $info[1],
-							'description' => $info[2],
-							'screenshot' => is_file( $path . '/screenshot.jpg' ) ? get_template_directory_uri().'/skins/'. $dirTwo . '/screenshot.jpg'
-											: ( is_file( $path . '/screenshot.png' ) ? get_template_directory_uri().'/skins/'. $dirTwo . '/screenshot.png'
-											: get_template_directory_uri() . '/themify/img/screenshot-na.png' ),
-							'has_demo' => is_file( $path . '/import.zip' ),
-							'demo_uri' => $info[3],
-							'required_plugins' => $info[4]
-						);
-					}
-				}
-			}
-			closedir($handle);
-		}
+	$skins = array(
+		1 => array(
+			array(
+				'name' => __( 'No Skin', 'themify' ),
+				'version' => null,
+				'description' => null,
+				'screenshot' => get_template_directory_uri() . '/themify/img/non-skin.gif',
+				'has_demo' => false,
+			),
+		),
+	);
+	if ( is_dir( $dir )  && ($handle = opendir( $dir ) )) {
+	    // Grab Folders
+	    while ( false !== ( $dirTwo = readdir($handle) ) ) {
+		    if( $dirTwo !== '.' && $dirTwo !== '..' ) {
+			    $path = trailingslashit( $dir ) . $dirTwo;
+			    if( is_file( $path . '/style.css' ) ) {
+				    $info = get_file_data( $path . '/style.css', array( 'Skin Name', 'Version', 'Description', 'Demo URI', 'Required Plugins', 'Display Order' ) );
+				    $order = empty( $info[5] ) ? 10 : $info[5];
+					$skins[ $order ][ $dirTwo ] = array(
+					    'name' => $info[0],
+					    'version' => $info[1],
+					    'description' => $info[2],
+					    'screenshot' => is_file( $path . '/screenshot.jpg' ) ? get_template_directory_uri().'/skins/'. $dirTwo . '/screenshot.jpg'
+									    : ( is_file( $path . '/screenshot.png' ) ? get_template_directory_uri().'/skins/'. $dirTwo . '/screenshot.png'
+									    : get_template_directory_uri() . '/themify/img/screenshot-na.png' ),
+					    'has_demo' => is_file( $path . '/import.zip' ),
+					    'demo_uri' => $info[3],
+					    'required_plugins' => $info[4],
+				    );
+			    }
+		    }
+	    }
+	    closedir($handle);
 	}
-	ksort( $skins );
+	ksort( $skins ); // sort skin groups
+	ksort( $skins[10] ); // sort by skin name
+	$skins = call_user_func_array( 'array_merge', $skins );
 
 	return apply_filters( 'themify_theme_skins', $skins );
 }
@@ -551,15 +784,15 @@ function themify_get_skins(){
  * @return string
  */
 function themify_get_skins_admin(){
-	$data = themify_get_data();
 	$skins = themify_get_skins();
 	$output = '';
 
 	if( ! empty( $skins ) ) {
+		$current=themify_get_skin();
 		foreach( $skins as $id => $skin ) {
-			$selected = themify_get_skin() === $id ? 'selected' : '';
+			$selected = $current === $id ? 'selected' : '';
 
-			if( $id === 'default' &&! themify_check( 'skin' ) ) {
+			if( $id === 'default' &&(!$current || $current==='default')) {
 				$selected = 'selected';
 			}
 
@@ -597,13 +830,19 @@ function themify_required_plugin_install_btn( $plugin = '' ){
 		    if ( $versions->is_update_available( $plugin ) && (!$updater->has_error() || $versions->has_attribute($plugin, 'wp_hosted')) ) {
 			    $link = wp_nonce_url( network_admin_url( 'update.php?action=install-plugin&plugin=' . $plugin ), 'install-plugin_' . $plugin );
 			    $default = sprintf("<a href='%s' class='external-link'>%s</a>", $link, __('Install', 'themify'));
+            } elseif ($updater->has_error()) {
+                $default = sprintf("%s <a href='%s' class='external-link'>%s</a>", __('Please enter a valid', 'themify'), add_query_arg( array( 'page' => 'themify-license' ), admin_url( 'index.php' ) ), __('license key', 'themify'));
             }
         }
 	}
 
 	return $default;
 }
-
+function themify_required_plugin_activate_btn( $plugin = '' ){
+    $link = wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=' . $plugin ), 'activate-plugin_' . $plugin );
+    $default = sprintf("<a href='%s' class='external-link'>%s</a>", $link, __( 'Activate', 'themify' ));
+    return $default;
+}
 function themify_required_plugins_modal( $required_plugins, $skin = '' ) {
 	$output = '<div class="required-addons themify-modal" style="display: none;" data-skin="' . $skin . '">';
 	if( ! empty( $required_plugins ) ) {
@@ -616,10 +855,18 @@ function themify_required_plugins_modal( $required_plugins, $skin = '' ) {
 			$output .= '<p>' . __( 'This demo requires these plugins/addons:', 'themify' ) . '</p>';
 			$output .= '<ul>';
 			foreach( $required_plugins as $plugin ) {
-				$state = isset( $all_plugins[$plugin['path']] ) ? is_plugin_active( $plugin['path'] ) ? __( '<span class="ti-check"></span>', 'themify' ) : __( 'installed, but not active', 'themify' ) : themify_required_plugin_install_btn( $plugin['path'] );
+				$state = isset( $all_plugins[$plugin['path']] ) ? is_plugin_active( $plugin['path'] ) ? __( '<span class="ti-check"></span>', 'themify' ) : themify_required_plugin_activate_btn( $plugin['path'] ) : themify_required_plugin_install_btn( $plugin['path'] );
 				$output .= '<li>' . sprintf( "<a href='%s' class='external-link'>%s</a> (%s)", $plugin['page'], $plugin['name'], $state ) . '</li>';
 			}
 			$output .= '</ul>';
+			if (!defined('THEMIFY_UPDATER')) {
+			    $updater = themify_get_known_plugin_info('themify-updater');
+			    if ( isset( $all_plugins[$updater['path']] ) ) {
+			        $output .= sprintf( "<p>(<a href='%s' class='external-link'>%s</a>) %s</p>", wp_nonce_url( admin_url( 'plugins.php?action=activate&plugin=' . $updater['path'] ), 'activate-plugin_' . $updater['path'] ), __('Activate', 'themify'), __('Themify Updater to install other plugins', 'themify'));
+			    } else {
+			        $output .= sprintf( "<p>%s (<a href='%s' class='external-link' target=\"_blank\">%s</a>)</p>", __('Missing Themify Updater', 'themify'), $updater['page'], __('Install', 'themify'));
+			    }
+			}
 			$output .= '<p class="themify-import-warning">' . __( 'Proceed import without the required addons/plugins might show incomplete/missing content.', 'themify' ) . '</p>';
 		}
 	}
@@ -630,7 +877,7 @@ function themify_required_plugins_modal( $required_plugins, $skin = '' ) {
 		<input type="checkbox" name="import_images" id="import_images" checked="checked" />
 		<span>' . __( 'Include all demo images (will take longer)', 'themify' ) . '</span>
 	</label>';
-	$output .= '<a href="#" class="close dismiss-import-notice"><i class="ti-close"></i></a>';
+	$output .= '<a href="#" class="close dismiss-import-notice"><i class="tf_close"></i></a>';
 	$output .= '</div>';
 	return $output;
 }
@@ -669,7 +916,7 @@ function themify_fieldset( $title = '', $module = '', $attr = '', $wrap = true )
 	);
 	if ( $wrap ) {
 		$tmp_id = is_string( $function ) ? 'id="'. esc_attr( $function ) .'"' : '' ;
-		$output = '<fieldset '.$tmp_id.'><legend><span>' . esc_html( $title ) . '</span><i class="ti-plus"></i></legend><div class="themify_panel_fieldset_wrap">'
+		$output = '<fieldset '.$tmp_id.'><legend><span>' . esc_html( $title ) . '</span><i class="tf_plus_icon"></i></legend><div class="themify_panel_fieldset_wrap">'
 			. $output
 		. '</div></fieldset>';
 	}
@@ -928,6 +1175,13 @@ function themify_get_known_plugin_info( $name = '' ) {
 			'page' => 'https://wordpress.org/plugins/learnpress/',
 			'path' => 'learnpress/learnpress.php'
 		),
+		'themify-updater' => array(
+			'name' => __( 'Themify Updater', 'themify' ),
+			'image' => '',
+			'desc' => '',
+			'page' => 'https://themify.me/docs/themify-updater-documentation',
+			'path' => 'themify-updater/themify-updater.php'
+		),
 	);
 
 	if( empty( $name ) ) {
@@ -956,12 +1210,11 @@ function themify_news_admin_widget() {
     if ( false !== ( $output = get_transient( $cache_key ) ) ) {
 		echo $output;
 	} else {
-		$src = themify_enque( THEMIFY_URI . '/js/admin-dashboard.js' );
+		$src = themify_enque( THEMIFY_URI . '/js/admin/admin-dashboard.js' );
 		echo '<script src="' . $src . '"></script>';
 	}
 	echo '</div>';
 }
-
 
 /**
  * Handle the display of the Themify News admin dashboard widget
@@ -1011,9 +1264,9 @@ function themify_site_logo( $data = array() ) {
 		$text = "checked='checked'";	
 		$image_display = "style='display:none;'";
 	}
-	$logo_image_value = themify_get( 'setting-site_logo_image_value' );
-	$logo_image_width = themify_get( 'setting-site_logo_width' );
-	$logo_image_height = themify_get( 'setting-site_logo_height' );
+	$logo_image_value = themify_get( 'setting-site_logo_image_value','',true );
+	$logo_image_width = themify_get( 'setting-site_logo_width','',true );
+	$logo_image_height = themify_get( 'setting-site_logo_height','',true );
 	return '<div class="themify_field_row">
 				<span class="label">'. __('Display', 'themify') .'</span> 
 					<input name="setting-site_logo" type="radio" value="text" '.$text.' /> ' . __('Site Title', 'themify') . '
@@ -1040,7 +1293,7 @@ function themify_favicon( $data = array() ) {
 	} else {
 		$target = '';
 	}
-	$setting_favicon = themify_get( 'setting-favicon' );
+	$setting_favicon = themify_get( 'setting-favicon','',true );
 	return '<div class="themify_field_row">
 				<span class="label">'. __('Custom Favicon', 'themify') . '</span>
 				<input id="setting-favicon" type="text" class="width10" name="setting-favicon" value="' . esc_attr( $setting_favicon ) . '" /> <br />
@@ -1080,7 +1333,7 @@ function themify_custom_post_type_layouts($data = array()){
 	$custom_posts = null;
 
 	$post_types = get_post_types(array('public' => true, 'publicly_queryable' => 'true'), 'objects');
-	$excluded_types = apply_filters( 'themify_exclude_CPT_for_sidebar', array('post', 'page', 'attachment', 'tbuilder_layout', 'tbuilder_layout_part', 'section'));
+	$excluded_types = apply_filters( 'themify_exclude_CPT_for_sidebar', array('post', 'page', 'attachment', 'tbuilder_layout', 'tbuilder_layout_part', 'section','tglobal_style'));
 
 
 	foreach ($post_types as $key => $value) {
@@ -1126,7 +1379,7 @@ function themify_custom_post_type_layouts($data = array()){
 					$output .= '<a href="#" class="preview-icon '.$class.'" title="'.$option['title'].'"><img src="'.THEME_URI.'/'.$option['img'].'" alt="'.$option['value'].'"  /></a>';
 				}
 
-				$output .= '<input type="hidden" name="'.($prefix.$key).'_archive" class="val" value="'.$val.'" /></p>';
+				$output .= '<input type="hidden" name="'.$prefix.$key.'_archive" class="val" value="'.$val.'" /></p>';
 			}
 			
 			$output .= '<p>'. sprintf('<span class="label">%s %s</span>', ucfirst($cPost['name']), __('Single Sidebar', 'themify'));
@@ -1143,7 +1396,7 @@ function themify_custom_post_type_layouts($data = array()){
 				}
 				$output .= '<a href="#" class="preview-icon '.$class.'" title="'.$option['title'].'"><img src="'.THEME_URI.'/'.$option['img'].'" alt="'.$option['value'].'"  /></a>';
 			}
-			$output .= '<input type="hidden" name="'.($prefix.$key).'_single" class="val" value="'.$val.'" /></p>
+			$output .= '<input type="hidden" name="'.$prefix.$key.'_single" class="val" value="'.$val.'" /></p>
 						</p>';
 		}
 	}
@@ -1157,7 +1410,7 @@ endif;
 // Custom Feed URL Module
 ///////////////////////////////////////////
 function themify_custom_feed_url( $data = array() ) {
-	$custom_feed_url = themify_get( 'setting-custom_feed_url' );
+	$custom_feed_url = themify_get( 'setting-custom_feed_url','',true );
 	return '<p><span class="label">' . __( 'Custom Feed URL', 'themify' ) . '</span> <input type="text" class="width10" name="setting-custom_feed_url" value="' . esc_attr( $custom_feed_url ) . '" /> <br />
 			<span class="pushlabel"><small>' . __( 'e.g. http://feedburner.com/userid', 'themify' ) . '</small></span></p>';
 }
@@ -1176,9 +1429,9 @@ function themify_meta_description( $data = array() ) {
  * @return string
  */
 function themify_header_html( $data = array() ) {
-	$header_html = themify_get( 'setting-header_html' );
+	$header_html = themify_get( 'setting-header_html','',true );
 	return '<p>' . __('The following code will add to the &lt;head&gt; tag.', 'themify') . '</p>
-				<p><textarea class="widthfull" rows="10" name="setting-header_html" id="setting-header_html">'. esc_html( $header_html ) .'</textarea><br />
+				<p><textarea class="widthfull tf_code_editor" rows="10" name="setting-header_html" id="setting-header_html">'. esc_html( $header_html ) .'</textarea><br />
 				<small>' . __('Useful if you need to add additional scripts such as CSS or JS.', 'themify') . '</small></p>';
 }
 
@@ -1189,9 +1442,9 @@ function themify_header_html( $data = array() ) {
  * @return string
  */
 function themify_footer_html( $data = array() ) {
-	$footer_html = themify_get( 'setting-footer_html' );
+	$footer_html = themify_get( 'setting-footer_html','',true );
 	return '<p>' . __('The following code will be added to the footer before the closing &lt;/body&gt; tag.', 'themify') . '</p>
-				<p><textarea type="text" class="widthfull" rows="10" name="setting-footer_html" id="setting-footer_html">' . esc_html( $footer_html ) . '</textarea><br />
+				<p><textarea type="text" class="widthfull tf_code_editor" rows="10" name="setting-footer_html" id="setting-footer_html">' . esc_html( $footer_html ) . '</textarea><br />
 				<small>' . __('Useful if you need to Javascript or tracking code.', 'themify') . '</small></p>';
 }
 
@@ -1201,7 +1454,7 @@ function themify_footer_html( $data = array() ) {
  * @return string
  */
 function themify_custom_css( $data = array() ) {
-	$custom_css = themify_get( 'setting-custom_css' );
+	$custom_css = themify_get( 'setting-custom_css','',true );
 	return '<p><textarea class="widthfull" rows="35" name="setting-custom_css">'.$custom_css.'</textarea><br /></p>';
 }
 
@@ -1212,20 +1465,16 @@ function themify_search_settings( $data = array() ) {
 	$data            = themify_get_data();
 	$post_checked         = '';
 	$checked         = '';
-	$search_settings = themify_get( 'setting-search_settings' );
-	if ( themify_get( 'setting-search_settings_exclude' ) ) {
+	$search_settings = themify_get( 'setting-search_settings','',true );
+	if ( themify_check( 'setting-search_settings_exclude',true ) ) {
 		$checked = 'checked="checked"';
 	}
-	if ( themify_get( 'setting-search_exclude_post' ) ) {
+	if ( themify_check( 'setting-search_exclude_post',true ) ) {
 		$post_checked = 'checked="checked"';
 	}
 	$out = '<p>
-				<span class="label">' . __( 'Search in Category IDs', 'themify' ) . ' </span>
+				<span class="label">' . __( 'Search in Category IDs', 'themify' ) .themify_help(__( 'Use minus sign (-) to exclude categories. Example: (1,4,-7) = search only in Category 1 &amp; 4, and exclude Category 7.', 'themify' )) . ' </span>
 				<input type="text" class="width6" name="setting-search_settings" value="' . esc_attr( $search_settings ) . '" />
-			</p>
-			<p>
-				<span class="pushlabel"><small>' . __( 'Use minus sign (-) to exclude categories.', 'themify' ) . '</small></span><br />
-				<span class="pushlabel"><small>' . __( 'Example: (1,4,-7) = search only in Category 1 &amp; 4, and exclude Category 7.', 'themify' ) . '</small></span>
 			</p>
 			<p>
 				<span class="pushlabel"><label for="setting-search_exclude_post"><input type="checkbox" id="setting-search_exclude_post" name="setting-search_exclude_post" ' . $post_checked . '/> ' . __( 'Exclude Posts in search results', 'themify' ) . '</label></span>
@@ -1273,7 +1522,7 @@ function themify_search_settings( $data = array() ) {
 if( !function_exists( 'page_404_settings' ) ){
 	function page_404_settings(){
 		$data            = themify_get_data();
-		$page_404 = themify_get( 'setting-page_404' );
+		$page_404 = themify_get( 'setting-page_404','',true );
 		$max = 100;
 		$args = array(
 			'sort_order' => 'asc',
@@ -1288,7 +1537,7 @@ if( !function_exists( 'page_404_settings' ) ){
 		);
 		$pages = new WP_Query( $args );
 					$front = get_option('page_on_front');
-		$out = '<p><span class="label">' . __( 'Custom 404 Page', 'themify' ) . ' </span>';
+		$out = '<p><span class="label">' . __( 'Custom 404 Page', 'themify' ) .themify_help(__('First create a new Page (eg. 404) and then select it here. The selected page will be used for error 404 (when a URL is not found on your site).', 'themify')). ' </span>';
 					if($pages->max_num_pages>1){
 						$post_name = '';
 						if($page_404){
@@ -1319,7 +1568,6 @@ if( !function_exists( 'page_404_settings' ) ){
 						}
 						$out .= '</select>';
 					}
-		$out .= '<p><span class="pushlabel"><small>' . __('First create a new Page (eg. 404) and then select it here. The selected page will be used for error 404 (when a URL is not found on your site).', 'themify') . '</small></span></p>';
 					wp_reset_postdata();
 		return $out;
 	}
@@ -1330,13 +1578,13 @@ if( !function_exists( 'page_404_settings' ) ){
 ///////////////////////////////////////////
 function themify_feed_settings( $data = array() ) {
 	$checked_use = '';
-	$feed_settings = themify_get( 'setting-feed_settings' );
-	$feed_custom_post = themify_get( 'setting-feed_custom_post' );
+	$feed_settings = themify_get( 'setting-feed_settings','',true );
+	$feed_custom_post = themify_get( 'setting-feed_custom_post','',true );
 	$custom_posts = array_diff( get_post_types( array('public' => true, 'publicly_queryable' => 'true' ) )
-		, array('attachment', 'tbuilder_layout', 'tbuilder_layout_part', 'section') );
+		, array('attachment', 'tbuilder_layout', 'tbuilder_layout_part', 'section','tglobal_style') );
 	$custom_posts_options = '<option></option>';
 
-	if ( 'on' === themify_get( 'setting-exclude_img_rss' ) ) {
+	if ( 'on' === themify_get( 'setting-exclude_img_rss','',true ) ) {
 		$checked_use = 'checked="checked"';
 	}
 
@@ -1352,20 +1600,12 @@ function themify_feed_settings( $data = array() ) {
 		}
 	}
 
-	return '<p><span class="label">' . __('Feed Category', 'themify') . '</span> <input type="text" class="width6" name="setting-feed_settings" value="' . esc_attr( $feed_settings ) . '" /></p>
-			<p>
-				<span class="pushlabel"><small>' . __('Use minus sign (-) to exclude categories.', 'themify') . '</small></span><br />
-				<span class="pushlabel"><small>' . __('Example: (2,-9) = include only Category 2 in feeds and exclude Category 9.', 'themify') . '</small></span>
-			</p>
-			<p><span class="label">' . __('Post Image in RSS', 'themify') . '</span> <label for="setting-exclude_img_rss"><input type="checkbox" id="setting-exclude_img_rss" name="setting-exclude_img_rss" '.$checked_use.'/> ' . __('Exclude featured image in RSS feeds', 'themify') . '</label></p>
-			<p>
-				<span class="pushlabel"><small>' . __('Check this to exclude post image in RSS feeds', 'themify') . '</small></span>
-			</p>
-			<p><span class="label">' . __('Custom Posts in RSS', 'themify') . '</span>
+	return '<p><span class="label">' . __('Feed Category', 'themify') .themify_help(__('Use minus sign (-) to exclude categories. <br/> Example: (2,-9) = include only Category 2 in feeds and exclude Category 9.', 'themify')) . '</span> <input type="text" class="width6" name="setting-feed_settings" value="' . esc_attr( $feed_settings ) . '" /></p>
+			<p><span class="label">' . __('Post Image in RSS', 'themify') .themify_help(__('Check this to exclude post image in RSS feeds', 'themify')) . '</span> <label for="setting-exclude_img_rss"><input type="checkbox" id="setting-exclude_img_rss" name="setting-exclude_img_rss" '.$checked_use.'/> ' . __('Exclude featured image in RSS feeds', 'themify') . '</label></p>
+			<p><span class="label">' . __('Custom Posts in RSS', 'themify') .themify_help(__( 'Select "All" to add all available posts in your feed or select the specific ones.', 'themify')) . '</span>
 				<select size="6" multiple="multiple" class="width10 themify_multiselect">' . $custom_posts_options . '</select>
 					<input type="hidden" name="setting-feed_custom_post" value="' . esc_attr( $feed_custom_post ) . '" />
-			</p>
-			<p><span class="pushlabel"><small>' . __( 'Select "All" to add all available posts in your feed or select the specific ones.', 'themify') . '</small></span><br /></p>';
+			</p>';
 }
 
 /**
@@ -1374,24 +1614,22 @@ function themify_feed_settings( $data = array() ) {
 function themify_img_settings( $data = array() ) {
 	$feature_sizes = themify_get_image_sizes_list();
 	$checked_use = '';
-	if ( 'on' === themify_get( 'setting-img_settings_use' ) ) {
+	if (themify_is_image_script_disabled() ) {
 		$checked_use = "checked='checked'";
 	}
-	$size = themify_get( 'setting-img_php_base_size', 'large' );
-	$global = themify_get( 'setting-global_feature_size' );
+	$size = themify_get( 'setting-img_php_base_size', 'large',true );
+	$global = themify_get( 'setting-global_feature_size','',true );
 	$output = '
 	<div class="module">
 		<div class="themify-info-link">' . sprintf( __( 'The image script is used to generate featured images dynamically in any dimension. If your images are cropped manually, disable it for faster performance. For more info about the image script, refer to the <a href="%s">Image Script</a> documentation.', 'themify' ), 'https://themify.me/docs/image-script' ) . '
 		</div>
 		<fieldset>
-		<div class="label">' . __( 'Disable', 'themify' ) . '</div> 
+		<div class="label">' . __( 'Disable', 'themify' ) .themify_help(__( 'Default WordPress image sizes or original images will be used.', 'themify' )) . '</div> 
 		<div class="row">
-			<label for="setting-img_settings_use"><input type="checkbox" id="setting-img_settings_use" name="setting-img_settings_use" class="disable_img_php" ' . $checked_use . '/> ' . __( 'Disable image script globally', 'themify' ) . '</label><br/>
-			<small class="pushlabel">' . __( 'Default WordPress image sizes or original images will be used.', 'themify' ) . '</small>
-			<br/>
+			<label for="setting-img_settings_use"><input type="checkbox" id="setting-img_settings_use" name="setting-img_settings_use" class="disable_img_php" ' . $checked_use . '/> ' . __( 'Disable image script globally', 'themify' ) . '</label>
 		</div>
 		<div class="show_if_enabled_img_php">
-			<div class="label">' . __('Base Image Size', 'themify') . '</div>
+			<div class="label">' . __('Base Image Size', 'themify') .themify_help(__( 'Select the image size that image script will resize thumbnails from. If you\'re not sure, leave it as "Large".', 'themify' )) . '</div>
 			<div class="row">
 				<select name="setting-img_php_base_size">';
 					foreach ( $feature_sizes as $option ) {
@@ -1400,9 +1638,6 @@ function themify_img_settings( $data = array() ) {
 					}
 					$output .= '
 				</select>
-				<small class="pushlabel">
-				' . __( 'Select the image size that image script will resize thumbnails from. If you\'re not sure, leave it as "Large".', 'themify' ) . '
-				</small>
 			</div>
 		</div>
 		<div class="show_if_disabled_img_php">
@@ -1440,10 +1675,10 @@ function themify_image_preview( $data = array() ) {
 	global $themify_config;
 
 	//Get currently selected preset
-	$savedpath = themify_get( 'styling-'.$data['category'].'-'.$data['id'].'-background_image-value-value' );
+	$savedpath = themify_get( 'styling-'.$data['category'].'-'.$data['id'].'-background_image-value-value',false,true );
 	
 	//Begin presets block
-	$output = '<div class="preset">';
+	$output = '<div class="preset tf_scrollbar">';
 	$presets=false;
 	// If it's activation, delete presets
 	if( !empty( $_GET['firsttime'] )) {
@@ -1872,13 +2107,10 @@ function themify_text_transform( $data = array() ) {
 			'name' => __('None', 'themify')
 		)
 	);
-	$output = '	<p><span class="label">' . __('Text Transform', 'themify') . '</span> <select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-text_transform-value-value' ) . '"><option> </option>';
+	$output = '	<p><span class="label">' . __('Text Transform', 'themify') . '</span> <select name="styling-'.$data['category'].'-'.$data['id'].'-text_transform-value-value"><option> </option>';
 	foreach($options as $option){
-		if ( isset( $data['value']['value'] ) && ( $option['value'] == $data['value']['value'] ) ) {
-			$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-		} else {
-			$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-		}
+		$sel=isset( $data['value']['value'] ) &&  $option['value'] === $data['value']['value']?' selected="selected"':'';
+		$output .= '<option'.$sel.' value="'.$option['value'].'">' . esc_html( $option['name'] ) . '</option>';
 	}
 	$output .= '</select></p>';
 	return $output;
@@ -1907,13 +2139,10 @@ function themify_text_decoration( $data = array() ) {
 			'name' => __('None', 'themify')
 		)
 	);
-	$output = '	<p><span class="label">' . __('Text Decoration', 'themify') . '</span> <select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-text_decoration-value-value' ) . '"><option> </option>';
+	$output = '	<p><span class="label">' . __('Text Decoration', 'themify') . '</span> <select name="styling-'.$data['category'].'-'.$data['id'].'-text_decoration-value-value"><option> </option>';
 	foreach($options as $option){
-		if ( isset( $data['value']['value'] ) && ( $option['value'] == $data['value']['value'] ) ) {
-			$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-		} else {
-			$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-		}
+		$sel=isset( $data['value']['value'] ) &&  $option['value'] === $data['value']['value']?' selected="selected"':'';
+		$output .= '<option'.$sel.' value="'.$option['value'].'">' . esc_html( $option['name'] ) . '</option>';
 	}
 	$output .= '</select></p>';
 	return $output;
@@ -1924,14 +2153,14 @@ function themify_text_decoration( $data = array() ) {
 ///////////////////////////////////////////
 function themify_color( $data = array() ) {
 	$data['value'] = isset( $data['value']['value'] ) ? $data['value']['value'] : '';
-	$data_value = isset( $data['value']['value'] ) ? $data['value']['value'] : '';
+	$data_value = isset( $data['value']['value'] ) ? esc_attr($data['value']['value']) : '';
 	return '<div class="themify_field_row">
 				<span class="label">' . __('Color', 'themify') . '</span>
 				<div class="themify_field-color">
-					<span class="colorSelect" style="' . esc_attr( 'background:#' . $data_value . ';' ) . '">
+					<span class="colorSelect" style="background:#' . $data_value . '">
 						<span></span>
 					</span>
-					<input type="text" class="colorSelectInput width4" value="' . esc_attr( $data_value ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-color-value-value' ) . '" />
+					<input type="text" class="colorSelectInput width4" value="' . $data_value. '" name="styling-'.$data['category'].'-'.$data['id'].'-color-value-value" />
 					<input type="button" class="button clearColor" value="' . __('Clear', 'themify') . '">
 				</div>
 			</div>';
@@ -1941,38 +2170,39 @@ function themify_color( $data = array() ) {
 // Padding Module
 ///////////////////////////////////////////
 function themify_padding( $data = array() ) {
-	$individuals = '';
-	$checked = '';
-	$same = '';
-	$data['value'] = isset( $data['value']['value'] ) ? $data['value']['value'] : '';
-	$data_value_same = isset( $data['value']['same'] ) ? $data['value']['same'] : '';
-	$data_value_top = isset( $data['value']['top'] ) ? $data['value']['top'] : '';
-	$data_value_right = isset( $data['value']['right'] ) ? $data['value']['right'] : '';
-	$data_value_bottom = isset( $data['value']['bottom'] ) ? $data['value']['bottom'] : '';
-	$data_value_left = isset( $data['value']['left'] ) ? $data['value']['left'] : '';
 	
-	if ( isset( $data['value'] ) && isset( $data['value']['checkbox'] ) && $data['value']['checkbox'] ) {
-		$checked = "checked='checked'";
-		$individuals = "style='display:none;'";	
+	
+	
+	$data['value'] = isset( $data['value']['value'] ) ? esc_attr($data['value']['value']) : '';
+	$data_value_same = isset( $data['value']['same'] ) ? esc_attr($data['value']['same']) : '';
+	$data_value_top = isset( $data['value']['top'] ) ? esc_attr($data['value']['top']) : '';
+	$data_value_right = isset( $data['value']['right'] ) ? esc_attr($data['value']['right']) : '';
+	$data_value_bottom = isset( $data['value']['bottom'] ) ? esc_attr($data['value']['bottom']) : '';
+	$data_value_left = isset( $data['value']['left'] ) ? esc_attr($data['value']['left']) : '';
+	
+	if ( !empty( $data['value']['checkbox'] )) {
+		$checked = ' checked="checked"';
+		$individuals = ' style="display:none"';
+		$same = '';
 	} else {
-		$same = "style='display:none;'";
+	    $checked = $individuals = '';
+	    $same = ' style="display:none"';
 	}
-	$output = '<div>
-					<p>
+	$output = '<div><p>
 						<span class="label">' . __('Padding', 'themify') . '</span>
-						<span class="same" '.$same.'>
-							<input type="text" class="width2 valid_num" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-padding-value-same' ) . '" value="' . esc_attr( $data_value_same ) . '" /> <small>px</small>
+						<span class="same"'.$same.'>
+							<input type="text" class="width2 valid_num" name="styling-'.$data['category'].'-'.$data['id'].'-padding-value-same" value="' . $data_value_same . '" /> <small>px</small>
 						</span>
-						<span class="individuals" '.$individuals.'>
-							<input type="text" class="width2 valid_num" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-padding-value-top' ) . '" value="' . esc_attr( $data_value_top ) . '" /> ' . __( 'top', 'themify' ) . '
-							<input type="text" class="width2 valid_num" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-padding-value-right' ) . '" value="' . esc_attr( $data_value_right ) . '" /> ' . __( 'right', 'themify' ) . '
-							<input type="text" class="width2 valid_num"  name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-padding-value-bottom' ) . '" value="' . esc_attr( $data_value_bottom ) . '"/> ' . __( 'bottom', 'themify' ) . '
-							<input type="text" class="width2 valid_num" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-padding-value-left' ) . '" value="' . esc_attr( $data_value_left ) . '" /> ' . __( 'left', 'themify' ) . ' <small>(px)</small>
+						<span class="individuals"'.$individuals.'>
+							<input type="text" class="width2 valid_num" name="styling-'.$data['category'].'-'.$data['id'].'-padding-value-top" value="' . $data_value_top . '" /> ' . __( 'top', 'themify' ) . '
+							<input type="text" class="width2 valid_num" name="styling-'.$data['category'].'-'.$data['id'].'-padding-value-right" value="' . $data_value_right . '" /> ' . __( 'right', 'themify' ) . '
+							<input type="text" class="width2 valid_num"  name="styling-'.$data['category'].'-'.$data['id'].'-padding-value-bottom" value="' . $data_value_bottom. '"/> ' . __( 'bottom', 'themify' ) . '
+							<input type="text" class="width2 valid_num" name="styling-'.$data['category'].'-'.$data['id'].'-padding-value-left" value="' . $data_value_left . '" /> ' . __( 'left', 'themify' ) . ' <small>(px)</small>
 						</span>
 					</p>
 					<p>
 						<span class="pushlabel" style="display:block;">
-							<input type="checkbox" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-padding-value-checkbox' ) . '" class="padding-switch" '.$checked.' /> ' . __('Same for all', 'themify') . '
+							<input type="checkbox" name="styling-'.$data['category'].'-'.$data['id'].'-padding-value-checkbox" class="padding-switch"'.$checked.' /> ' . __('Same for all', 'themify') . '
 						</span>
 					</p>
 				</div>';
@@ -1983,37 +2213,35 @@ function themify_padding( $data = array() ) {
 // Margin Module
 ///////////////////////////////////////////
 function themify_margin( $data = array() ) {
-	$data['value'] = isset( $data['value']['value'] ) ? $data['value']['value'] : '';
-	$data_value_name = isset( $data['value']['same'] ) ? $data['value']['same'] : '';
-	$data_value_top = isset( $data['value']['top'] ) ? $data['value']['top'] : '';
-	$data_value_right = isset( $data['value']['right'] ) ? $data['value']['right'] : '';
-	$data_value_bottom = isset( $data['value']['bottom'] ) ? $data['value']['bottom'] : '';
-	$data_value_left = isset( $data['value']['left'] ) ? $data['value']['left'] : '';
-	$individuals = '';
-	$checked = '';
-	$same = '';
-	if ( isset( $data['value'] ) && isset( $data['value']['checkbox'] ) && $data['value']['checkbox'] ) {
-		$checked = "checked='checked'";
-		$individuals = "style='display:none;'";	
+	$data['value'] = isset( $data['value']['value'] ) ? esc_attr($data['value']['value']) : '';
+	$data_value_name = isset( $data['value']['same'] ) ? esc_attr($data['value']['same']) : '';
+	$data_value_top = isset( $data['value']['top'] ) ? esc_attr($data['value']['top']) : '';
+	$data_value_right = isset( $data['value']['right'] ) ? esc_attr($data['value']['right']) : '';
+	$data_value_bottom = isset( $data['value']['bottom'] ) ? esc_attr($data['value']['bottom']) : '';
+	$data_value_left = isset( $data['value']['left'] ) ? esc_attr($data['value']['left']) : '';
+	
+	if ( !empty( $data['value']['checkbox'] )) {
+		$checked = ' checked="checked"';
+		$same = '';
+		$individuals = ' style="display:none"';
 	} else {
-		$same = "style='display:none;'";
+		$checked =$individuals =  '';
+		$same = ' style="display:none"';
 	}
-	$output = '<div>
-					<p>
-						<span class="label">' . __('Margin', 'themify') . '</span>';
-	$output .= '<span class="same" '.$same.'>
-					<input type="text" class="width2 valid_num" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-margin-value-same' ) . '" value="' . esc_attr( $data_value_name ) . '" /> <small>px</small>
+	$output = '<div><p><span class="label">' . __('Margin', 'themify') . '</span>';
+	$output .= '<span class="same"'.$same.'>
+					<input type="text" class="width2 valid_num" name="styling-'.$data['category'].'-'.$data['id'].'-margin-value-same" value="' . $data_value_name. '" /> <small>px</small>
 				</span>
-				<span class="individuals" '.$individuals.'>
-					<input type="text" class="width2 valid_num" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-margin-value-top' ) . '" value="' . esc_attr( $data_value_top ) . '" /> ' . __( 'top', 'themify' ) . '
-					<input type="text" class="width2 valid_num" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-margin-value-right' ) . '" value="' . esc_attr( $data_value_right ) . '" /> ' . __( 'right', 'themify' ) . '
-					<input type="text" class="width2 valid_num"  name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-margin-value-bottom' ) . '" value="' . esc_attr( $data_value_bottom ) . '"/> ' . __( 'bottom', 'themify' ) . '
-					<input type="text" class="width2 valid_num" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-margin-value-left' ) . '" value="' . esc_attr( $data_value_left ) . '" /> ' . __( 'left', 'themify' ) . ' <small>(px)</small>
+				<span class="individuals"'.$individuals.'>
+					<input type="text" class="width2 valid_num" name="styling-'.$data['category'].'-'.$data['id'].'-margin-value-top" value="' . $data_value_top. '" /> ' . __( 'top', 'themify' ) . '
+					<input type="text" class="width2 valid_num" name="styling-'.$data['category'].'-'.$data['id'].'-margin-value-right" value="' . $data_value_right . '" /> ' . __( 'right', 'themify' ) . '
+					<input type="text" class="width2 valid_num"  name="styling-'.$data['category'].'-'.$data['id'].'-margin-value-bottom" value="' . $data_value_bottom . '"/> ' . __( 'bottom', 'themify' ) . '
+					<input type="text" class="width2 valid_num" name="styling-'.$data['category'].'-'.$data['id'].'-margin-value-left" value="' . $data_value_left . '" /> ' . __( 'left', 'themify' ) . ' <small>(px)</small>
 				</span>
 			</p>
 			<p>
-				<span class="pushlabel" style="display:block;">
-					<input type="checkbox" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-margin-value-checkbox' ) . '" '.$checked.' class="margin-switch" /> ' . __('Same for all', 'themify') . '
+				<span class="pushlabel" style="display:block">
+					<input type="checkbox" name="styling-'.$data['category'].'-'.$data['id'].'-margin-value-checkbox"'.$checked.' class="margin-switch" /> ' . __('Same for all', 'themify') . '
 				</span>
 			</p>
 		</div>';
@@ -2024,20 +2252,17 @@ function themify_margin( $data = array() ) {
 // Height Module
 ///////////////////////////////////////////
 function themify_height( $data = array() ) {
-	$value = isset( $data['value']['value'] ) ? $data['value']['value'] : '';
-	$value['value'] = isset( $value['value'] ) ? $value['value'] : '';
+	$value = isset( $data['value']['value'] ) ? $data['value']['value'] : array();
+	$value['value'] = isset( $value['value'] ) ? esc_attr($value['value']) : '';
 	$value['unit'] = isset( $value['unit'] ) ? $value['unit'] : '';
 	
 	$options = array('px','em','%');
-	$output = '	<p><span class="label">' . __('Height', 'themify') . '</span> 
-				<input type="text" class="width2 valid_num" value="' . esc_attr( $value['value'] ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-height-value-value' ) . '" />
-				<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-height-value-unit' ) . '"><option> </option>';
+	$output = '<p><span class="label">' . __('Height', 'themify') . '</span> 
+				<input type="text" class="width2 valid_num" value="' . $value['value']  . '" name="styling-'.$data['category'].'-'.$data['id'].'-height-value-value" />
+				<select name="styling-'.$data['category'].'-'.$data['id'].'-height-value-unit"><option> </option>';
 	foreach($options as $option){
-		if($option == $value['unit']){
-			$output .= '<option value="' . esc_attr( $option ) . '" selected="selected">' . esc_html( $option ) . '</option>';
-		} else {
-			$output .= '<option value="' . esc_attr( $option ) . '">' . esc_html( $option ) . '</option>';
-		}
+		$sel=$option === $value['unit']?' selected="selected"':'';
+		$output .= '<option'.$sel.' value="'.$option.'">' . $option . '</option>';
 	}
 	$output .= '</select></p>';
 	return $output;
@@ -2047,17 +2272,14 @@ function themify_height( $data = array() ) {
 // Width Module
 ///////////////////////////////////////////
 function themify_width( $data = array() ) {
-	$data['value'] = isset( $data['value']['value'] ) ? $data['value']['value'] : '';
+	$data['value'] = isset( $data['value']['value'] ) ? esc_attr($data['value']['value']) : '';
 	$options = array('px','em','%');
-	$output = '	<p><span class="label">' . __('Width', 'themify') . '</span> 
-				<input type="text" class="width2 valid_num" value="' . esc_attr( $data['value'] ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-width-value-value' ) . '" />
-				<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-width-value-unit' ) . '"><option> </option>';
+	$output = '<p><span class="label">' . __('Width', 'themify') . '</span> 
+				<input type="text" class="width2 valid_num" value="' . $data['value'] . '" name="styling-'.$data['category'].'-'.$data['id'].'-width-value-value" />
+				<select name="styling-'.$data['category'].'-'.$data['id'].'-width-value-unit"><option> </option>';
 	foreach($options as $option){
-		if($option == $data['value']['unit']){
-			$output .= '<option value="' . esc_attr( $option ) . '" selected="selected">' . esc_html( $option ) . '</option>';
-		} else {
-			$output .= '<option value="' . esc_attr( $option ) . '">' . esc_html( $option ) . '</option>';
-		}
+		$sel=isset($data['value']['unit']) && $option === $data['value']['unit']?' selected="selected"':'';
+		$output .= '<option'.$sel.' value="'.$option.'">' . $option . '</option>';
 	}
 	$output .= '</select></p>';
 	return $output;
@@ -2068,14 +2290,14 @@ function themify_width( $data = array() ) {
 ///////////////////////////////////////////
 function themify_border( $data = array() ) {
 	$data['value'] = isset( $data['value']['value'] ) ? $data['value']['value'] : '';
-	$individuals = '';
-	$checked = '';
-	$same = '';
-	if ( isset( $data['value'] ) && isset( $data['value']['checkbox'] ) && $data['value']['checkbox'] ) {
-		$checked = "checked='checked'";
-		$individuals = "style='display:none;'";	
+	
+	if ( !empty( $data['value']['checkbox'] ) ) {
+		$checked = ' checked="checked"';
+		$same = '';
+		$individuals = ' style="display:none"';	
 	} else {
-		$same = "style='display:none;'";
+	    $individuals =$checked =  '';
+	    $same = ' style="display:none"';
 	}
 	$options = array(
 		array(
@@ -2095,81 +2317,65 @@ function themify_border( $data = array() ) {
 			'name' => __('Double', 'themify')
 		)
 	);
-	$data_value_same = isset( $data['value']['same'] ) ? $data['value']['same'] : '';
-	$data_value_same_color = isset( $data['value']['same_color'] ) ? $data['value']['same_color'] : '';
-	$data_value_top_color = isset( $data['value']['top_color'] ) ? $data['value']['top_color'] : '';
-	$data_value_top = isset( $data['value']['top'] ) ? $data['value']['top'] : '';
-	$data_value_right_color = isset( $data['value']['right_color'] ) ? $data['value']['right_color'] : '';
-	$data_value_right = isset( $data['value']['right'] ) ? $data['value']['right'] : '';
-	$data_value_bottom_color = isset( $data['value']['bottom_color'] ) ? $data['value']['bottom_color'] : '';
-	$data_value_bottom = isset( $data['value']['bottom'] ) ? $data['value']['bottom'] : '';
-	$data_value_left_color = isset( $data['value']['left_color'] ) ? $data['value']['left_color'] : '';
-	$data_value_left = isset( $data['value']['left'] ) ? $data['value']['left'] : '';
-	$output = '<div><p>
-					<span class="label">' . __('Border', 'themify') . '</span> 
-					<span class="same" '.$same.'>
-						<span class="colorSelect" style="' . esc_attr( 'background-color:#' . $data_value_same_color . ';' ). '"><span></span></span>  <input type="text" value="' . esc_attr( $data_value_same_color ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-same_color' ) . '" class="width4 colorSelectInput" />
-						<input type="text" class="width2 valid_num" value="' . esc_attr( $data_value_same ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-same' ) . '" /> <small>px</small>
-						<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-same_style' ) . '"><option> </option>';
+	$data_value_same = isset( $data['value']['same'] ) ? esc_attr( $data['value']['same']) : '';
+	$data_value_same_color = isset( $data['value']['same_color'] ) ? esc_attr($data['value']['same_color']) : '';
+	$data_value_top_color = isset( $data['value']['top_color'] ) ? esc_attr($data['value']['top_color']) : '';
+	$data_value_top = isset( $data['value']['top'] ) ? esc_attr($data['value']['top']) : '';
+	$data_value_right_color = isset( $data['value']['right_color'] ) ? esc_attr($data['value']['right_color']) : '';
+	$data_value_right = isset( $data['value']['right'] ) ? esc_attr($data['value']['right']) : '';
+	$data_value_bottom_color = isset( $data['value']['bottom_color'] ) ? esc_attr($data['value']['bottom_color']) : '';
+	$data_value_bottom = isset( $data['value']['bottom'] ) ? esc_attr($data['value']['bottom']) : '';
+	$data_value_left_color = isset( $data['value']['left_color'] ) ? esc_attr($data['value']['left_color']) : '';
+	$data_value_left = isset( $data['value']['left'] ) ? esc_attr($data['value']['left']) : '';
+	$output = '<div><p><span class="label">' . __('Border', 'themify') . '</span> 
+					<span class="same"'.$same.'>
+						<span class="colorSelect" style="background-color:#' . $data_value_same_color. '"><span></span></span>  <input type="text" value="' . $data_value_same_color. '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-same_color" class="width4 colorSelectInput" />
+						<input type="text" class="width2 valid_num" value="' . $data_value_same . '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-same" /> <small>px</small>
+						<select name="styling-'.$data['category'].'-'.$data['id'].'-border-value-same_style"><option> </option>';
 						foreach ( $options as $option ) {
-							if ( isset( $data['value']['same_style'] ) && ( $option['value'] == $data['value']['same_style'] ) ) {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-							} else {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-							}
+							$sel=isset( $data['value']['same_style'] ) &&  $option['value'] === $data['value']['same_style']?' selected="selected"':'';
+							$output .= '<option'.$sel.' value="'.$option['value'].'">' . esc_html( $option['name'] ) . '</option>';
 						}
 	$output .= '		</select>
 					</span>
-					<span class="individuals" '.$individuals.'>
+					<span class="individuals"'.$individuals.'>
 					<span class="borders">
-						<span class="colorSelect" style="' . esc_attr( 'background-color:#' . $data_value_top_color . ';' ). '"><span></span></span> <input type="text" value="' . esc_attr( $data_value_top_color ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-top_color' ) . '" class="width4 colorSelectInput" />
-						<input type="text" class="width2 valid_num" value="' . esc_attr( $data_value_top ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-top' ) . '" /> <small>px</small>
-						<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-top_style' ) . '"><option> </option>';
+						<span class="colorSelect" style="background-color:#' . $data_value_top_color. '"><span></span></span> <input type="text" value="' . $data_value_top_color. '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-top_color" class="width4 colorSelectInput" />
+						<input type="text" class="width2 valid_num" value="' . $data_value_top . '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-top" /> <small>px</small>
+						<select name="styling-'.$data['category'].'-'.$data['id'].'-border-value-top_style"><option> </option>';
 						foreach ( $options as $option ) {
-							if ( isset( $data['value']['top_style'] ) && ( $option['value'] == $data['value']['top_style'] ) ) {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-							} else {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-							}
+							$sel=isset( $data['value']['top_style'] ) &&  $option['value'] === $data['value']['top_style']?' selected="selected"':'';
+							$output .= '<option'.$sel.' value="'.$option['value'].'">' . esc_html( $option['name'] ) . '</option>';
 						}
 	$output .= '		</select> ' . __('top', 'themify') . '
 					</span>
 					<span class="pushlabel borders" style="display:block;">
-						<span class="colorSelect" style="' . esc_attr( 'background-color:#' . $data_value_right_color . ';' ). '"><span></span></span> <input type="text" value="' . esc_attr( $data_value_right_color ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-right_color' ) . '" class="width4 colorSelectInput" />
-						<input type="text" class="width2 valid_num" value="' . esc_attr( $data_value_right ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-right' ) . '" /> <small>px</small>
-						<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-right_style' ) . '"><option> </option>';
+						<span class="colorSelect" style="background-color:#' . $data_value_right_color. '"><span></span></span> <input type="text" value="' . $data_value_right_color . '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-right_color" class="width4 colorSelectInput" />
+						<input type="text" class="width2 valid_num" value="' . $data_value_right . '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-right" /> <small>px</small>
+						<select name="styling-'.$data['category'].'-'.$data['id'].'-border-value-right_style"><option> </option>';
 						foreach ( $options as $option ) {
-							if ( isset( $data['value']['right_style'] ) && ( $option['value'] == $data['value']['right_style'] ) ) {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-							} else {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-							}
+							$sel=isset( $data['value']['right_style'] ) &&  $option['value'] === $data['value']['right_style']?' selected="selected"':'';
+							$output .= '<option'.$sel.' value="'.$option['value'].'">' . esc_html( $option['name'] ) . '</option>';
 						}
 	$output .= '		</select> ' . __('right', 'themify') . '
 					</span>
 					<span class="pushlabel borders" style="display:block;">
-						<span class="colorSelect" style="' . esc_attr( 'background-color:#' . $data_value_bottom_color . ';' ). '"><span></span></span> <input type="text" value="' . esc_attr( $data_value_bottom_color ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-bottom_color' ) . '" class="width4 colorSelectInput" />
-						<input type="text" class="width2 valid_num" value="' . esc_attr( $data_value_bottom ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-bottom' ) . '" /> <small>px</small>
-						<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-bottom_style' ) . '"><option> </option>';
+						<span class="colorSelect" style="background-color:#' . $data_value_bottom_color. '"><span></span></span> <input type="text" value="' . $data_value_bottom_color. '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-bottom_color" class="width4 colorSelectInput" />
+						<input type="text" class="width2 valid_num" value="' . $data_value_bottom. '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-bottom" /> <small>px</small>
+						<select name="styling-'.$data['category'].'-'.$data['id'].'-border-value-bottom_style"><option> </option>';
 						foreach ( $options as $option ) {
-							if ( isset( $data['value']['bottom_style'] ) && ( $option['value'] == $data['value']['bottom_style'] ) ) {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-							} else {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-							}
+							$sel=isset( $data['value']['bottom_style'] ) &&  $option['value'] === $data['value']['bottom_style']?' selected="selected"':'';
+							$output .= '<option'.$sel.' value="'.$option['value'].'">' . esc_html( $option['name'] ) . '</option>';
 						}
 	$output .= '		</select> ' . __('bottom', 'themify') . '
 					</span>
 					<span class="pushlabel borders" style="display:block;">
-						<span class="colorSelect" style="' . esc_attr( 'background-color:#' . $data_value_left_color . ';' ). '"><span></span></span> <input type="text" value="' . esc_attr( $data_value_left_color ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-left_color' ) . '" class="width4 colorSelectInput" />
-						<input type="text" class="width2 valid_num" value="' . esc_attr( $data_value_left ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-left' ) . '" /> <small>px</small>
-						<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-left_style' ) . '"><option> </option>';
+						<span class="colorSelect" style="background-color:#' . $data_value_left_color. '"><span></span></span> <input type="text" value="' . $data_value_left_color . '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-left_color" class="width4 colorSelectInput" />
+						<input type="text" class="width2 valid_num" value="' . $data_value_left . '" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-left" /> <small>px</small>
+						<select name="styling-'.$data['category'].'-'.$data['id'].'-border-value-left_style"><option> </option>';
 						foreach ( $options as $option ) {
-							if ( isset( $data['value']['left_style'] ) && ( $option['value'] == $data['value']['left_style'] ) ) {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-							} else {
-								$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-							}
+							$sel=isset( $data['value']['left_style'] ) &&  $option['value'] === $data['value']['left_style']?' selected="selected"':'';
+							$output .= '<option'.$sel.' value="'.$option['value'].'">' . esc_html( $option['name'] ) . '</option>';
 						}
 	$output .= '		</select> ' . __('left', 'themify') . '
 					</span>
@@ -2177,7 +2383,7 @@ function themify_border( $data = array() ) {
 				</p>
 				<p>
 					<span class="pushlabel" style="display:block;">
-						<input type="checkbox" class="border-switch" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-border-value-checkbox' ) . '" '.$checked.' /> ' . __('Same for all', 'themify') . '
+						<input type="checkbox" class="border-switch" name="styling-'.$data['category'].'-'.$data['id'].'-border-value-checkbox"'.$checked.' /> ' . __('Same for all', 'themify') . '
 					</span>
 				</p>
 			</div>';				
@@ -2232,43 +2438,34 @@ function themify_position( $data = array() ) {
 		)
 	);
 	$display = '';
-	if ( $data_value_position != 'fixed' && $data_value_position != 'absolute' ) {
-		$display = "style='display:none;'";	
+	if ( $data_value_position !== 'fixed' && $data_value_position !== 'absolute' ) {
+		$display = "style='display:none'";	
 	}
 	$output = '	<p><span class="label">' . __('Position', 'themify') . '</span>
-				<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-position-value-value" class="select_position' ) . '"><option> </option>';
+				<select name="styling-'.$data['category'].'-'.$data['id'].'-position-value-value" class="select_position"><option></option>';
 	foreach ( $options as $option ) {
-		if ( $option['value'] == $data_value_position ) {
-			$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-		} else {
-			$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-		}
+		$sel=$option['value'] === $data_value_position?' selected="selected"':'';
+		$output .= '<option'.$sel.' value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
 	}
 	$output .= '</select></p>
 				<p class="position_display" '.$display.'>
 					<span class="pushlabel" style="display:block;">
-					<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-position-value-x' ) . '"><option> </option>';
+					<select name="styling-'.$data['category'].'-'.$data['id'].'-position-value-x"><option> </option>';
 					foreach ( $options_x as $option ) {
-						if ( isset( $data['value']['x'] ) && ( $option['value'] == $data['value']['x'] ) ) {
-							$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-						} else {
-							$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-						}
+						$sel=isset( $data['value']['x'] ) && $option['value'] = $data['value']['x']?' selected="selected"':'';
+						$output .= '<option'.$sel.' value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
 					}	
-	$output .=	'	</select>
-					<input type="text" class="width2 valid_num" value="' . esc_attr( $data_value_x_value ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-position-value-x_value' ) . '" /> <small>px</small>
+	$output .=	'</select>
+					<input type="text" class="width2 valid_num" value="' . esc_attr( $data_value_x_value ) . '" name="styling-'.$data['category'].'-'.$data['id'].'-position-value-x_value" /> <small>px</small>
 					</span>
 					<span class="pushlabel" >
-					<select name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-position-value-y' ) . '"><option> </option>';
+					<select name="styling-'.$data['category'].'-'.$data['id'].'-position-value-y"><option> </option>';
 					foreach ( $options_y as $option ) {
-						if ( isset( $data['value']['y'] ) && ( $option['value'] == $data['value']['y'] ) ) {
-							$output .= '<option value="'.esc_attr( $option['value'] ).'" selected="selected">' . esc_html( $option['name'] ) . '</option>';
-						} else {
-							$output .= '<option value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
-						}
+						$sel=isset( $data['value']['y'] ) && $option['value'] = $data['value']['y']?' selected="selected"':'';
+						$output .= '<option'.$sel.' value="'.esc_attr( $option['value'] ).'">' . esc_html( $option['name'] ) . '</option>';
 					}	
-	$output .=	'	</select>
-					<input type="text" class="width2 valid_num" value="' . esc_attr( $data_value_y_value ) . '" name="' . esc_attr( 'styling-'.$data['category'].'-'.$data['id'].'-position-value-y_value' ) . '" /> <small>px</small>
+	$output .=	'</select>
+					<input type="text" class="width2 valid_num" value="' . esc_attr( $data_value_y_value ) . '" name="styling-'.$data['category'].'-'.$data['id'].'-position-value-y_value" /> <small>px</small>
 					</span>
 				</p>';
 	return $output;	
@@ -2283,23 +2480,28 @@ function themify_position( $data = array() ) {
 function themify_gallery_plugins( $data = array() ) {
 
 	$display_options = apply_filters('themify_lightbox_module_options', array(
-		__( 'Magnific (lightbox)', 'themify' ) => 'lightbox',
-		__( 'None', 'themify' ) => 'none'
+		__( 'Enable', 'themify' ) => 'lightbox',
+		__( 'Disable', 'themify' ) => 'none'
 	));
 
-	$gallery_lightbox = themify_get( 'setting-gallery_lightbox' );
+	$gallery_lightbox = themify_get( 'setting-gallery_lightbox',null,true );
 
 	$out = '<p>
 				<span class="label">' . __( 'WordPress Gallery', 'themify' ) . ' </span>
 				<select class="gallery_lightbox_type" name="setting-gallery_lightbox">';
 				foreach ( $display_options as $option => $value ) {
-					$out .= '<option value="' . esc_attr( $value ) . '" '.selected( $value? $value: 'lightbox', $gallery_lightbox, false ).'>' . esc_html( $option ) . '</option>';
+					$out .= '<option value="' . $value . '" '.selected( $value, $gallery_lightbox, false ).'>' . esc_html( $option ) . '</option>';
 				}
 	$out .= '	</select>
 			</p>';
+    $out .= '<p>
+				<span class="pushlabel"><label for="setting-lightbox_disable_share">
+					<input type="checkbox" id="setting-lightbox_disable_share" name="setting-lightbox_disable_share" '. checked( themify_get( 'setting-lightbox_disable_share',false,true ), 'on', false ) .'/> ' . __('Hide social share buttons on lightbox', 'themify') . '</label>
+				</span>
+			</p>';
 	$out .= '<p>
 				<span class="pushlabel"><label for="setting-lightbox_content_images">
-					<input type="checkbox" id="setting-lightbox_content_images" name="setting-lightbox_content_images" '. checked( themify_get( 'setting-lightbox_content_images' ), 'on', false ) .'/> ' . __('Apply lightbox to image links', 'themify') . '</label>
+					<input type="checkbox" id="setting-lightbox_content_images" name="setting-lightbox_content_images" '. checked( themify_get( 'setting-lightbox_content_images',false,true ), 'on', false ) .'/> ' . __('Apply lightbox to image links automatically', 'themify') . '</label>
 				</span>
 				<small class="pushlabel">'. __( 'All links to jpg, png, and gif will open in lightbox.', 'themify' ) .'</small>
 			</p>';
@@ -2323,76 +2525,76 @@ function themify_add_link_template( $fid, $data = array(), $ajax = false, $type 
 	}
 
 	$title_name = $pre.'title_'.$fid;
-	$title_val = isset($data[$title_name])? $data[$title_name] : '';
+	$title_val = isset($data[$title_name])? esc_attr(trim($data[$title_name])): '';
 	
 	$link_name = $pre.'link_'.$fid;
-	$link_val = isset($data[$link_name])? $data[$link_name] : '';
+	$link_val = isset($data[$link_name])? esc_attr(trim($data[$link_name])) : '';
 	
 	$img_name = $pre.'img_'.$fid;
-	$img_val = ! isset( $data[$img_name] ) || '' == $data[$img_name]? '' : $data[$img_name];
+	$img_val = ! isset( $data[$img_name] ) || '' == $data[$img_name]? '' : esc_attr($data[$img_name]);
 
 	$ficon_name = $pre.'ficon_'.$fid;
-	$ficon_val = trim( isset($data[$ficon_name])? $data[$ficon_name] : '' );
+	$ficon_val = trim( isset($data[$ficon_name])? esc_attr($data[$ficon_name]) : '' );
 
 	$ficolor_name = $pre.'ficolor_'.$fid;
-	$ficolor_val = isset($data[$ficolor_name])? $data[$ficolor_name] : '';
+	$ficolor_val = isset($data[$ficolor_name])? esc_attr($data[$ficolor_name]) : '';
 
 	$fibgcolor_name = $pre.'fibgcolor_'.$fid;
-	$fibgcolor_val = isset($data[$fibgcolor_name])? $data[$fibgcolor_name] : '';
+	$fibgcolor_val = isset($data[$fibgcolor_name])? esc_attr($data[$fibgcolor_name]) : '';
 
 	/**
 	 * TODO: Add appearance checkboxes
 	 */
 
-	$out = '<li id="' . esc_attr( $fid ) . '" class="social-link-item ' . esc_attr( $type_val ) . '">';
+	$out = '<li id="' . $fid . '" class="social-link-item ' . $type_val . '">';
 
 	$out .= '<div class="social-drag">' . esc_html__('Drag to Sort', 'themify') . '<i class="ti-arrows-vertical"></i></div>';
 
-	$out .= '<input type="hidden" name="' . esc_attr( $type_name ) . '" value="' . esc_attr( trim( $type_val ) ) . '">';
+	$out .= '<input type="hidden" name="' . $type_name . '" value="' . trim( $type_val ) . '">';
 
 	$out .= '<div class="row">
-				<span class="label">' . __( 'Title', 'themify' ) . '</span> <input type="text" name="' . esc_attr( $title_name ) . '" class="width6" value="' . esc_attr( trim($title_val) ) . '">
+				<span class="label">' . __( 'Title', 'themify' ) . '</span> <input type="text" name="' . $title_name. '" class="width6" value="' . $title_val . '">
 			</div>
 			<!-- /row -->';
 
 	$out .= '<div class="row">
-				<span class="label">' . __( 'Link', 'themify' ) . '</span> <input type="text" name="' . esc_attr( $link_name ) . '" class="width10" value="' . esc_attr( trim($link_val) ) . '">
+				<span class="label">' . __( 'Link', 'themify' ) . '</span> <input type="text" name="' . $link_name . '" class="width10" value="' . $link_val . '">
 			</div>
 			<!-- /row -->';
 
-	if ( 'font-icon' == $type_val ) {
+	if ( 'font-icon' === $type_val ) {
 
 		$out .= '<div class="row">
 					<span class="label">' . __( 'Icon', 'themify' ) . '</span>';
 
 		$out .= sprintf('<input type="text" id="%s" name="%s" value="%s" size="55" class="themify_input_field themify_fa %s" /> <a class="button button-secondary hide-if-no-js themify_fa_toggle" href="#" data-target="#%s">%s</a>',
-			esc_attr( $ficon_name ), esc_attr( $ficon_name ), esc_attr( $ficon_val ), 'small', esc_attr( $ficon_name ), __( 'Insert Icon', 'themify' ) );
+			$ficon_name, $ficon_name, $ficon_val, 'small', $ficon_name, __( 'Insert Icon', 'themify' ) );
 
 		$out .= '</div>
 				<!-- /row -->';
 
 		$out .= '<div class="icon-preview font-icon-preview">
-						<i class="' . themify_get_icon( $ficon_val ) . '"></i>
+						<i>'.themify_get_icon( $ficon_val ).'</i>
 					</div>
 					<!-- /icon-preview -->';
 
 		$out .= '<div class="themify_field_row">
 					<span class="label">' . __('Icon Color', 'themify') . '</span>
 					<div class="themify_field-color">
-						<span class="colorSelect" style="' . esc_attr( 'background:#' . $ficolor_val . ';' ). '">
+						<span class="colorSelect" style="background:#' . $ficolor_val. '">
 							<span></span>
 						</span>
-						<input type="text" data-format="rgba" class="colorSelectInput width4" value="' . esc_attr( $ficolor_val ) . '" name="' . esc_attr( $ficolor_name ) . '" />
+						<input type="text" data-format="rgba" class="colorSelectInput width4" value="' . $ficolor_val. '" name="' . $ficolor_name . '" />
 					</div>
 				</div>';
 
 		$out .= '<div class="themify_field_row">
 					<span class="label">' . __('Background', 'themify') . '</span>
 					<div class="themify_field-color">
-						<span class="colorSelect" style="' . esc_attr( 'background:#' . $fibgcolor_val . ';' ). '">
+						<span class="colorSelect" style="background:#' . $fibgcolor_val. '">
 							<span></span>
 						</span>
-						<input type="text" data-format="rgba" class="colorSelectInput width4" value="' . esc_attr( $fibgcolor_val ) . '" name="' . esc_attr( $fibgcolor_name ) . '" />
+						<input type="text" data-format="rgba" class="colorSelectInput width4" value="' . $fibgcolor_val . '" name="' . $fibgcolor_name . '" />
 					</div>
 				</div>';
 
@@ -2401,18 +2603,18 @@ function themify_add_link_template( $fid, $data = array(), $ajax = false, $type 
 		$out .= '<div class="row">
 					<span class="label">' . __( 'Image', 'themify' ) . '</span>
 					<div class="uploader-fields image">
-						<input type="text" id="' . esc_attr( $img_name ) . '" name="' . esc_attr( $img_name ) . '" class="width10" value="' . esc_attr( $img_val ) . '">
+						<input type="text" id="' . $img_name . '" name="' . $img_name. '" class="width10" value="' . $img_val. '">
 						<div class="clear image">' . themify_get_uploader( $img_name, array( 'tomedia' => true, 'preview' => true ) ) . '</div>
 					</div>
 				</div>
 				<!-- /row -->';
 		$out .= '<div class="icon-preview">
-					<img id="' . esc_attr( $img_name . '-preview' ) . '" src="' . esc_url( $img_val ) . '" />
+					<img id="' . $img_name . '-preview" src="' . $img_val . '" />
 				</div>
 				<!-- /icon-preview -->';
 	}
 
-	$out .= '<a href="#" class="remove-item" data-removelink="' . esc_attr( $fid ) . '"><i class="ti ti-close"></i></a>
+	$out .= '<a href="#" class="remove-item" data-removelink="' . $fid . '"><i class="tf_close"></i></a>
 		</li>
 		<!-- /social-links-item -->';
 
@@ -2428,15 +2630,18 @@ function themify_add_link_template( $fid, $data = array(), $ajax = false, $type 
 function themify_manage_links( $data = array() ) {
 	$data = themify_get_data();
 	$pre = 'setting-link_';
-	$field_hash = isset( $data[$pre.'field_hash'] ) && $data[$pre.'field_hash'] ? $data[$pre.'field_hash'] : 8;
+	$field_hash = !empty( $data[$pre.'field_hash'] )? (int)$data[$pre.'field_hash'] : 8;
 	$start = array();
-	for ( $i=0; $i < $field_hash; $i++ ) {
+	for ( $i=0; $i < $field_hash; ++$i ) {
 		$start['themify-link-'.$i] = 'themify-link-'.$i;
 	}
 	//$data[$pre.'field_ids'] = json_encode($start);
-	
-	if ( json_decode( themify_get( $pre.'field_ids' ) ) ) {
-		$field_ids = json_decode( themify_get( $pre.'field_ids' ) );
+	$field_ids=themify_get( $pre.'field_ids',false,true );
+	if ( $field_ids) {
+		$field_ids=json_decode( $field_ids, true );
+		if ( ! is_array( $field_ids ) ) {
+			$field_ids = array();
+		}
 	} else {
 		$field_ids = $start;
 
@@ -2501,26 +2706,26 @@ function themify_manage_links( $data = array() ) {
 
 	$out .= '<div id="social-link-type">';
 		// Icon Font
-		$out .= '<label for="' . esc_attr( $pre ) . 'font_icon">';
-		$out .= '<input ' . checked( isset( $data[$pre.'icon_type'] )? $data[$pre.'icon_type'] : 'font-icon', 'font-icon', false) . ' type="radio" id="' . esc_attr( $pre . 'font_icon' ) . '" name="' . esc_attr( $pre . 'icon_type' ) . '" value="font-icon" data-hide="image-icon" /> ';
+		$out .= '<label for="' . $pre . 'font_icon">';
+		$out .= '<input ' . checked( isset( $data[$pre.'icon_type'] )? $data[$pre.'icon_type'] : 'font-icon', 'font-icon', false) . ' type="radio" id="' . $pre . 'font_icon" name="' .  $pre . 'icon_type" value="font-icon" data-hide="image-icon" /> ';
 		$out .= __( 'Icon Font', 'themify' ) . '</label>';
 
 		// Image
-		$out .= '<label for="' . esc_attr( $pre ) . 'image_icon">';
-		$out .= '<input ' . checked( isset( $data[$pre.'icon_type'] )? $data[$pre.'icon_type'] : '', 'image-icon', false ) . ' type="radio" id="' . esc_attr( $pre . 'image_icon' ) . '" name="' . esc_attr( $pre . 'icon_type' ) . '" value="image-icon" data-hide="font-icon" /> ';
+		$out .= '<label for="' . $pre . 'image_icon">';
+		$out .= '<input ' . checked( isset( $data[$pre.'icon_type'] )? $data[$pre.'icon_type'] : '', 'image-icon', false ) . ' type="radio" id="' . $pre . 'image_icon" name="' . $pre . 'icon_type" value="image-icon" data-hide="font-icon" /> ';
 		$out .= __( 'Image', 'themify' ) . '</label>';
 	$out .= '</p>';
 
 	$out .=  '<ul id="social-links-wrapper">';
-		foreach ( $field_ids as $key => $fid ) {
+		foreach ( $field_ids as $fid ) {
 			$out .= themify_add_link_template( $fid, $data );
 		}
 	$out .= '</ul>';
 	
 	$out .= '<p class="add-link add-social-link"><a href="#">' . __('Add Link', 'themify') . '</a></p>';
 
-	$out .= '<input type="hidden" id="' . esc_attr( $pre . 'field_ids' ) . '" name="' . esc_attr( $pre . 'field_ids' ) . '" value=\'' . json_encode( $field_ids ) . '\'/>';
-	$out .= '<input type="hidden" id="' . esc_attr( $pre . 'field_hash' ) . '" name="' . esc_attr( $pre . 'field_hash' ) . '" value="' . esc_attr( $field_hash ) . '"/>';
+	$out .= '<input type="hidden" id="' .  $pre . 'field_ids" name="' . $pre . 'field_ids" value=\'' . json_encode( $field_ids ) . '\'/>';
+	$out .= '<input type="hidden" id="' .  $pre . 'field_hash" name="' . $pre . 'field_hash" value="' . esc_attr( $field_hash ) . '"/>';
 	//$out .= '<p>Fields: '.json_encode($field_ids).'</p><p>Hash: '.$field_hash.'</p>';
 	
 	return $out;
@@ -2578,7 +2783,7 @@ function themify_post_meta_options( $pmkey, $data, $metas = array(), $states = a
 		'name' => __( 'Theme', 'themify' ),
 		'value' => '',
 		'icon' => THEMIFY_URI . '/img/ddbtn-blank.png',
-		'title' => __( 'Use theme settings', 'themify' )
+		'title' => esc_attr(__( 'Use theme settings', 'themify' ))
 	);
 	
 	$out = '<div class="themify_field_row dropdownbutton-group"><span class="label">' . esc_html( $group_label ) . '</span>';
@@ -2591,41 +2796,37 @@ function themify_post_meta_options( $pmkey, $data, $metas = array(), $states = a
 					$metakey = $pmkey.'_'.$meta;
 					$meta_class = 'ddbtn-sub ddbtn-'.$meta;
 				}
-
+				$name=esc_html( $name );
 				$others = '';
-				$out .=	'
-				<div id="' . esc_attr( $metakey ) . '" class="dropdownbutton-list" data-name="' . esc_attr( $name ) . '" data-def-icon="' . esc_url( $default['icon'] ) . '">';
+				$out .=	'<div id="' . $metakey. '" class="dropdownbutton-list" data-name="' . $name . '" data-def-icon="' . $default['icon']. '">';
 				
 				// default state
 				$first = '
 					<div class="first-ddbtn">
-						<a href="#" data-val="' . esc_attr( $default['value'] ) . '" data-name="' . esc_attr( $default['name'] ) . '" title="' . esc_attr( $default['title'] ) . '">
-							<img src="' . esc_url( $default['icon'] ) . '" title="' . esc_attr( $default['title'] ) . '" />
-							<span class="ddbtn-name">' . esc_html( $name ) . '</span>
+						<a href="#" data-val="' . $default['value'] . '" data-name="' . $default['name']  . '" title="' . $default['title'] . '">
+							<img src="' . $default['icon'] . '" title="' . $default['title'] . '" />
+							<span class="ddbtn-name">' . $name . '</span>
 						</a>
 					</div>';
 
 				foreach ( $states as $state ) {
-					if ( isset( $state['value'] ) && isset( $data[$metakey] ) && $state['value'] == $data[$metakey] ) {
-						$first = '
-						<div class="first-ddbtn">
-							<a href="#" data-val="' . esc_attr( $state['value'] ) . '" data-name="' . esc_attr( $state['name'] ) . '" title="' . esc_attr( $state['title'] ) . '">
-								<img src="' . esc_url( $state['icon'] ) . '" title="' . esc_attr( $state['title'] ) . '" />
-								<span class="ddbtn-name">' . esc_html( $name ) . '</span>
-							</a>
-						</div>';
-						$selected = 'selected';
-						//$hide = 'ddbtn-hide';
-						$hide = '';
+					$title=esc_attr($state['title']);
+					if ( isset( $state['value'] ) && isset( $data[$metakey] ) && $state['value'] === $data[$metakey] ) {
+					    $first = '<div class="first-ddbtn">
+						    <a href="#" data-val="' . $state['value'] . '" data-name="' . $state['name'] . '" title="' . $title. '">
+							    <img src="' . $state['icon']. '" title="' . $title . '" />
+							    <span class="ddbtn-name">' . $name . '</span>
+						    </a>
+					    </div>';
+					    $selected = 'selected';
 					} else {
 						$selected = '';
-						$hide = '';
 					}
 					
 					$others .= '
-						<div class="' . esc_attr( 'ddbtn ' . $hide ) . '">
-							<a href="#" data-sel="' . esc_attr( $selected ) . '" data-val="' . esc_attr( $state['value'] ) . '" data-name="' . esc_attr( $state['name'] ) . '" title="' . esc_attr( $state['title'] ) . '">
-								<img src="' . esc_url( $state['icon'] ) . '" title="' . esc_attr( $state['title'] ) . '" />
+						<div class="ddbtn">
+							<a href="#" data-sel="' . $selected. '" data-val="' . $state['value'] . '" data-name="' . $state['name'] . '" title="' . $title . '">
+								<img src="' . $state['icon'] . '" title="' . $title. '" />
 								<span class="ddbtn-label">' . esc_html( $state['name'] ) . '</span>
 							</a>
 						</div>';
@@ -2633,8 +2834,7 @@ function themify_post_meta_options( $pmkey, $data, $metas = array(), $states = a
 				$out .= $first . '<div class="dropdownbutton">' . $others . '</div>';
 				$out .= '
 				</div>';
-				$meta_key_data = themify_get( $metakey );
-				$out .= '<input type="hidden" value="' . esc_attr( $meta_key_data ) . '" class="' . esc_attr( $meta_class ) . '" id="' . esc_attr( $metakey ) . '" name="' . esc_attr( $metakey ) . '" />';
+				$out .= '<input type="hidden" value="' . esc_attr( themify_get( $metakey ) ) . '" class="' . $meta_class. '" id="' . $metakey . '" name="' . $metakey . '" />';
 			}
 
 	$out .= '</div>';
@@ -2648,9 +2848,9 @@ function themify_post_meta_options( $pmkey, $data, $metas = array(), $states = a
  * @return string $out Markup for options
  */
 if ( ! function_exists( 'themify_post_sorting_options' ) ) {
-	function themify_post_sorting_options( $key = 'setting-index_order', $data ) {
+	function themify_post_sorting_options( $key = 'setting-index_order', $data = array() ) {
 
-		$orderby = themify_get( $key . 'by' );
+		$orderby = themify_get( $key . 'by','');
 		$orderby_options = apply_filters( 'themify_index_orderby_options', array(
 			__( 'Date (default)', 'themify' ) => 'date',
 			__( 'Random', 'themify' ) => 'rand',
@@ -2663,31 +2863,29 @@ if ( ! function_exists( 'themify_post_sorting_options' ) ) {
 			__( 'Custom Field String', 'themify' ) => 'meta_value',
 			__( 'Custom Field Numeric', 'themify' ) => 'meta_value_num' ) );
 
-		$order = themify_get( $key );
+		$order = themify_get( $key,'');
 		$order_options = array(
 			__( 'Descending (default)', 'themify' ) => 'DESC',
 			__( 'Ascending', 'themify' ) => 'ASC' );
 
 		$order_meta_key = 'setting-index_meta_key';
-		$order_meta_key_value = themify_get( $order_meta_key );
 
-		$out = '<p>
-					<span class="label">' . __( 'Order By', 'themify' ) . ' </span>
-					<select name="' . esc_attr( $key . 'by' ) . '">';
+		$out = '<p><span class="label">' . __( 'Order By', 'themify' ) . ' </span>
+					<select name="' .$key . 'by">';
 						foreach ( $orderby_options as $option => $value ) {
-							$out .= '<option value="' . esc_attr( $value ) . '" '.selected( $value? $value: 'date', $orderby, false ).'>' . esc_html( $option ) . '</option>';
-							}
+						    $out .= '<option value="' . esc_attr( $value ) . '" '.selected( $value, $orderby, false ).'>' . esc_html( $option ) . '</option>';
+					    }
 		$out .= '	</select>
 				</p>
 				<p data-show-if-element="[name=' . $key . 'by]" data-show-if-value=\'["meta_value", "meta_value_num"]\'>
 					<span class="label">' . __( 'Custom Field Key', 'themify' ) . ' </span>
-					<input type="text" id="' . esc_attr( $order_meta_key ) . '" name="' . esc_attr( $order_meta_key ) . '" value="' . esc_attr( $order_meta_key_value ) . '" />
+					<input type="text" id="' . $order_meta_key . '" name="' . $order_meta_key . '" value="' . esc_attr( themify_get( $order_meta_key,'',true ) ) . '" />
 				</p>
 				<p>
 					<span class="label">' . __( 'Order', 'themify' ) . ' </span>
-					<select name="' . esc_attr( $key ) . '">';
+					<select name="' . $key. '">';
 						foreach ( $order_options as $option => $value ) {
-							$out .= '<option value="' . esc_attr( $value ) . '" '.selected( $value? $value: 'DESC', $order, false ).'>' . esc_html( $option ) . '</option>';
+							$out .= '<option value="' . esc_attr( $value ) . '" '.selected( $value, $order, false ).'>' . esc_html( $option ) . '</option>';
 					}
 		$out .= '	</select>
 				</p>';
@@ -2702,7 +2900,7 @@ if ( ! function_exists( 'themify_homepage_welcome' ) ) {
 	 * @return string Markup for welcome text control
 	 */
 	function themify_homepage_welcome() {
-		return '<p><textarea class="widthfull" name="setting-homepage_welcome" rows="4">' . esc_textarea( themify_get( 'setting-homepage_welcome' ) ) . '</textarea></p>';
+		return '<p><textarea class="widthfull" name="setting-homepage_welcome" rows="4">' . esc_textarea( themify_get( 'setting-homepage_welcome','',true ) ) . '</textarea></p>';
 	}
 }
 
@@ -2712,7 +2910,7 @@ if ( ! function_exists( 'themify_exclude_rss' ) ) {
 	 * @return string
 	 */
 	function themify_exclude_rss() {
-		return '<p><label for="setting-exclude_rss"><input type="checkbox" id="setting-exclude_rss" name="setting-exclude_rss" ' . checked( themify_get( 'setting-exclude_rss' ), 'on', false ) . '/> ' . __( 'Check here to exclude RSS icon/button in the header', 'themify' ) . '</label></p>';	
+		return '<p><label for="setting-exclude_rss"><input type="checkbox" id="setting-exclude_rss" name="setting-exclude_rss" ' . checked( themify_get( 'setting-exclude_rss','',true ), 'on', false ) . '/> ' . __( 'Check here to exclude RSS icon/button in the header', 'themify' ) . '</label></p>';	
 	}
 }
 
@@ -2722,7 +2920,7 @@ if ( ! function_exists( 'themify_exclude_search_form' ) ) {
 	 * @return string
 	 */
 	function themify_exclude_search_form() {
-		return '<p><label for="setting-exclude_search_form"><input type="checkbox" id="setting-exclude_search_form" name="setting-exclude_search_form" ' . checked( themify_get( 'setting-exclude_search_form' ), 'on', false ) . '/> ' . __( 'Check here to exclude search form in the header', 'themify' ) . '</label></p>';	
+		return '<p><label for="setting-exclude_search_form"><input type="checkbox" id="setting-exclude_search_form" name="setting-exclude_search_form" ' . checked( themify_get( 'setting-exclude_search_form','',true ), 'on', false ) . '/> ' . __( 'Check here to exclude search form in the header', 'themify' ) . '</label></p>';	
 	}
 }
 
@@ -2742,7 +2940,7 @@ if ( ! function_exists( 'themify_footer_text_left' ) ) {
 	 * @return string
 	 */
 	function themify_footer_text_left() {
-		return '<h4>' . __('Footer Text One', 'themify') . '</h4><div data-show-if-element="[name=setting-footer_text_left_hide]" data-show-if-value="false"><textarea class="widthfull" rows="4" name="setting-footer_text_left">' . esc_textarea( themify_get( 'setting-footer_text_left' ) ) . '</textarea></div><div><label><input type="checkbox" name="setting-footer_text_left_hide" value="hide" ' . checked( themify_get( 'setting-footer_text_left_hide' ), 'hide', false ) . ' />' . __( 'Hide Footer Text One', 'themify' ) . '</label></div>';
+		return '<h4>' . __('Footer Text One', 'themify') . '</h4><div data-show-if-element="[name=setting-footer_text_left_hide]" data-show-if-value="false"><textarea class="widthfull" rows="4" name="setting-footer_text_left">' . esc_textarea( themify_get( 'setting-footer_text_left','',true ) ) . '</textarea></div><div><label><input type="checkbox" name="setting-footer_text_left_hide" value="hide" ' . checked( themify_get( 'setting-footer_text_left_hide','',true ), 'hide', false ) . ' />' . __( 'Hide Footer Text One', 'themify' ) . '</label></div>';
 	}
 }
 
@@ -2752,7 +2950,7 @@ if ( ! function_exists( 'themify_footer_text_right' ) ) {
 	 * @return string
 	 */
 	function themify_footer_text_right(){
-		return '<h4>' . __('Footer Text Two', 'themify') . '</h4><div data-show-if-element="[name=setting-footer_text_right_hide]" data-show-if-value="false"><textarea class="widthfull" rows="4" name="setting-footer_text_right">' . esc_textarea( themify_get( 'setting-footer_text_right' ) ) . '</textarea></div><div><label><input type="checkbox" name="setting-footer_text_right_hide" value="hide" ' . checked( themify_get( 'setting-footer_text_right_hide' ), 'hide', false ) . ' />' . __( 'Hide Footer Text Two', 'themify' ) . '</label></div>';
+		return '<h4>' . __('Footer Text Two', 'themify') . '</h4><div data-show-if-element="[name=setting-footer_text_right_hide]" data-show-if-value="false"><textarea class="widthfull" rows="4" name="setting-footer_text_right">' . esc_textarea( themify_get( 'setting-footer_text_right','',true ) ) . '</textarea></div><div><label><input type="checkbox" name="setting-footer_text_right_hide" value="hide" ' . checked( themify_get( 'setting-footer_text_right_hide','',true ), 'hide', false ) . ' />' . __( 'Hide Footer Text Two', 'themify' ) . '</label></div>';
 	}
 }
 
@@ -2762,8 +2960,7 @@ if(!function_exists('themify_homepage_widgets')){
 	 * @return string Module markup
 	 */
 	function themify_homepage_widgets(){
-		$data = themify_get_data();
-		$val = isset($data['setting-homepage_widgets'])? $data['setting-homepage_widgets'] : null;
+		$val = themify_get( 'setting-homepage_widgets',false,true );
 		$options = array(
 			array(
 				'value' => 'homewidget-4col',
@@ -2789,15 +2986,11 @@ if(!function_exists('themify_homepage_widgets')){
 		);
 		$output = '';
 		foreach($options as $option){
-			if(('' == $val || !$val || !isset($val)) && isset($option['selected']) && $option['selected']){ 
-				$val = $option['value'];
+			if(!$val && !empty($option['selected'])){ 
+			    $val = $option['value'];
 			}
-			if($val == $option['value']){ 
-				$class = ' selected';
-			} else {
-				$class = '';
-			}
-			$output .= '<a href="#" class="' . esc_attr( 'preview-icon' . $class ) . '" title="' . esc_attr( $option['title'] ) . '"><img src="' . esc_url( THEME_URI.'/'.$option['img'] ) . '" alt="' . esc_attr( $option['value'] ) . '"  /></a>';
+			$class = $val === $option['value']?' selected':'';
+			$output .= '<a href="#" class="preview-icon' . $class . '" title="' . esc_attr( $option['title'] ) . '"><img src="' . THEME_URI.'/'.$option['img']. '" alt="' . esc_attr( $option['value'] ) . '"  /></a>';
 		}
 		$output .= '<input type="hidden" name="setting-homepage_widgets" class="val" value="' . esc_attr( $val ) . '" />';
 		return $output;
@@ -2810,8 +3003,7 @@ if(!function_exists('themify_footer_widgets')){
 	 * @return string Module markup
 	 */
 	function themify_footer_widgets(){
-		$data = themify_get_data();
-		$val = isset($data['setting-footer_widgets'])? $data['setting-footer_widgets'] : null;
+		$val = themify_get( 'setting-footer_widgets',false,true );
 		$options = array(
 			array(
 				'value' => 'footerwidget-4col',
@@ -2837,15 +3029,11 @@ if(!function_exists('themify_footer_widgets')){
 		);
 		$output = '';
 		foreach($options as $option){
-			if(('' == $val || !$val || !isset($val)) && isset($option['selected']) && $option['selected']){ 
-				$val = $option['value'];
+			if(!$val &&!empty($option['selected'])){ 
+			    $val = $option['value'];
 			}
-			if($val == $option['value']){ 
-				$class = 'selected';
-			} else {
-				$class = '';
-			}
-			$output .= '<a href="#" class="' . esc_attr( 'preview-icon ' . $class ) . '" title="' . esc_attr( $option['title'] ) . '"><img src="' . esc_url( THEME_URI.'/'.$option['img'] ) . '" alt="' . esc_attr( $option['value'] ) . '"  /></a>';
+			$class = $val === $option['value']?' selected':'';
+			$output .= '<a href="#" class="preview-icon' . $class. '" title="' . esc_attr( $option['title'] ) . '"><img src="' . THEME_URI.'/'.$option['img']. '" alt="' . esc_attr( $option['value'] ) . '"  /></a>';
 		}
 		$output .= '<input type="hidden" name="setting-footer_widgets" class="val" value="' . esc_attr( $val ) . '" />';
 		return $output;
@@ -2859,76 +3047,359 @@ if(!function_exists('themify_manage_twitter_settings')){
 	 */
 	function themify_manage_twitter_settings() {
 		$prefix = 'setting-twitter_settings_';
-		$consumer_key = themify_get( $prefix.'consumer_key' );
-		$consumer_secret = themify_get( $prefix.'consumer_secret' );
 
-		$out = '<p><label class="label" for="' . esc_attr( $prefix . 'consumer_key' ) . '">'.__('Consumer Key', 'themify').'</label>';
-		$out .= '<input type="text" id="' . esc_attr( $prefix . 'consumer_key' ) . '" name="' . esc_attr( $prefix . 'consumer_key' ) . '" class="width10" value="' . esc_attr( $consumer_key ) . '" /></p>';
+		$out = '<p><label class="label" for="' .  $prefix . 'consumer_key">'.__('Consumer Key', 'themify').'</label>';
+		$out .= '<input type="text" id="' . $prefix . 'consumer_key" name="' . $prefix . 'consumer_key" class="width10" value="' . esc_attr( themify_get( $prefix.'consumer_key','',true ) ) . '" /></p>';
 
-		$out .= '<p><label class="label" for="' . esc_attr( $prefix . 'consumer_secret' ) . '">'.__('Consumer Secret', 'themify').'</label>';
-		$out .= '<input type="text" id="' . esc_attr( $prefix . 'consumer_secret' ) . '" name="' . esc_attr( $prefix . 'consumer_secret' ) . '" class="width10" value="' . esc_attr( $consumer_secret ) . '" />
-			<br />
-			<span class="pushlabel"><small>'.sprintf(
-			__('<a href="%s">Twitter access</a> is required for Themify Twitter widget and Twitter shortcode, read this <a href="%s">documentation</a> for more details.', 'themify'),
-			'https://apps.twitter.com/app/new',
-			'https://themify.me/docs/setting-up-twitter'
-		)
-		.'</small></span>
+		$out .= '<p><label class="label" for="' . $prefix . 'consumer_secret">'.__('Consumer Secret', 'themify').themify_help(__('<a href="https://apps.twitter.com/app/new">Twitter access</a> is required for Themify Twitter widget and Twitter shortcode, read this <a href="https://themify.me/docs/setting-up-twitter">documentation</a> for more details.', 'themify')).'</label>';
+		$out .= '<input type="text" id="' . $prefix . 'consumer_secret" name="' . $prefix . 'consumer_secret" class="width10" value="' . esc_attr( themify_get( $prefix.'consumer_secret','',true ) ) . '" />
 		</p>';
 
 		return $out;
 	}
 }
 
+if ( ! function_exists( 'themify_entries_navigation' ) ) {
+	/**
+	 * Display module to select numbered pagination or links to previous and next posts.
+	 * @param array $data
+	 * @return string $html Module markup.
+	 * @since 1.6.0
+	 */
+	function themify_entries_navigation( $data = array() ) {
+		$key = 'setting-entries_nav';
+		$v= themify_get( $key,'numbered',true );
+		$html = '<p>';
+			// Numbered pagination
+			$html .= '<label for="' . $key . '_numbered">';
+			$html .= '<input ' . checked( $v, 'numbered', false) . ' type="radio" id="' .  $key . '_numbered" name="' . $key . '" value="numbered" /> ';
+			$html .= __( 'Numbered Page Navigation (page 1, 2, 3, etc.)', 'themify' ) . '</label>';
+			$html .= '<br/>';
+			
+			// Previous / Next links
+			$html .= '<label for="' . $key . '_prevnext">';
+			$html .= '<input ' . checked( $v, 'prevnext', false ) . ' type="radio" id="' . $key . '_prevnext" name="' . $key . '" value="prevnext" /> ';
+			$html .= __( 'Previous Posts and Next Posts Links', 'themify' ) . '</label>';
+		$html .= '</p>';
+		return $html;
+	}
+}
 
+/**
+ * Adds option to disable schema.org markup to Settings > General page
+ *
+ * @return array
+ */
+function themify_framework_theme_performance( $themify_theme_config ) {
+		$tabs=$themify_theme_config['panel']['settings']['tab'];
+		
+		$tabs=array_slice($tabs,0,1)+
+				array('performance'=>array(
+					'title' => __('Performance', 'themify'),		
+					'id' => 'performance',
+					'custom-module' => array(
+						array(
+							'title' => '',
+							'function' => 'performance_settings'
+						)
 
-if(!function_exists('themify_manage_script_minification_settings')) {
+					)
+				)
+				)+array_slice($tabs,1);
+		$themify_theme_config['panel']['settings']['tab']=$tabs;
+	return $themify_theme_config;
+}
+add_filter( 'themify_theme_config_setup', 'themify_framework_theme_performance' );
+
+/**
+ * Adds Accessibility options to Settings > Theme Settings
+ *
+ * @return array
+ */
+function themify_framework_accessibility( $themify_theme_config ) {
+
+    $themify_theme_config['panel']['settings']['tab']['theme_settings']['custom-module'][]=array(
+		'title' => __('Accessibility', 'themify'),
+		'function' => 'accessibility_options'
+	);
+	return $themify_theme_config;
+}
+add_filter( 'themify_theme_config_setup', 'themify_framework_accessibility' );
+/**
+ * Renders Accessibility options
+ *
+ * @return string
+ */
+function themify_accessibility_options( $data = array() ) {
+	$key = 'setting-acc_';
+	$out = '<p>
+				<span class="label">' . __( 'Link Focus Outline', 'themify' ) . '</span>
+				<select name="' . $key.'lfo' . '">' . themify_options_module( array(
+			array( 'name' => __( 'Light', 'themify' ), 'value' => '' ),
+			array( 'name' => __( 'Heavy', 'themify' ), 'value' => 'h' ),
+			array( 'name' => __( 'None', 'themify' ), 'value' => 'n' )
+		), $key.'lfo' ) . '
+				</select>
+			</p>';
+	$out .= '<p>
+				<span class="label">' . __( 'General Font Size', 'themify' ) . '</span>
+				<select name="' . $key.'fs' . '">' . themify_options_module( array(
+			array( 'name' => __( 'Normal', 'themify' ), 'value' => '' ),
+			array( 'name' => __( 'Large', 'themify' ), 'value' => 'l' ),
+		), $key . 'fs' ) . '
+				</select>
+			</p>';
+	return $out;
+}
+
+/**
+ * Add separate tab for the Fontello settings, into Themify > Settings page
+ *
+ * @return array
+ */
+function themify_fontello_config_setup( $config ) {
+	$config['panel']['settings']['tab']['custom-icon-font'] = array(
+		'title' => __( 'Custom Icon Font', 'themify' ),
+		'id' => 'custom-icon-font',
+		'custom-module' => array(
+			array(
+				'title' => __( 'Custom Icon Font', 'themify' ),
+				'function' => 'themify_fontello_input_callback',
+			),
+		)
+	);
+	return $config;
+}
+add_filter( 'themify_theme_config_setup', 'themify_fontello_config_setup', 30 );
+
+/**
+ * Render the input field to allow uploading font packages
+ *
+ * @return string
+ */
+function themify_fontello_input_callback( $data = array() ) {
+	return '
+	<div class="themify_field_row">
+		<span class="label">'. __('Icon Font Package', 'themify') .themify_help(__( 'Go to <a target="_blank" href="http://fontello.com">fontello.com</a>, pick your icons, download the webfont zip, upload and insert the zip URL here. The icon package will be auto detected on Themify\'s icon library where you click "Insert Icon".', 'themify' )) . '</span>
+		<input id="setting-fontello" type="text" class="width10" name="setting-fontello" value="' . esc_attr( themify_get( 'setting-fontello','',true ) ) . '" /> <br />
+		<div class="pushlabel" style="display:block;">
+			<div class="themify_medialib_wrapper">
+				<a href="#" class="themify-media-lib-browse" data-submit=\'' . json_encode( array( 'action' => 'themify_handle_fontello_upload', 'field_name' => 'setting-fontello' ) ) . '\' data-uploader-title="' . __( 'Upload package', 'themify' ) .'" data-uploader-button-text="'. __( 'Upload package', 'themify' ) .'" data-fields="setting-fontello" data-type="application/zip">'. __( 'Browse Library', 'themify' ) . '</a>
+			</div>
+		</div>
+	</div>';
+}
+
+if(!function_exists('themify_performance_settings')) {
 	/**
 	 * Script Minification Settings
 	 * @param array Themify data
 	 * @return string Module markup
 	 * @since 1.3.9
 	 */
-	function themify_manage_script_minification_settings($data = array()){
-		$key = 'setting-script_minification';
-		$htaccess_file=Themify_Enqueue_Assets::getHtaccessFile();
-		$wp_filesystem = Themify_Filesystem::get_instance();
-		if ($wp_filesystem->execute->exists($htaccess_file) && $wp_filesystem->execute->is_writable($htaccess_file)) {
-		   $message= sprintf(__('Enabling gzip will add code to your .htaccess file (%s)','themify'),$htaccess_file);
-		   $gzip=themify_check( 'setting-cache_gzip' );
+	function themify_performance_settings($data = array()){
+		$server=themify_get_server();
+		$htaccess_file=$server==='nginx'?null:Themify_Enqueue_Assets::getHtaccessFile();
+		$cache_dir=TFCache::get_wp_content_dir();
+		if ($htaccess_file!==null && Themify_Filesystem::is_file($htaccess_file) && Themify_Filesystem::is_writable($htaccess_file)) {
+		   $message= sprintf(__('Enabling Gzip will add code to your .htaccess file (%s)','themify'),$htaccess_file);
+		   $gzip=themify_check( 'setting-cache_gzip',true );
 		}
 		else{
-		    $message= sprintf(__('The htaccess file %s isn`t writable. Please allow to write to enable this feauture','themify'),$htaccess_file);
+			$message= $server!=='apache'?sprintf(__('It looks like you are using Nginx server. Please <a href="%s" target="_blank">follow</a> this tutorial to enable this feature.','themify'),'https://themify.me/docs/enable-gzip-nginx-servers'):sprintf(__('The htaccess file %s isn`t writable. Please allow to write to enable this feauture','themify'),$htaccess_file);
 		    $gzip=null;
 		}
-              
-		$output ='<p>
-			<span class="label">' . __( 'Minified Scripts', 'themify' ) . '</span>
-			<label for="'.$key.'-min"><input type="checkbox" id="'.$key.'-min" name="'.$key.'-min" '. checked( themify_get($key.'-min' ), 'on', false ) .'/> ' . __('Disable minified scripts (css/js files)', 'themify') . '</label></label>
-			<small class="pushlabel">'.__('Using minified version of scripts can reduce script file size by 10-20%.','themify').'</small>
-		    </p>';
-		$output.='<p>
-			<span class="label">' . __( 'Gzip Scripts', 'themify' ) . '</span>
-			<label for="setting-cache_gzip"'.($gzip===null?' class="themify_field_disable"':'').'><input type="checkbox"'.($gzip===null?' disabled="disabled"':'').'id="setting-cache_gzip" name="setting-cache_gzip" '.checked( $gzip, true, false ).'/> ' . __('Enable Gzip scripts (recommended)', 'themify').'</label>
-			<small class="pushlabel">'.__('Using gzip version of scripts can reduce script file size by 60-80%.','themify').'</small>
-			<small class="pushlabel'.($gzip===null?' themify_warning':'').'" style="margin:20px 0;">'.$message.'</small>
-		</p>';
-		$key='setting-css';
-		$output.= '<span class="label">' . __( 'Themify CSS Output', 'themify' ) . '</span>';
-		$value = themify_get( $key );
-		 if(!$value){
-		    $value = 'top';
+		$cache_plugins=false!==TFCache::get_cache_plugins();
+		$menuCache='data-show-if-element="[name$=setting-cache-html]" data-show-if-value="false"';
+		$warning=$tmp='';
+		if($cache_plugins===true){
+			$menuCache='style="display:none"';
+		    $warning=__('Themify Cache can not be enabled due to another cache plugin is activated.','themify');
 		}
-		$output .= '<label><input ' . checked( $value, 'top', false ). ' type="radio" name="'.$key.'" value="top" /> ';
-                    $output .= __('In the head', 'themify').'</label>';
-                    $output .= '<div class="pushlabel indented-field" data-show-if-element="[name='.$key.']:checked" data-show-if-value=' . '["top"]' . '>';
-                    $output .= '<label for="'.$key.'-inline"><input  type="checkbox" id="'.$key.'-inline" name="'.$key.'-inline" '.checked( themify_check( $key.'-inline' ), true, false ).'/> ' . __('Output as inline CSS', 'themify').'</label>';
-                    $output .='<small>'.__('Inline CSS can improve page loading without render blocking, but may slow down performance.','themify').'</small></div>';
-		    $output .= '<div class="pushlabel"><label><input ' . checked( $value, 'bottom', false ). ' type="radio" name="'.$key.'" value="bottom" />';
-		    $output .= __('In the footer', 'themify') . '</label><small>'.__('Output CSS files in the footer will load page without render blocking, but it can cause render delay.','themify').'</small></div>';
+		elseif(!Themify_Filesystem::is_writable($cache_dir)){
+		    $warning=sprintf(__('The directory %s isn`t writable. Please allow to write to enable this feauture','themify'),$cache_dir);
+		}
+		elseif(!WP_CACHE){
+		    $tmp='<div class="pushlabel themify_warning note">'.__('WP_CACHE is not enabled. Please enable it on wp-config.php file. ','themify');
+		    $tmp.=' <a href="https://wordpress.org/support/article/editing-wp-config-php/#cache" target="_blank">'.__('Read details','themify').'</a>.';
+		    if(Themify_Filesystem::is_writable(ABSPATH . 'wp-config.php' )){
+			$tmp.='<br/><br/><a href="#" data-action="themify_write_config" data-send="all" data-clearing-text="'.__('Writing...','themify').'" data-done-text="'.__('Done','themify').'" data-default-text="'.__('Try to fix it','themify').'" data-default-icon="ti-eraser" class="button button-outline js-clear-cache"> <span>'.__('Try to fix it','themify').'</span></a>';
+		    }
+		    $tmp.='</div>';
+		}
+		
+		
+		$ignore_cache=array(
+		    'is_single'=>__('Single Posts','themify'),
+		    'is_page'=>__('Pages','themify'),
+		    'is_front_page'=>__('Front Page','themify'),
+		    'is_home'=>__('Home','themify'),
+		    'is_archives'=>__('Archives','themify'),
+		    'is_tags'=>__('Tags','themify'),
+		    'is_category'=>__('Category','themify'),
+		    'is_feed'=>__('Feeds','themify'),
+		    'is_author'=>__('Author Pages','themify')
+		);
+		if(themify_is_woocommerce_active()){
+		    $ignore_cache['is_shop']=__('Shop Page','themify');
+		    $ignore_cache['is_product']=__('Single Products','themify');
+		    $ignore_cache['is_product_category']=__('Product Categories','themify');
+		    $ignore_cache['is_product_tag']=__('Product Tags','themify');
+		}
+		$key='setting-cache-live';
+		$tmp.='<p><span class="label">' . __( 'Cache Expires', 'themify' ) . '</span><label class="pushlabel"><input type="text" name="'.$key.'" value="'.themify_get($key,(WEEK_IN_SECONDS/60),true).'" class="width4"> '.__('Minutes (default 1 week)','themify').'</label></p>';
+		
+		$key='setting-cache-ignore';
+		$tmp.='<span class="label">' . __( 'Exclude Caching On', 'themify' ) . '</span><div class="pushlabel">';
+		foreach($ignore_cache as $k=>$v){
+		    $tmp.='<label>';
+		    $tmp.='<input type="checkbox" value="'.$k.'" id="'.$key.'" name="'.$key.'_'.$k.'" '. checked( themify_check($key.'_'.$k,true ),true,false ) .'/> ' . $v . '</label>';
+		    $tmp.='</label><br/>';
+		}
+		$tmp.='</div>';
+		$disableJsLazy=$cache_plugins===true;
+		$ignore_cache=null;
+		$pageCache=$warning==='' && Themify_Filesystem::is_file(TFCache::get_cache_config_file());
+		$key = 'setting-disable-lazy';
+		$output='<div>
+			<span class="label">' . __( 'Themify Lazy Load', 'themify' ) .themify_help(__('Lazy load can speed up pagespeed by loading media (image, audio, video, iframe, etc.) when they are visible in the viewport.','themify')) . '</span>';
+		
+			$output.='<label for="'.$key.'"><input type="checkbox" id="'.$key.'" name="'.$key.'" '. checked( themify_check($key,true ),true, false ) .'/> ' . __('Disable lazy load', 'themify') . '</label><br/>';
+			
+			$output.='<div data-show-if-element="[name$='.$key.']" data-show-if-value="false" class="pushlabel'.($disableJsLazy===false?' themify_field_disable':'').'"><label for="'.$key.'-native"><input type="checkbox"'.($disableJsLazy===false?' disabled="disabled"':'').' id="'.$key.'-native" name="'.$key.'-native" '. checked(($disableJsLazy===true?themify_check($key.'-native',true ):false),true, false ).'/> ' . __('Use native lazy load', 'themify').themify_help(__('Themify can detect and use native lazy load if the browser is compatible. If you are using a third party cache plugin, this option will be available which allow you to enable native lazy load instead of using Javascript.','themify')) . '</label></div>';
+			
+			$output.='<div data-show-if-element="[name$='.$key.']" data-show-if-value="false" class="tf_clearfix">';
+			$output .= sprintf( '<div class="label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="0" data-max="100" data-default-min="0" data-default-max="100" class="width4" readonly> px</div>',
+				esc_html__( 'Blur Image', 'themify' ),
+				'setting-lazy-blur',
+				themify_get('setting-lazy-blur',25,true )
+			);
+				
+		$output.='</div>';
+		
+		$key = 'setting-dev-mode';
+		$output.='<hr><p><span class="label">' . __( 'Development Mode', 'themify' ) .themify_help(__('Warning: the following will be disabled: Themify cache, menu cache, concate CSS caching, Gzip scripts, and minified scripts. Only enable this for development purposes (eg. preview child theme CSS/script changes).','themify')) . '</span>';
+		
+		$output.='<label for="'.$key.'"><input type="checkbox" id="'.$key.'" name="'.$key.'" '. checked(themify_check($key,true ),true, false ) .'/> ' . __('Enable development mode', 'themify') . '</label><br/>';
+	
+		$output.='<span data-show-if-element="[name$='.$key.']" data-show-if-value="true" class="themify_warning">'.__('Warning: the following will be disabled: Themify cache, menu cache, concate CSS caching, Gzip scripts, and minified scripts. Only enable this for development purposes (eg. preview child theme CSS/script changes).','themify').'</span>';
+		
+		$output.='</p>';
+		$output.='<div data-show-if-element="[name$='.$key.']" data-show-if-value="false">';//dev mode
+		
+		$key = 'setting-cache-html';
+		$output.='<hr><p>
+			<span class="label">' . __( 'Themify Cache', 'themify' ) .themify_help(__('Caching can reduce page size and server responses (only frontend public viewing will be cached). Themify Cache can not be used with third party cache plugins to avoid conflicts.','themify')) . '</span>
+			<label for="'.$key.'"'.($warning!==''?' class="themify_field_disable"':'').'><input type="checkbox"'.($warning!==''?' disabled="disabled"':'').' id="'.$key.'" name="'.$key.'" '. checked( ($pageCache===true ?themify_check($key,true ):false),true,false ) .'/> ' . __('Enable Themify Cache (recommended)', 'themify') . '</label>
+			<small class="pushlabel'.($warning!==''?' themify_warning':'').'" style="margin:20px 0;">'.$warning.'</small></p>';
+		
+		$output.='<div data-show-if-element="[name$='.$key.']" data-show-if-value="true">
+			'.$tmp.'
+			<span class="label">'. __( 'Excluding Caching URLs', 'themify' ) .'</span>
+			<div class="pushlabel">
+			<textarea class="widthfull" rows="5" name="setting-cache-rule" id="setting-cache-rule">'. esc_html( themify_get( 'setting-cache-rule','',true ) ).'</textarea>'
+			.'<small>'.__('Enter the URLs to exclude caching (supports regular expressions). Separate each rule with a line break.','themify').'</small>';
+		$output.='<br/><br/><a href="#" data-action="themify_clear_all_html" data-send="all" data-clearing-text="'.__('Clearing...','themify').'" data-done-text="'.__('Done','themify').'" data-default-text="'.__('Clear Themify Cache','themify').'" data-default-icon="ti-eraser" class="button button-outline js-clear-cache"><i class="ti-eraser"></i> <span>'.__('Clear Themify Cache','themify').'</span></a>';
+		if(is_multisite()){
+			$output.='<br/><label><input type="checkbox" value="1" id="tmp_cache_network" name="tmp_cache_network"/>'.__('Clear all network sites','themify').'</label>';
+		}
+		$output.='</div></div>';
+		$tmp=null;
+		$key = 'setting-script_minification-min';
+		$output.='<hr><p>
+			<span class="label">' . __( 'Minified Scripts', 'themify' ) .themify_help(__('Using minified version of scripts can reduce script file size by 10-20%.','themify')) . '</span>
+			<label for="'.$key.'"><input type="checkbox" id="'.$key.'" name="'.$key.'" '. checked( themify_check($key,true ),true, false ) .'/> ' . __('Disable minified scripts (css/js files)', 'themify') . '</label>
+		    </p>';
+		$output.='<hr><p>
+			<span class="label">' . __( 'Gzip Scripts', 'themify' ) .themify_help(__('Using Gzip version of scripts can reduce script file size by 60-80%.','themify')) . '</span>
+			<label for="setting-cache_gzip"'.($gzip===null?' class="themify_field_disable"':'').'><input type="checkbox"'.($gzip===null?' disabled="disabled"':'').'id="setting-cache_gzip" name="setting-cache_gzip" '.checked( $gzip, true, false ).'/> ' . __('Enable Gzip scripts (recommended)', 'themify').'</label>
+			<small class="pushlabel'.($gzip===null?' themify_warning':'').'" >'.$message.'</small>
+		</p>';
+		if(!class_exists('Imagick') && !function_exists('imagewebp')){
+			$message=__('The GD library and Imagick extensions are not installed. Ask your host provider to enable them to use this feature.','themify');
+			$webp=null;
+		}
+		else{
+			$message='';
+			$webp=themify_check( 'setting-webp',true );
+			if($server!=='apache' && $server!=='litespeed'){
+				$message=sprintf(__('It looks like you are using %s server. Please <a href="%s" target="_blank">follow</a> this tutorial to enable this feature.','themify'), ucfirst($server),'https://themify.me/docs/enable-webp-nginx-servers');
+			}
+		}
+		$output.='</p>';
+		$output.='<hr><p>
+			<span class="label">' . __( 'Concate CSS', 'themify' ) . '</span>
+			<a href="#" data-action="themify_clear_all_concate" data-clearing-text="'.__('Clearing...','themify').'" data-done-text="'.__('Done','themify').'" data-default-text="'.__('Clear Concate CSS Cache','themify').'" data-default-icon="ti-eraser" class="button button-outline js-clear-cache"><i class="ti-eraser"></i> <span>'.__('Clear Concate CSS Cache','themify').'</span></a>
+		';
+		if(!Themify_Enqueue_Assets::createDir()){
+			$output.='<span class="pushlabel themify_warning">'.__('It looks like the WordPress upload folder path is set wrong or have file permission issue. Please check the upload path on WP Settings > Media. Make sure the folder is set correctly and it has correct file permission.','themify').'</span>';
+		}
+		$output.='</p>';
+		$key='setting-cache-menu';
+		$output.='<div '.$menuCache.'><hr><p>
+			<span class="label">' . __( 'WordPress Menus Cache', 'themify' ) .themify_help(__('Caching WordPress menus can reduce queries. Will only work when there is no active cache plugin. If you have server cache, you can disable this feature.')) . '</span>
+			<label for="'. $key.'"><input type="checkbox" id="'. $key.'" name="'. $key.'" '.checked(themify_check( $key,true ), true, false ).'/> ' . __('Disable menu cache', 'themify').'</label>			
+		</p></div>';
+		
+		$output.='</div>';//end of dev mode
+		
+		$output.='<hr><p>
+			<span class="label">' . __( 'WebP Image', 'themify' ) .themify_help(__('Using WebP image format can reduce file size by 50-90%. Only local images will be converted. The CDN and external images can not be converted. For background images of Themify Builder, you have to regenerate CSS and .htaccess file must be writeable.','themify')) . '</span>
+			<label for="setting-webp"'.($webp===null?' class="themify_field_disable"':'').'><input type="checkbox"'.($webp===null?' disabled="disabled"':'').'id="setting-webp" name="setting-webp" '.checked( $webp, true, false ).'/> ' . __('Enable WebP image (recommended)', 'themify').'</label>
+			<span class="pushlabel"><a href="#" data-action="themify_clear_all_webp" data-clearing-text="'.__('Clearing...','themify').'" data-done-text="'.__('Done','themify').'" data-default-text="'.__('Clear WebP Images','themify').'" data-default-icon="ti-eraser" class="button button-outline js-clear-cache"><i class="ti-eraser"></i> <span>'.__('Clear WebP Images','themify').'</span></a></span>';
+		if($message!==''){
+			$output.='<small class="pushlabel themify_warning" >'.$message.'</small>';
+		}
+		
+        if(themify_is_woocommerce_active()){
+            $key='setting-optimize-wc';
+            $output.='<hr><p>
+			<span class="label">' . __( 'WooCommerce Script Optimization', 'themify' ) .themify_help(__('Themify loads WooCommerce scripts on demand for faster page load. If you are encountering issues with third party WooCommerce extensions, try to disable WooCommerce script optimization.','themify')) . '</span>
+			<label for="'. $key.'"><input type="checkbox" id="'. $key.'" name="'. $key.'" '.checked(themify_check( $key,true ), true, false ).'/> ' . __('Disable WooCommerce script loading optimization', 'themify').'</label>
+		</p>';
+            $key='setting-defer-wc';
+            $output.='<p data-show-if-element="[name$=setting-optimize-wc]" data-show-if-value="false">
+			<span class="label">' . __( 'WooCommerce Script Defer', 'themify' ) .themify_help(__('WooCommerce scripts are deferred for faster page load. If you are encountering issues with third party WooCommerce extensions, try to disable script defer.','themify')) . '</span>
+			<label for="'. $key.'"><input type="checkbox" id="'. $key.'" name="'. $key.'" '.checked(themify_check( $key,true ), true, false ).'/> ' . __('Disable WooCommerce script defer', 'themify').'</label>
+		</p>';
+        }
+		$key='setting-jquery';
+		$output.='<hr><p>
+			<span class="label">' . __( 'jQuery Script', 'themify' ) .themify_help(__('Defer jQuery and all scripts can prevent render blocking. If your site/plugin(s) have inline jQuery code conflicting it, disable this option.','themify')) . '</span>
+			<label for="'. $key.'"><input type="checkbox" id="'. $key.'" name="'. $key.'" '.checked(themify_check( $key,true ), true, false ).'/> ' . __('Defer jQuery script loading', 'themify').'</label>
+		</p>';
+		$key = 'setting-jquery-migrate';
+		$output.='<p>
+			<span class="label">' . __( 'jQuery Migrate', 'themify' ) .themify_help(__('Only enable this if your plugin(s) use the deprecated jQuery versions.','themify')) . '</span>
+			<label for="'. $key.'"><input type="checkbox" id="'. $key.'" name="'. $key.'" '.checked(themify_check( $key,true ), true, false ).'/> ' . __('Enable jQuery Migrate', 'themify').'</label>
+		</p>';
+		$key='setting-emoji';
+		$output.='<hr><p>
+			<span class="label">' . __( 'WordPress Emoji', 'themify' ) .themify_help(__('If you are not using WordPress Emoji icons, keep it disabled to reduce script load.','themify')) . '</span>
+			<label for="'. $key.'"><input type="checkbox" id="'. $key.'" name="'. $key.'" '.checked(themify_check( $key,true ), true, false ).'/> ' . __('Enable Emoji script loading', 'themify').'</label>
+		</p>';
 		return $output;
 	}
 }
+
+if ( ! function_exists( 'themify_framework_theme_config_webfonts_subsets' ) ) {
+	/**
+	 * Google Fonts settings
+	 *
+	 * @return array
+	 */
+	function themify_framework_theme_config_webfonts_subsets($themify_theme_config) {
+		$themify_theme_config['panel']['settings']['tab']['general']['custom-module'][] =
+			array(
+				'title' => __('Google Fonts', 'themify'),
+				'function' => 'themify_webfonts_subsets'
+			)
+		;
+		return $themify_theme_config;
+	}
+	add_filter('themify_theme_config_setup', 'themify_framework_theme_config_webfonts_subsets');
+}
+
 if(!function_exists('themify_webfonts_subsets')) {
 	/**
 	 * Module to specify additional characters subsets
@@ -2959,96 +3430,8 @@ if(!function_exists('themify_webfonts_subsets')) {
 					<input ' . checked( themify_check( $key )? themify_get( $key ) : '', 'full', false ) . ' type="radio" id="' . esc_attr( $key . '_full' ) . '" name="' . esc_attr( $key ) . '" value="full" /> ' . __( 'Show all Google Fonts (showing all fonts will take longer to load)', 'themify' ) . '</label>
 					</span>
 				</p>';
-                $subsets = array(
-                                'arabic',
-                                'bengali',
-                                'cyrillic',
-                                'cyrillic-ext',
-                                'devanagari',
-                                'greek',
-                                'greek-ext',
-                                'gujarati',
-                                'gurmukhi',
-                                'hebrew',
-                                'kannada',
-                                'khmer',
-                                'korean',
-                                'latin',
-                                'latin-ext',
-                                'malayalam',
-                                'myanmar',
-                                'oriya',
-                                'sinhala',
-                                'tamil',
-                                'telugu',
-                                'thai',
-                                'vietnamese'
-                                );
-		// Filter by character subset
-		$key = 'setting-webfonts_subsets';
-                $val = themify_get( $key );
-                $selected_subset = array();   
-                if($val){
-                    $selected_subset = explode(',',$val);
-                    $selected_subset = array_map('trim',$selected_subset);
-                }
-		$html .= '<p><span class="label">' . __( 'Character Subsets', 'themify' ) . '</span>';
-                $html.='<select size="11" multiple="multiple" class="width10 google_font_subset">';
-                foreach($subsets as $s){
-                    $selected = in_array($s,$selected_subset)?'selected="selected"':'';
-                    $html.='<option '.$selected.' value="'.$s.'">'.$s.'</option>';
-                }
-                $html.='</select><input type="hidden" name="' . $key . '" value="'.$val.'" /> <br />
-				</p>';
-
-		$html .= '<p>
-					<span class="pushlabel"><a href="#" class="refresh-webfonts button">'.__( 'Refresh List', 'themify' ).'</a><br/><small>' . __( 'If you made any changes to these settings, refresh the list.', 'themify' ) . '</small></span>
-				</p>';
-
 		return $html;
 	}
-}
-
-if ( ! function_exists( 'themify_entries_navigation' ) ) {
-	/**
-	 * Display module to select numbered pagination or links to previous and next posts.
-	 * @param array $data
-	 * @return string $html Module markup.
-	 * @since 1.6.0
-	 */
-	function themify_entries_navigation( $data = array() ) {
-		$data = themify_get_data();
-		$key = 'setting-entries_nav';
-		$html = '<p>';
-			// Numbered pagination
-			$html .= '<label for="' . esc_attr( $key . '_numbered' ) . '">';
-			$html .= '<input ' . checked( isset( $data[$key] )? $data[$key] : 'numbered', 'numbered', false) . ' type="radio" id="' . esc_attr( $key . '_numbered' ) . '" name="' . esc_attr( $key ) . '" value="numbered" /> ';
-			$html .= __( 'Numbered Page Navigation (page 1, 2, 3, etc.)', 'themify' ) . '</label>';
-			$html .= '<br/>';
-			
-			// Previous / Next links
-			$html .= '<label for="' . esc_attr( $key . '_prevnext' ) . '">';
-			$html .= '<input ' . checked( isset( $data[$key] )? $data[$key] : '', 'prevnext', false ) . ' type="radio" id="' . esc_attr( $key . '_prevnext' ) . '" name="' . esc_attr( $key ) . '" value="prevnext" /> ';
-			$html .= __( 'Previous Posts and Next Posts Links', 'themify' ) . '</label>';
-		$html .= '</p>';
-		return $html;
-	}
-}
-
-//////////////////////////////////////////////
-// Add common modules
-//////////////////////////////////////////////
-if(!function_exists('themify_framework_theme_config_webfonts_subsets')){
-	function themify_framework_theme_config_webfonts_subsets($themify_theme_config) {
-		$themify_theme_config['panel']['settings']['tab']['general']['custom-module'][] =
-			array(
-				'title' => __('Google Fonts', 'themify'),
-				'function' => 'themify_webfonts_subsets'
-			)
-		;
-		return $themify_theme_config;
-	};
-	add_filter('themify_theme_config_setup', 'themify_framework_theme_config_webfonts_subsets');
 }
 
 if( ! function_exists( 'themify_framework_theme_config_add_twitter_settings' ) ) {
@@ -3074,6 +3457,10 @@ if( ! function_exists( 'themify_framework_theme_config_add_twitter_settings' ) )
 					'title' => __('Bing Map API Settings','themify'),
 					'function' =>'themify_bing_map_key'
                 ),
+                array(
+                    'title' => __('Cloudflare API Settings','themify'),
+                    'function' =>'themify_cloudflare_setting'
+                ),
 			)
 		);
 		return $themify_theme_config;
@@ -3081,48 +3468,23 @@ if( ! function_exists( 'themify_framework_theme_config_add_twitter_settings' ) )
 	add_filter('themify_theme_config_setup', 'themify_framework_theme_config_add_integration_settings');
 }
 
-
-if( ! function_exists( 'themify_framework_theme_config_add_perforamce' ) ) {
-	/**
-	 * Script Minification and GZIP, Outputing CSS
-	 * @param array $themify_theme_config
-	 * @return array
-	 */
-	function themify_framework_theme_config_add_perforamce($themify_theme_config) {
-            $config = array();
-            foreach($themify_theme_config['panel']['settings']['tab']['theme_settings']['custom-module'] as $index=>$val){
-                    if($index===2){
-			    $config[] =array(
-                                'title' => __('Performance &amp; Minified Scripts', 'themify'),
-                                'function' => 'themify_manage_script_minification_settings'
-                            );
-                    }
-                    $config[] = $val;
-            }
-            $themify_theme_config['panel']['settings']['tab']['theme_settings']['custom-module'] = $config;
-            return $themify_theme_config;
-	};
-	add_filter('themify_theme_config_setup', 'themify_framework_theme_config_add_perforamce');
-}
 /**
- * Renders the option to disable responsive design
+ * Renders the option to responsive design
  *
  * @since 2.1.5
  * @return string
  */
 function themify_disable_responsive_design_option( $data = array() ) {
-	$out = '<p><label for="setting-disable_responsive_design"><input type="checkbox" id="setting-disable_responsive_design" name="setting-disable_responsive_design" ' . checked( themify_get( 'setting-disable_responsive_design' ), 'on', false ) . '/> ' . __( 'Disable responsive design (site will not be mobile friendly)', 'themify' ) . '</label></p>';
-        $out.='<div data-show-if-element="[name=setting-disable_responsive_design]" data-show-if-value="false">';
-        $out .= sprintf( '<p class="clearfix"><span class="label width10">%s</span></p>', esc_html__( 'Responsive Breakpoints:', 'themify' ) );
+        $out = sprintf( '<p class="tf_clearfix"><span class="label width10">%s</span></p>', esc_html__( 'Responsive Breakpoints:', 'themify' ) );
 
 	$opt_data = themify_get_data();
         $break_points = themify_get_breakpoints('',true);
 	$pre = 'setting-customizer_responsive_design_';
-	$bp_tablet_landscape = !empty( $opt_data[ $pre . 'tablet_landscape'] ) ? $opt_data[ $pre . 'tablet_landscape'] : $break_points['tablet_landscape'][1];
-	$bp_tablet = !empty( $opt_data[ $pre . 'tablet'] ) ? $opt_data[ $pre . 'tablet'] : $break_points['tablet'][1];
-	$bp_mobile =!empty( $opt_data[ $pre . 'mobile'] ) ? $opt_data[ $pre . 'mobile'] : $break_points['mobile'];
+	$bp_tablet_landscape = !empty( $opt_data[ $pre . 'tablet_landscape'] ) ? $opt_data[ $pre . 'tablet_landscape'] : 1024;
+	$bp_tablet = !empty( $opt_data[ $pre . 'tablet'] ) ? $opt_data[ $pre . 'tablet'] : 768;
+	$bp_mobile =!empty( $opt_data[ $pre . 'mobile'] ) ? $opt_data[ $pre . 'mobile'] : 600;
         
-	$out .= sprintf( '<div class="clearfix"><div class="label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" data-default-min="%d" data-default-max="%d" class="width4"> px</div></div>',
+	$out .= sprintf( '<div class="tf_clearfix"><div class="label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" data-default-min="%d" data-default-max="%d" class="width4"> px</div></div>',
 		esc_html__( 'Tablet Landscape', 'themify' ),
 		$pre . 'tablet_landscape',
 		$bp_tablet_landscape,
@@ -3131,8 +3493,8 @@ function themify_disable_responsive_design_option( $data = array() ) {
 		$break_points['tablet_landscape'][0],// default min
 		$break_points['tablet_landscape'][1]// default max
 	);
-	$out .= sprintf( '<div class="clearfix"><div class="label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" data-default-min="%d" data-default-max="%d" class="width4"> px</div></div>',
-		esc_html__( 'Tablet', 'themify' ),
+	$out .= sprintf( '<div class="tf_clearfix"><div class="label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" data-default-min="%d" data-default-max="%d" class="width4"> px</div></div>',
+		esc_html__( 'Tablet Portrait', 'themify' ),
 		$pre . 'tablet',
 		$bp_tablet,
 		$bp_tablet < $break_points['tablet'][0] ? $bp_tablet : $break_points['tablet'][0],//min
@@ -3140,7 +3502,7 @@ function themify_disable_responsive_design_option( $data = array() ) {
 		$break_points['tablet'][0],
 		$break_points['tablet'][1]
 	);
-	$out .= sprintf( '<div class="clearfix"><div class="label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" data-default-min="%d" data-default-max="%d" class="width4"> px</div></div>',
+	$out .= sprintf( '<div class="tf_clearfix"><div class="label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" data-default-min="%d" data-default-max="%d" class="width4"> px</div></div>',
 		esc_html__( 'Mobile', 'themify' ),
 		$pre . 'mobile',
 		$bp_mobile,
@@ -3149,16 +3511,11 @@ function themify_disable_responsive_design_option( $data = array() ) {
         320,
 		$break_points['mobile']
 	);
-
-	$point = themify_get( 'setting-mobile_menu_trigger_point', 900 );
 	$out .= '
 	<p>
-		<span class="label">' . __( 'Mobile Menu', 'themify' ) . '</span>
-		<input type="text" name="setting-mobile_menu_trigger_point" value="' . esc_attr( $point ) . '" class="width2">' . __( 'Mobile menu viewport (px)', 'themify' ) .'
-		<small class="pushlabel">'. __( 'Main menu will toggle to mobile menu style when viewport width meets the entered value.', 'themify' ) .'</small>
+		<span class="label">' . __( 'Mobile Menu', 'themify' ) .themify_help(__( 'Main menu will toggle to mobile menu style when viewport width meets the entered value.', 'themify' )) . '</span>
+		<input type="text" name="setting-mobile_menu_trigger_point" value="' . esc_attr( themify_get( 'setting-mobile_menu_trigger_point', 900,true ) ) . '" class="width2">' . __( 'Mobile menu viewport (px)', 'themify' ) .'
 	</p>';
-
-	$out.='</div>';
 
 	return $out;
 }
@@ -3175,7 +3532,6 @@ if ( ! function_exists( 'themify_generic_slider_controls' ) ) {
 		 * Associative array containing theme settings
 		 * @var array
 		 */
-		$data = themify_get_data();
 
 		$auto_options = apply_filters( 'themify_generic_slider_auto',
 			array(
@@ -3210,9 +3566,10 @@ if ( ! function_exists( 'themify_generic_slider_controls' ) ) {
 		 */
 		$output = '<p>
 						<span class="label">' . __('Auto Play', 'themify') . '</span>
-						<select name="' . esc_attr( $prefix ) . 'autoplay">';
+						<select name="' . $prefix . 'autoplay">';
 						foreach ( $auto_options as $name => $val ) {
-							$output .= '<option value="' . esc_attr( $val ) . '" ' . selected( themify_get( $prefix . 'autoplay' ), themify_check( $prefix . 'autoplay' ) ? $val : 4000, false ) . '>' . esc_html( $name ) . '</option>';
+							$v=themify_get( $prefix . 'autoplay' );
+							$output .= '<option value="' . $val . '" ' . selected( $v, $v ? $val : 4000, false ) . '>' . esc_html( $name ) . '</option>';
 						}
 		$output .= '	</select>
 					</p>';
@@ -3222,7 +3579,7 @@ if ( ! function_exists( 'themify_generic_slider_controls' ) ) {
 		 */
 		$output .= '<p>
 						<span class="label">' . __( 'Effect', 'themify' ) . '</span>
-						<select name="' . esc_attr( $prefix ) . 'effect">' .
+						<select name="' . $prefix. 'effect">' .
 						themify_options_module( $effect_options, $prefix . 'effect' ) . '
 						</select>
 					</p>';
@@ -3232,9 +3589,10 @@ if ( ! function_exists( 'themify_generic_slider_controls' ) ) {
 		 */
 		$output .= '<p>
 						<span class="label">' . __( 'Transition Speed', 'themify' ) . '</span>
-						<select name="' . esc_attr( $prefix ) . 'transition_speed">';
+						<select name="' . $prefix . 'transition_speed">';
+						$transition=themify_get( $prefix . 'transition_speed' );
 						foreach ( $speed_options as $name => $val ) {
-							$output .= '<option value="' . esc_attr( $val ) . '" ' . selected( themify_get( $prefix . 'transition_speed' ), themify_check( $prefix . 'transition_speed' ) ? $val : 500, false ) . '>' . esc_html( $name ) . '</option>';
+							$output .= '<option value="' . $val . '" ' . selected( $transition, $transition? $val : 500, false ) . '>' . esc_html( $name ) . '</option>';
 						}
 		$output .= '	</select>
 					</p>';
@@ -3255,16 +3613,12 @@ function themify_feature_image_sizes_select($key = ''){
 	$themify_layout_feature_sizes = themify_get_image_sizes_list();
 
 	$output = '<p class="show_if_disabled_img_php">
-				<span class="label">' . __('Featured Image Size', 'themify') . '</span>
-				<select name="' . esc_attr( 'setting-' . $key ) . '">';
+		    <span class="label">' . __('Featured Image Size', 'themify') . '</span>
+		    <select name="setting-' . $key . '">';
+	$val=themify_get('setting-'.$key,false,true);
 	foreach($themify_layout_feature_sizes as $option){
-		if($option['value'] == themify_get('setting-'.$key.'')){
-			$output .= '<option value="' . esc_attr( $option['value'] ) . '" selected="selected">';
-				$output .= esc_html( $option['name'] );
-			$output .= '</option>';
-		} else {
-			$output .= '<option value="' . esc_attr( $option['value'] ) . '">' . esc_html( $option['name'] ) . '</option>';
-		}
+		$sel=$option['value']===$val?' selected="selected"':'';
+		$output .= '<option'.$sel.' value="' . $option['value'] . '">' . esc_html( $option['name'] ) . '</option>';
 	}
 	$output .= '</select></p>';
 
@@ -3290,22 +3644,15 @@ function themify_theme_mega_menu_controls( $data = array() ) {
 	 * Module markup
 	 * @var string
 	 */
-	 
-	$mega = themify_get( $key.'_posts', 5 );
 	$out = '
 	<p>
-		<span class="label">' . __( 'Mega Menu Posts', 'themify' ) . '</span>
-		<input type="text" name="'.$key.'_posts" value="' . esc_attr( $mega ) . '" class="width2">' . __( 'Posts', 'themify' ) .'
-		<br><small class="pushlabel">'. __( 'Number of posts to show on mega menu.', 'themify' ) .'</small>
+		<span class="label">' . __( 'Mega Menu Posts', 'themify' ) .themify_help(__( 'Number of posts to show on mega menu.', 'themify' )) . '</span>
+		<input type="text" name="'.$key.'_posts" value="' . esc_attr( themify_get( $key.'_posts', 5,true ) ) . '" class="width2">' . __( 'Posts', 'themify' ) .'
 	</p>';
-	
-	$width = themify_get( $key.'_image_width', 180 );
-	$height = themify_get( $key.'_image_height', 120 );
 	$out .= '
 	<p>
-		<span class="label">' . __( 'Mega Menu Posts', 'themify' ) . '</span>
-		<input type="text" name="'.$key.'_image_width" value="' . esc_attr( $width ) . '" class="width2"> X <input type="text" name="'.$key.'_image_height" value="' . esc_attr( $height ) . '" class="width2"> ' . __( 'px', 'themify' ) .'
-		<br><small class="pushlabel">'. __( 'Enter featured image size on mega menu', 'themify' ) .'</small>
+		<span class="label">' . __( 'Mega Menu Posts', 'themify' ) .themify_help(__( 'Enter featured image size on mega menu', 'themify' )) . '</span>
+		<input type="text" name="'.$key.'_image_width" value="' . esc_attr( themify_get( $key.'_image_width', 180,true ) ) . '" class="width2"> X <input type="text" name="'.$key.'_image_height" value="' . esc_attr( themify_get( $key.'_image_height', 120,true ) ) . '" class="width2"> ' . __( 'px', 'themify' ) .'
 	</p>';
 
 	return apply_filters('themify_mega_menu_settings',$out);
@@ -3319,9 +3666,11 @@ function themify_theme_mega_menu_controls( $data = array() ) {
  * @since 2.7.7
  */
 function themify_google_map_key($data=array()){
-    $google_map_key = themify_get( 'setting-google_map_key' );
-    return '<p><span class="label">' . __( 'Google Map Key', 'themify' ) . '</span> <input type="text" class="width10" name="setting-google_map_key" value="' . esc_attr( $google_map_key ) . '" /> <br />
-				<span class="pushlabel"><small>'.__('Google API key is required to use Builder Map module and Map shortcode.','themify').' <a href="//developers.google.com/maps/documentation/javascript/get-api-key#key" target="_blank">' . __( 'Generate an API key', 'themify' ) . '</a> and insert it here.</small></span></p>';
+    return '
+	<p>
+		<span class="label">' . __( 'Google Map Key', 'themify' ) . '</span> <input type="text" class="width10" name="setting-google_map_key" value="' . esc_attr( themify_get( 'setting-google_map_key','',true) ) . '" /> <br />' .
+		'<span class="pushlabel"><small>' . sprintf( __( 'Google API key is required to use Builder Map module and Map shortcode. <a href="%s" target="_blank">Generate an API key</a> and insert it here.' ), '//developers.google.com/maps/documentation/javascript/get-api-key#key' ) . '</small></span>' .
+	'</p>';
 }
 
 /**
@@ -3330,9 +3679,29 @@ function themify_google_map_key($data=array()){
  * @since 2.8.0
  */
 function themify_bing_map_key($data=array()){
-    $bing_map_key = themify_get( 'setting-bing_map_key' );
-    return '<p><span class="label">' . __( 'Bing Maps Key', 'themify' ) . '</span> <input type="text" class="width10" name="setting-bing_map_key" value="' . esc_attr( $bing_map_key ) . '" /> <br />
-				<span class="pushlabel"><small>'.__('To use Bing Maps,','themify').' <a href="https://msdn.microsoft.com/en-us/library/ff428642.aspx" target="_blank">' . __( 'Generate an API key', 'themify' ) . '</a> and insert it here.</small></span></p>';
+    return '<p><span class="label">' . __( 'Bing Maps Key', 'themify' ) . '</span> <input type="text" class="width10" name="setting-bing_map_key" value="' . esc_attr( themify_get( 'setting-bing_map_key','',true ) ) . '" /> <br />
+				<span class="pushlabel"><small>' . sprintf( __( 'To use Bing Maps, <a href="%s" target="_blank">generate an API key</a> and insert it here.' ), 'https://msdn.microsoft.com/en-us/library/ff428642.aspx' ) . '</small></span></p>';
+}
+
+/**
+ * Display Cloudflare api key input
+ * @return String
+ * @since 2.8.0
+ */
+function themify_cloudflare_setting($data=array()){
+    $key='setting-clf_email';
+    $email=themify_get( $key,'',true );
+    $output = '<p><span class="label">' . __( 'Account Email', 'themify' ) . '</span> <input type="email" class="width8" name="'.$key.'" value="' . esc_attr( $email ) . '" /></p>';
+    $key='setting-clf_key';
+    $api=themify_get( $key,'',true );
+    $output .= '<p><span class="label">' . __( 'API Key', 'themify' ) . '</span> <input type="text" class="width10" name="'.$key.'" value="' . esc_attr( $api ) . '" /></p>';
+    $key='setting-clf_z_'.crc32($email.$api);
+    $zone=themify_get( $key,'',true );
+    if(!empty($zone)){
+        $output .= '<input type="hidden" name="'.$key.'" value="' . esc_attr( $zone ) . '" />';
+    }
+    $output .= '<p><span class="pushlabel"><small>' . sprintf( __( 'To clear Cloudflare cache upon theme update or purge Themify cache, please login to your Cloudflare account and insert your information here.' ) ) . '</small></span></p>';
+    return $output;
 }
 
 /**
@@ -3348,7 +3717,7 @@ function themify_framework_theme_microdata_config( $themify_theme_config ) {
 		)
 	;
 	return $themify_theme_config;
-};
+}
 add_filter( 'themify_theme_config_setup', 'themify_framework_theme_microdata_config' );
 
 /**
@@ -3357,47 +3726,9 @@ add_filter( 'themify_theme_config_setup', 'themify_framework_theme_microdata_con
  * @return string
  */
 function themify_framework_theme_microdata_config_callback() {
-	return '<p><span class="label">' . __('Schema Microdata', 'themify') . '</span> <label for="setting-disable_microdata"><input type="checkbox" id="setting-disable_microdata" name="setting-disable_microdata" '. checked( 'on', themify_get( 'setting-disable_microdata' ), false ) .'/> ' . __('Disable schema.org microdata output.', 'themify') . '</label></p>';
+	return '<p><span class="label">' . __('Schema Microdata', 'themify') . '</span> <label for="setting-disable_microdata"><input type="checkbox" id="setting-disable_microdata" name="setting-disable_microdata" '. checked( 'on', themify_get( 'setting-disable_microdata','',true ), false ) .'/> ' . __('Disable schema.org microdata output.', 'themify') . '</label></p>';
 }
 
-/**
- * Enable CodeMirror editor on Header Code and Footer Code options
- *
- * @since 4.2.5
- */
-function themify_header_footer_html_setting_codemirror() {
-	if ( 'toplevel_page_themify' !== get_current_screen()->id ) {
-		return;
-	}
-
-	// Enqueue code editor and settings for manipulating HTML.
-	$settings = wp_enqueue_code_editor( array( 'type' => 'text/html' ) );
-
-	// Bail if user disabled CodeMirror.
-	if ( false === $settings ) {
-		return;
-	}
-
-	wp_add_inline_script(
-		'code-editor',
-		sprintf(
-			'jQuery( function() {
-				var ed = wp.codeEditor.initialize( "setting-header_html", %1$s );
-				ed.codemirror.on( "change", function() {
-					ed.codemirror.save();
-				} );
-			} );'
-			. 'jQuery( function() {
-				var ed = wp.codeEditor.initialize( "setting-footer_html", %1$s );
-				ed.codemirror.on( "change", function() {
-					ed.codemirror.save();
-				} );
-			} );',
-			wp_json_encode( $settings )
-		)
-	);
-}
-add_action( 'admin_enqueue_scripts', 'themify_header_footer_html_setting_codemirror' );
 
 /**
  * Display Builder Styles page content
@@ -3410,4 +3741,385 @@ function themify_global_styles_page(){
 		wp_die( __( 'You do not have sufficient permissions to update this site.', 'themify' ) );
 
 	return Themify_Global_Styles::page_content();
+}
+
+
+///////////////////////////////////////////
+// Scrub Function
+///////////////////////////////////////////
+function themify_scrub_func($string=''){
+	return str_replace(array(' ', '/', ','), array('_', '_', '-'), strtolower($string));
+}
+
+///////////////////////////////////////////
+// Scrub
+///////////////////////////////////////////
+function themify_scrub($string=''){
+	return str_replace(array('#','-',' ','.',':',',','[',']','=','<','>'), array('_id_','_dash_','_space_','_class_','_colon_','_comma_','_opensquare_','_closesquare_','_equal_','_openbracket_','_closebracket_'), $string);
+}
+/**
+ * Check if multiple plugins are active, returns true only if all of them are
+ *
+ * @return bool
+ * @since 2.8.6
+ */
+function themify_are_plugins_active( $plugins ) {
+	$result = true;
+	foreach( $plugins as $plugin ) {
+		if( ! is_plugin_active( $plugin ) ) {
+			$result = false;
+			break;
+		}
+	}
+
+	return $result;
+}
+
+if ( ! function_exists( 'themify_lightbox_link_field' ) ) {
+	/**
+	 * Returns Lightbox Link field definition for themify custom panel
+	 * @return array
+	 */
+	function themify_lightbox_link_field( $args = array() ) {
+
+		$defaults = array(
+			'name' 	=> 'multi_lightbox_link',
+			'title' => __('Lightbox Link', 'themify'),
+			'description' => '',
+			'type' 	=> 'multi',
+			'meta'	=> array(
+				'fields' => array(
+			  		// Lightbox link field
+			  		array(
+						'name' 	=> 'lightbox_link',
+						'label' => '',
+						'description' => __('Link Featured Image and Post Title to lightbox image, video or iframe URL <br/>(<a href="https://themify.me/docs/lightbox" target="_blank">learn more</a>)', 'themify'),
+						'type' 	=> 'textbox',
+						'meta'	=> array(),
+						'before' => '',
+						'after' => '',
+					),
+					array(
+						'name' 		=> 'iframe_url',
+						'label' 		=> __('iFrame URL', 'themify'),
+						'description' => '',
+						'type' 		=> 'checkbox',
+						'before' => '',
+						'after' => '',
+					),
+					array(
+						'name' 		=> 'lightbox_icon',
+						'label' 		=> __('Add zoom icon on lightbox link', 'themify'),
+						'description' => '',
+						'type' 		=> 'checkbox',
+						'before' => '',
+						'after' => '',
+					)
+				),
+				'description' => '',
+				'before' => '',
+				'after' => '',
+				'separator' => ''
+			)
+		);
+
+		$field = wp_parse_args( $args, $defaults );
+
+		return apply_filters( 'themify_lightbox_link_field', $field );
+	}
+}
+
+if( ! function_exists( 'themify_image_dimensions_field' ) ) {
+	/**
+	 * Multi field: Image dimensions fields to enter width and height.
+	 * @param array $args
+	 * @param string $prefix
+	 * @return mixed|void
+	 * @since 1.5.2
+	 */
+	function themify_image_dimensions_field( $args = array(), $prefix = 'image' ) {
+		if(!themify_is_image_script_disabled()){
+			$defaults = array(
+				'type' => 'multi',
+				'name' => $prefix . '_dimensions',
+				'title' => __('Featured Image Size', 'themify'),
+				'meta' => array(
+					'fields' => array(
+						// Image Width
+						array(
+							'name' => $prefix . '_width',
+							'label' => __('width', 'themify'),
+							'description' => '',
+							'type' => 'textbox',
+							'meta' => array('size' => 'small')
+						),
+						// Image Height
+						array(
+							'name' => $prefix . '_height',
+							'label' => __('height', 'themify'),
+							'type' => 'textbox',
+							'meta' => array( 'size' => 'small')
+						),
+					),
+					'description' => __('Enter height = 0 to disable vertical cropping with image script enabled', 'themify'),
+					'before' => '',
+					'after' => '',
+					'separator' => ''
+				)
+			);
+		} else {
+			$defaults = array( 'name'=>'','type'=>'' );
+		}
+		$field = wp_parse_args( $args, $defaults );
+
+		return apply_filters( 'themify_image_dimensions_field', $field );
+	}
+}
+
+
+/**
+ * Returns a collection of options: yes, no and default which means the theme settings will be used.
+ *
+ * @since 2.1.3
+ *
+ * @param string $yes
+ * @param string $no
+ * @param string $default
+ * @param array $args
+ *
+ * @return array
+ */
+function themify_ternary_options( $yes = '', $no = '', $default = '', $args = array() ) {
+	return wp_parse_args( $args, array(
+		array(
+			'value' => 'default',
+			'name'  => !empty( $default ) ? $default : __( 'Default', 'themify' ),
+			'selected' => true
+		),
+		array(
+			'value'    => 'yes',
+			'name'     => !empty( $yes ) ? $yes : __( 'Yes', 'themify' ),
+		),
+		array(
+			'value' => 'no',
+			'name'  => !empty( $no ) ? $no : __( 'No', 'themify' ),
+		),
+	));
+}
+
+/**
+ * Returns a collection of states: yes, no and default which means the theme settings will be used.
+ *
+ * @since 2.1.3
+ *
+ * @param string $yes
+ * @param string $no
+ * @param string $default
+ * @param array $args
+ *
+ * @return array
+ */
+function themify_ternary_states( $args = array(), $all = array() ) {
+	$args = wp_parse_args( $args, array(
+		'icon_yes' => THEMIFY_URI . '/img/ddbtn-check.svg',
+		'icon_no' => THEMIFY_URI . '/img/ddbtn-cross.svg',
+		'value_default' => '',
+	) );
+	return wp_parse_args( $all, array(
+		array(
+			'name' => empty( $args['label_yes'] ) ? __('Hide', 'themify') : $args['label_yes'],
+			'value' => 'yes',
+			'icon' => $args['icon_yes'],
+			'title' => __('Hide this', 'themify')
+		),
+		array(
+			'name' => empty( $args['label_no'] ) ? __('Show', 'themify') : $args['label_no'],
+			'value' => 'no',
+			'icon' => $args['icon_no'],
+			'title' => __('Show this', 'themify')
+		),
+		array(
+			'name' => empty( $args['default'] ) ? __('Theme default', 'themify') : $args['default'],
+			'value' => $args['value_default'],
+			'icon' => THEMIFY_URI . '/img/ddbtn-blank.png',
+			'title' => __('Use theme settings', 'themify'),
+			'default' => true
+		)
+	));
+}
+if( ! function_exists( 'themify_multi_meta_field' ) ) {
+	/**
+	 * Definition for tri-state hide meta buttons
+	 *
+	 * @param array  $args
+	 * @param string $prefix
+	 *
+	 * @return mixed|void
+	 * @since 1.5.2
+	 */
+	function themify_multi_meta_field( $args = array(), $prefix = 'hide_meta' ) {
+
+		$states = themify_ternary_states( array( 'label_no' => __('Do not hide', 'themify') ) );
+
+		$defaults = array(
+			'name' 		=> $prefix . '_multi',
+			'title' 	=> __('Hide Post Meta', 'themify'),
+			'description' => '',
+			'type' 		=> 'multi',
+			'meta'		=>  array (
+				'fields' => array(
+					array(
+						'name' => $prefix . '_all',
+						'title' => __('Hide All', 'themify'),
+						'description' => '',
+						'type' => 'dropdownbutton',
+						'states' => $states,
+						'main' => true,
+						'disable_value' => 'yes'
+					),
+					array(
+						'name' => $prefix . '_author',
+						'title' => __('Author', 'themify'),
+						'description' => '',
+						'type' => 'dropdownbutton',
+						'states' => $states,
+						'sub' => true
+					),
+					array(
+						'name' => $prefix . '_category',
+						'title' => __('Category', 'themify'),
+						'description' => '',
+						'type' => 'dropdownbutton',
+						'states' => $states,
+						'sub' => true
+					),
+					array(
+						'name' => $prefix . '_comment',
+						'title' => __('Comment', 'themify'),
+						'description' => '',
+						'type' => 'dropdownbutton',
+						'states' => $states,
+						'sub' => true
+					),
+					array(
+						'name' => $prefix . '_tag',
+						'title' => __('Tag', 'themify'),
+						'description' => '',
+						'type' => 'dropdownbutton',
+						'states' => $states,
+						'sub' => true
+					),
+				),
+				'description' => '',
+				'before' => '',
+				'after' => '',
+				'separator' => ''
+			)
+		);
+
+		$field = wp_parse_args( $args, $defaults );
+
+		return apply_filters( 'themify_multi_meta_field', $field );
+	}
+}
+
+function themify_meta_field_fontawesome( $args, $call_before_after = true, $echo = true ) {
+	
+	$meta_box =  $args['meta_box'];
+	$meta_value = $args['meta_value'];
+	$class = isset( $meta_box['meta']['size'] ) && 'small' === $meta_box['meta']['size']?'small': '';
+
+	$html = '<div class="icon-preview font-icon-preview">
+				<i class="fa ' . esc_attr( $meta_value ) . '"></i>
+			</div>
+			<!-- /icon-preview -->';
+	$html .= sprintf( '<input type="text" id="%s" name="%s" value="%s" size="55" class="themify_input_field themify_fa %s" /> <a class="button button-secondary hide-if-no-js themify_fa_toggle" href="#" data-target="#%s">%s</a>',
+		esc_attr( $meta_box['name'] ),
+		esc_attr( $meta_box['name'] ),
+		esc_attr( $meta_value ),
+		$class,
+		esc_attr( $meta_box['name'] ),
+		__( 'Insert Icon', 'themify' ) );
+
+	if (  !empty( $meta_box['label'] )) {
+		$html = sprintf( '<label for="%s">%s %s</label>',
+			esc_attr( $meta_box['name'] ),
+			$html,
+			esc_html( $meta_box['label'] )
+		);
+	}
+
+	if ( isset( $meta_box['description'] ) ) {
+		$html .= themify_meta_field_get_description( $meta_box['description'] );
+	}
+
+	if ( !empty( $meta_box['before'] )) {
+		$html = $meta_box['before'] . $html;
+	}
+	if ( !empty( $meta_box['after'] )) {
+		$html .= $meta_box['after'];
+	}
+
+	if ( $echo ) echo $html;
+	return $html;
+}
+/**
+ * Build custom write panels
+ * This function is required to provide backward compatibility
+ */
+function themify_build_write_panels( $args = null ) {
+}
+/**
+ * featimgdropdown field type, creates an option to select image sizes
+ *
+ * @since 2.8.8
+ */
+function themify_meta_field_featimgdropdown( $args ) {
+	/** Define WP Featured Image sizes + blank + Themify's image script*/
+	$themify_fi_sizes = themify_get_image_sizes_list();
+	$meta_box = $args['meta_box'];
+	?>
+	<select name="<?php  esc_attr_e( $meta_box['name'] ); ?>">
+		<?php foreach($themify_fi_sizes as $option): ?>
+			<option value="<?php  esc_attr_e( $option['value'] ); ?>" <?php selected( $option['value'], $args['meta_value'] ); ?>><?php echo esc_html( $option['name'] ); ?></option>
+		<?php endforeach; ?>
+	</select>
+	<?php if ( isset( $meta_box['description'] ) ) : ?>
+		<span class="themify_field_description"><?php echo wp_kses_post( $meta_box['description'] ); ?></span>
+	<?php endif; // meta_box description
+}
+/**
+ * Outputs html to display alert messages in post edit/new screens. Excludes pages.
+ * @since 1.2.2
+ */
+function themify_prompt_message() {
+	global $pagenow, $typenow;
+	if('page' !== $typenow && ('post.php' === $pagenow || 'post-new.php' === $pagenow || 'admin.php' === $pagenow) ){
+		echo '<div class="prompt-box"><div class="show-error"></div></div><div class="overlay">&nbsp;</div>';
+	}
+	if(class_exists('Themify_Builder_Model')){
+		Themify_Builder_Model::check_plugins_compatible();
+	}
+	if(!Themify_Enqueue_Assets::createDir()){
+		echo '<div class="notice notice-error"><p><strong>'.__('Themify:','themify').'</strong></p><p>'.__('It looks like the WordPress upload folder path is set wrong or have file permission issue. Please check the upload path on WP Settings > Media. Make sure the folder is set correctly and it has correct file permission.','themify').'</p></div>';
+	}
+}
+add_action( 'admin_enqueue_scripts', 'themify_enqueue_scripts', 12 );
+
+// register custom field types only available in the framework
+add_action( 'themify_metabox/field/fontawesome', 'themify_meta_field_fontawesome', 10, 1 );
+add_action( 'themify_metabox/field/sidebar_visibility', 'themify_meta_field_sidebar_visibility', 10, 1 );
+add_action( 'themify_metabox/field/featimgdropdown', 'themify_meta_field_featimgdropdown', 10, 1 );
+add_action( 'themify_metabox/field/page_builder', 'themify_meta_field_page_builder', 10, 1 );
+add_action( 'admin_notices', 'themify_prompt_message' );
+
+require_once THEMIFY_DIR . '/themify-wpajax.php';
+if(themify_is_themify_theme()){
+
+	/**
+	 * Initialize settings page and update permissions.
+	 * @since 2.1.8
+	 */
+	add_action( 'init', 'themify_after_user_is_authenticated' );
+    require_once THEMIFY_DIR . '/class-tgm-plugin-activation.php';
 }

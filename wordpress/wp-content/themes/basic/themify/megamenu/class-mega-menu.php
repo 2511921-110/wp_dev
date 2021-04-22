@@ -6,7 +6,7 @@
  * @since 1.0.0
  */
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
 
 if( ! class_exists('Themify_Mega_Menu_Walker') ) {
 	/**
@@ -15,19 +15,22 @@ if( ! class_exists('Themify_Mega_Menu_Walker') ) {
 	 */
 	class Themify_Mega_Menu_Walker extends Walker_Nav_Menu {
 		static $mega_open = false;
-
+		private static $hasLayout=false;
+		private static $open=false;
+		static $disableAssetsLoading=false;
 		/**
 		 * render a widget menu item
 		 *
-		 * $dropdown_wrapper add ul.sub-menu around the widget
+		 * $depth level
 		 * $class_names additional CSS classes to add to the menu wrapper
 		 * @return string
 		 */
-		function render_widget_menu( $item, $dropdown_wrapper, $class_names = '' ) {
+		 
+		function render_widget_menu( $item, $depth, $class_names = '' ) {
 			$output = '';
-			if( $dropdown_wrapper ) {
+			if( $depth === 0 ) {
 				$title = apply_filters( 'the_title', $item->title, $item->ID );
-				$output .= "<li id='menu-item-$item->ID' $class_names><a href='#'>" . $title . '</a><ul class="sub-menu">';
+				$output = "<li $class_names><a href='#'>" . $title . '<span class="child-arrow"></a></span><ul class="sub-menu tf_box">';
 			}
 
 			$menu_widget = Themify_Widgets_Menu::get_instance()->get_widget_menu_class( $item );
@@ -39,7 +42,7 @@ if( ! class_exists('Themify_Mega_Menu_Walker') ) {
 				)
 			) . '';
 
-			if( $dropdown_wrapper ) {
+			if( $depth === 0 ) {
 				$output .= '</ul>';
 			}
 
@@ -49,20 +52,20 @@ if( ! class_exists('Themify_Mega_Menu_Walker') ) {
 		/**
 		 * Render a Layout Part inside menu
 		 *
-		 * $dropdown_wrapper add ul.sub-menu around the widget
+		 * $depth level
 		 * $class_names additional CSS classes to add to the menu wrapper
 		 * @return string
 		 */
-		function render_layout_part( $item, $dropdown_wrapper, $class_names = '' ) {
+		function render_layout_part( $item, $depth, $class_names = '' ) {
 			$output = '';
-			if( $dropdown_wrapper ) {
+			if( $depth === 0 ) {
 				$title = apply_filters( 'the_title', $item->title, $item->ID );
-				$output .= "<li id='menu-item-$item->ID' $class_names><a href='#'>" . $title . '</a><ul class="sub-menu">';
+				$output = "<li $class_names><a href='#'>" . $title . '<span class="child-arrow"></span></a><ul class="sub-menu tf_box">';
 			}
 
 			$output .= '<li class="themify-widget-menu">' . do_shortcode( sprintf( '[themify_layout_part id="%s"]', $item->object_id ) ) . '';
 
-			if( $dropdown_wrapper ) {
+			if(  $depth === 0 ) {
 				$output .= '</ul>';
 			}
 
@@ -70,44 +73,56 @@ if( ! class_exists('Themify_Mega_Menu_Walker') ) {
 		}
 
 		function start_el( &$output, $item, $depth = 0, $args = array(), $current_object_id = 0 ) {
-
+			
 			$classes = empty ( $item->classes ) ? array () : (array) $item->classes;
-			$dropdown_columns = get_post_meta( $item->ID, '_themify_dropdown_columns', true );
-			if( ! empty( $dropdown_columns ) ) {
-				$classes[] = 'dropdown-columns-' . $dropdown_columns;
+			if( $item->type === 'taxonomy' ){
+				$classes[]='mega-link';
 			}
-
-			$class_names = implode(' ', apply_filters(	'nav_menu_css_class', array_filter( $classes ), $item ));
+            $classes[]='menu-item-'.$item->ID;
+			$class_names = implode(' ', apply_filters('nav_menu_css_class', array_filter(array_unique($classes) ), $item ));
+			$classes=null;
 			$class_names = !empty ( $class_names )? 'class="'.esc_attr( $class_names ).'"' : '';
-
+		
 			/* handle the display of widget menu items */
 			if( Themify_Widgets_Menu::get_instance()->is_menu_widget( $item ) ) {
-				$output .= $this->render_widget_menu( $item, $depth == 0, $class_names );
-				return $output;
+			    $item_output= $this->render_widget_menu( $item, $depth, $class_names );
 			}
+			else{
+			   /* Layout Part rendering */
+			    if ($item->type === 'post_type' && $item->object === 'tbuilder_layout_part' ) {
+				$item_output= $this->render_layout_part( $item, $depth, $class_names );
+			    }
+			    else{
 
-			/* Layout Part rendering */
-			if ( $item->type === 'post_type' && $item->object === 'tbuilder_layout_part' ) {
-				$output .= $this->render_layout_part( $item, $depth == 0, $class_names );
-				return $output;
+				$li_attributes = '';
+				/* required for "mega" menu type which displays posts from a taxonomy term */
+				if( $item->type === 'taxonomy' ) {
+					$li_attributes = 'data-termid="' . $item->object_id . '" data-tax="' . $item->object . '"';
+				}
+				if($args->walker->has_children>0){	
+					$li_attributes.=' aria-haspopup="true"';
+				}
+				$output .= "<li $class_names $li_attributes>";
+
+				$attributes  = !empty( $item->attr_title )? ' title="'  . esc_attr( $item->attr_title ) . '"': '';
+				$attributes .= !empty( $item->target )    ? ' target="' . esc_attr( $item->target     ) . '"': '';
+				$attributes .= !empty( $item->xfn )       ? ' rel="'    . esc_attr( $item->xfn        ) . '"': '';
+				$attributes .= !empty( $item->url )       ? ' href="'   . esc_attr( $item->url        ) . '"': '';
+
+				$title = apply_filters( 'the_title', $item->title, $item->ID );
+
+				$item_output = $args->before. "<a $attributes>" . $args->link_before . $title;
+
+				if(isset($args->post_count) && $args->post_count===true && $item->type==='taxonomy'){
+					$term = get_term( $item->object_id, $item->object );
+					$item_output.='<span class="tf_post_count">'.$term->count.'</span>';
+				}
+				if($args->walker->has_children>0){	
+					$item_output.='<span class="child-arrow"></span>';
+				}
+				$item_output.='</a> ' . $args->link_after . $args->after;
+			    }
 			}
-
-			$li_attributes = '';
-			/* required for "mega" menu type which displays posts from a taxonomy term */
-			if( $item->type === 'taxonomy' ) {
-				$li_attributes .= 'data-termid="' . $item->object_id . '" data-tax="' . $item->object . '"';
-			}
-
-			$output .= "<li id='menu-item-$item->ID' $class_names $li_attributes>";
-
-			$attributes  = !empty( $item->attr_title )? ' title="'  . esc_attr( $item->attr_title ) . '"': '';
-			$attributes .= !empty( $item->target )    ? ' target="' . esc_attr( $item->target     ) . '"': '';
-			$attributes .= !empty( $item->xfn )       ? ' rel="'    . esc_attr( $item->xfn        ) . '"': '';
-			$attributes .= !empty( $item->url )       ? ' href="'   . esc_attr( $item->url        ) . '"': '';
-
-			$title = apply_filters( 'the_title', $item->title, $item->ID );
-
-			$item_output = $args->before. "<a $attributes>" . $args->link_before . $title . '</a> ' . $args->link_after . $args->after;
 			$output .= apply_filters( 'walker_nav_menu_start_el', $item_output, $item, $depth, $args );
 		}
 
@@ -118,9 +133,16 @@ if( ! class_exists('Themify_Mega_Menu_Walker') ) {
 		 * @param array $args
 		 */
 		function start_lvl( &$output, $depth = 0, $args = array() ) {
-			if( true == self::$mega_open ) return;
-			$indent = str_repeat("\t", $depth);
-			$output .= "\n$indent<ul class=\"sub-menu\">\n";
+			$cl='sub-menu';
+			if(self::$hasLayout==='layout'){
+				$cl.=' tf_scrollbar';
+			}
+			elseif(self::$hasLayout==='ajax'){
+				$cl='tf_mega_taxes tf_left tf_box';
+				$output.='<div class="mega-sub-menu sub-menu">';
+				self::$open=true;
+			}
+			$output .= '<ul class="'.$cl.'">';
 		}
 
 		/**
@@ -130,9 +152,11 @@ if( ! class_exists('Themify_Mega_Menu_Walker') ) {
 		 * @param array $args
 		 */
 		function end_lvl( &$output, $depth = 0, $args = array() ) {
-			if( true == self::$mega_open ) return;
-			$indent = str_repeat("\t", $depth);
-			$output .= "$indent</ul>\n";
+			$output .= '</ul>';
+			if(self::$open===true){
+				self::$open=false;
+				$output.='</div>';
+			}
 		}
 
 		/**
@@ -146,50 +170,74 @@ if( ! class_exists('Themify_Mega_Menu_Walker') ) {
 		 * @return null|void
 		 * @since 1.0.0
 		 */
-		function display_element( $item, &$children_elements, $max_depth, $depth = 0, $args, &$output ) {
+		function display_element( $item, &$children_elements, $max_depth, $depth, $args, &$output ) {
 			$id_field = $this->db_fields['id'];
-
-			if ( ! empty( $children_elements[ $item->$id_field ] ) ) {
-				$item->classes[] = 'has-sub-menu';
-			}
+			static $is=null;
+			self::$hasLayout=false;
 			if ( themify_is_menu_highlighted_link($item->ID) ) {
 				$item->classes[] = 'highlight-link';
 			}
-			if (
-				themify_is_mega_menu_type( $item->ID, 'mega' )
-				|| in_array( 'mega', $item->classes,true ) // backward compatibility
-			) {
+			$cl=false;
+			if ( in_array( 'mega', $item->classes,true ) || themify_is_mega_menu_type( $item->ID, 'mega' )){ // backward compatibility
 				$item->classes[] = 'mega';
 				$item->classes[] = 'has-mega-sub-menu';
-				if ( ! empty( $children_elements[ $item->$id_field ] ) ) {
-					foreach( $children_elements[ $item->$id_field ] as $child ) {
-						$child->classes[] = 'mega-sub-item';
-					}
+				$item->classes[] = 'has-mega';
+				self::$hasLayout='ajax';
+				$cl='mega-sub-item';
+			}
+			elseif(in_array( 'columns', $item->classes,true ) || themify_is_mega_menu_type( $item->$id_field, 'column' )){// backwards compatibility
+				if($is===null){
+					$is=true;
+					self::preloadCssJs();
 				}
-			} elseif(
-				themify_is_mega_menu_type( $item->$id_field, 'column' )
-				|| in_array( 'columns', $item->classes,true ) // backwards compatibility
-			) {
 				$item->classes[] = 'has-mega-column';
+				$item->classes[] = 'has-mega';
 				if( $column_layout = get_post_meta( $item->ID, '_themify_mega_menu_columns_layout', true ) ) {
 					$item->classes[] = 'layout-' . $column_layout;
 				} else {
 					$item->classes[] = 'layout-auto';
 				}
-				if ( ! empty( $children_elements[ $item->$id_field ] ) ) {
+				self::$hasLayout='layout';
+				$cl='columns-sub-item';
+			}
+            elseif(($dropdown_columns = get_post_meta( $item->$id_field, '_themify_dropdown_columns', true ))){
+                if($dropdown_columns>1){
+                    $item->classes[] = 'has-mega-dropdown dropdown-columns-' . $dropdown_columns;
+                    if($is===null){
+                        $is=true;
+                        self::preloadCssJs();
+                    }
+                }
+            }
+			elseif(in_array( 'columns-sub-item', $item->classes,true ) ) {
+					$cl='columns-sub-item';
+			}
+			if ( ! empty( $children_elements[ $item->$id_field ] ) ) {
+				$item->classes[] = 'has-sub-menu';
+			
+				if ($cl!==false ) {
 					foreach( $children_elements[ $item->$id_field ] as $child ) {
-						$child->classes[] = 'columns-sub-item';
-					}
-				}
-			} elseif( in_array( 'columns-sub-item', $item->classes,true ) ) {
-				if ( ! empty( $children_elements[ $item->$id_field ] ) ) {
-					foreach( $children_elements[ $item->$id_field ] as $child ) {
-						$child->classes[] = 'columns-sub-item';
+						$child->classes[] =$cl;
 					}
 				}
 			}
 
 			Walker_Nav_Menu::display_element( $item, $children_elements, $max_depth, $depth, $args, $output );
+		}
+		
+		public static function preloadCssJs(){
+			static $done=null;
+			if($done===null){
+				$done=true;
+				if(self::$disableAssetsLoading===false){
+					themify_enque_style('tf_megamenu',THEMIFY_URI . '/megamenu/css/megamenu.css',null,THEMIFY_VERSION);
+					Themify_Enqueue_Assets::addPrefetchJs(THEMIFY_URI . '/megamenu/js/themify.mega-menu.js',THEMIFY_VERSION);
+					Themify_Enqueue_Assets::addLocalization('done','tf_megamenu',true);
+				}
+				else{
+					Themify_Enqueue_Assets::addLocalization('disableMega',true);
+				}
+			}
 		}
 	}
 }
@@ -206,9 +254,16 @@ if( ! function_exists('themify_theme_mega_get_posts') ) {
 		if ( is_wp_error( $taxObject ) || empty( $taxObject ) ) {
 			return '';
 		}
-		$mega_posts = '<article itemscope itemtype="https://schema.org/Article" class="post"><p class="post-title">'.__('Error loading posts.', 'themify').'</p></article>';
 
-		$postPerPage = themify_get( 'setting-mega_menu_posts', 5 );
+		if ( false === themify_check( 'setting-cache-menu', true ) ) {
+			$cache_key = "_transient_tf_menu_posts_{$taxonomy}_{$term_id}";
+			$mega_posts = get_transient( $cache_key );
+			if ( false !== $mega_posts ) {
+				return $mega_posts;
+			}
+		}
+
+		$postPerPage = themify_get( 'setting-mega_menu_posts', 5, true );
 		$term_query_args = apply_filters( 'themify_mega_menu_query',
 			array(
 				'post_type' => $taxObject->object_type,
@@ -226,7 +281,7 @@ if( ! function_exists('themify_theme_mega_get_posts') ) {
 		
 		$posts = get_posts( $term_query_args );
 
-		if( $posts ) {
+		if ( $posts ) {
 			global $post;
 			ob_start();
 			foreach( $posts as $post ) {
@@ -242,8 +297,15 @@ if( ! function_exists('themify_theme_mega_get_posts') ) {
 			}
 			$mega_posts = ob_get_clean();
 			wp_reset_postdata();
+		} else {
+			$mega_posts = '<article itemscope itemtype="https://schema.org/Article" class="post"><p class="post-title">'.__('Error loading posts.', 'themify').'</p></article>';
 		}
-		return apply_filters('themify_mega_posts_output',$mega_posts,$term_id,$taxonomy);
+
+		if ( isset( $cache_key ) ) {
+			set_transient( $cache_key, $mega_posts, HOUR_IN_SECONDS * 6 );
+		}
+
+		return apply_filters( 'themify_mega_posts_output', $mega_posts, $term_id, $taxonomy );
 	}
 }
 
@@ -269,10 +331,7 @@ if ( ! function_exists( 'themify_theme_maybe_do_mega_menu' ) ) {
 	 * @since 1.0.0
 	 */
 	function themify_theme_maybe_do_mega_menu() {
-		if ( 'no' !== themify_get( 'setting-mega_menu' ) && ! themify_is_touch( 'phone' ) ) {
-			return true;
-		}
-		return false;
+	    return ('no' !== themify_get( 'setting-mega_menu',false,true ) && ! themify_is_touch( 'phone' ));
 	}
 }
 
@@ -310,27 +369,14 @@ if ( ! function_exists( 'themify_theme_main_menu' ) ) {
  * @since 1.0.0
  */
 function themify_is_mega_menu_type( $item_id, $type = 'mega' ) {
-	switch ( $type ) {
-		case 'mega':
-			if ( get_post_meta( $item_id, '_themify_mega_menu_item', true ) == '1' ) {
-				return true;
-			}
-			break;
-		case 'column':
-			if ( get_post_meta( $item_id, '_themify_mega_menu_column', true ) == '1' ) {
-				return true;
-			}
-			break;
-		case 'dual':
-			return get_post_meta( $item_id, '_themify_mega_menu_dual', true );
-			break;
+	if($type==='mega' || $type==='column' || $type==='dual'){
+		$key=$type==='mega'?'item':$type;
+		return get_post_meta( $item_id, '_themify_mega_menu_'.$key, true ) == '1';
 	}
-	return false;
 }
 
 function themify_is_menu_highlighted_link( $item_id ) {
-			$highlight = get_post_meta( $item_id, '_themify_highlight_link', false );
-	return $highlight;
+		return get_post_meta( $item_id, '_themify_highlight_link', true );
 }
 
 /**
@@ -341,8 +387,8 @@ function themify_is_menu_highlighted_link( $item_id ) {
 function themify_menu_mega_option( $item_id, $item, $depth, $args ) {
 		$dropdown_columns = (int) get_post_meta( $item_id, '_themify_dropdown_columns', true );
 		$is_mega = themify_is_mega_menu_type( $item_id, 'mega' );
-		$is_column = themify_is_mega_menu_type( $item_id, 'column' );
-		$is_dropdown_column = ! empty( $dropdown_columns );
+		$is_column = !$is_mega && themify_is_mega_menu_type( $item_id, 'column' );
+		$is_dropdown_column = !$is_column && ! empty( $dropdown_columns );
 		$column_layout = get_post_meta( $item_id, '_themify_mega_menu_columns_layout', true );
 		?>
 		<div class="field-tf-mega description description-thin">
@@ -568,13 +614,13 @@ class Themify_Widgets_Menu {
 		themify_enque_style( 'themify-widgets-menu-admin', THEMIFY_URI . '/megamenu/css/megamenu-admin.css',null,THEMIFY_VERSION );
 
 		do_action( 'themify_widgets_menu_enqueue_admin_scripts' );
-		remove_action( 'admin_enqueue_scripts', array( &$this, 'nav_menu_script' ), 12 );
+		remove_action( 'admin_enqueue_scripts', array( $this, 'nav_menu_script' ), 12 );
 
 		/* fire enqueue events for Widgets Manager in Menus screen */
 		do_action( 'sidebar_admin_setup' );
 		do_action( 'admin_enqueue_scripts', 'widgets.php' );
-		do_action( "admin_print_styles-widgets.php" );
-		do_action( "admin_print_scripts-widgets.php" );
+		do_action( 'admin_print_styles-widgets.php' );
+		do_action( 'admin_print_scripts-widgets.php' );
 	}
 
 	function admin_footer() {
@@ -679,16 +725,6 @@ class Themify_Widgets_Menu {
 }
 Themify_Widgets_Menu::get_instance();
 
-/**
- * Add data for minification tool in TF framework
- *
- * @return array
- */
-function themify_megamenu_minify_vars( $vars ) {
-    $vars['minify']['js']['themify.mega-menu'] = themify_enque( THEMIFY_URI . '/megamenu/js/themify.mega-menu.js', true );
-	return $vars;
-}
-add_filter( 'themify_main_script_vars', 'themify_megamenu_minify_vars', 10, 1 );
 
 /**
  * Allow Layout Part post type in navigation menus

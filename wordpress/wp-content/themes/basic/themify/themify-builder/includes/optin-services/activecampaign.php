@@ -1,5 +1,7 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
 class Builder_Optin_Service_ActiveCampaign extends Builder_Optin_Service {
 
 	function get_id() {
@@ -45,8 +47,7 @@ class Builder_Optin_Service_ActiveCampaign extends Builder_Optin_Service {
 			array(
 				'id' => 'activecampaign_key',
 				'type' => 'text',
-				'label' => __( 'ActiveCampaign API Key', 'themify' ),
-				'description' => __( 'To get your API credentials go to your ActiveCampaign dashboard, you can find both API URL and Key in Settings > Developer section.', 'themify' ),
+				'label' => __( 'ActiveCampaign API Key'.themify_help(__( 'To get your API credentials go to your ActiveCampaign dashboard, you can find both API URL and Key in Settings > Developer section.')), 'themify' ),
 			),
 		);
 	}

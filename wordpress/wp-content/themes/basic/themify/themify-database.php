@@ -11,8 +11,6 @@
  *
  ***************************************************************************/
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
-
 /* 	Database Functions
 /***************************************************************************/
 
@@ -44,14 +42,14 @@ function themify_set_data( $data ) {
  * @return array|String
  */
 function themify_get_data($reinit=false) {
-    static $themify_data=null;
-    if ($themify_data===null || $reinit!==false) {
-        $themify_data = themify_sanitize_data(get_option( 'themify_data', array() ));
-        if(!$reinit){
-            $themify_data = apply_filters( 'themify_get_data', $themify_data );
+    static $data=null;
+    if ($data===null || $reinit!==false) {
+        $data = themify_sanitize_data(get_option( 'themify_data', array() ));
+        if($reinit===false){
+            $data = apply_filters( 'themify_get_data', $data );
         }
     }
-    return $themify_data;
+    return $data;
 }
 
 /**
@@ -60,7 +58,7 @@ function themify_get_data($reinit=false) {
  * @return array
  */
 function themify_sanitize_data( $data ) {
-	if ( is_array( $data ) && count( $data ) >= 1 ) {
+	if ( is_array( $data ) && !empty( $data )) {
 		foreach( $data as $name => $value ){
 			if ( in_array( $name, array( 'setting-custom_css', 'setting-header_html', 'setting-footer_html', 'setting-footer_text_left', 'setting-footer_text_right', 'setting-homepage_welcome', 'setting-store_info_address' ),true )
 				|| ( false !== stripos( $name, 'setting-hooks' ) )

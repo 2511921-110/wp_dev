@@ -1,6 +1,6 @@
 <?php
-if ( !defined( 'ABSPATH' ) )
-	exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Module Name: Sign Up Form
@@ -11,15 +11,28 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 
 	function __construct() {
 		parent::__construct( array(
-			'name' => __( 'Sign Up Form', 'themify' ),
-			'slug' => 'signup-form'
+		    'name' => __( 'Sign Up Form', 'themify' ),
+		    'slug' => 'signup-form'
 		) );
 
 		// Sign Up module action for processing sign up form
 		add_action( 'wp_ajax_tb_signup_process', array( __CLASS__, 'signup_process' ) );
 		add_action( 'wp_ajax_nopriv_tb_signup_process', array( __CLASS__, 'signup_process' ) );
 	}
-
+	
+	public function get_icon(){
+	    return 'pencil-alt';
+	}
+	
+	public function get_assets() {
+		$_arr= array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+		if(!Themify_Builder_Model::is_front_builder_activate()){
+		    $_arr['js']=themify_enque(THEMIFY_BUILDER_JS_MODULES.$this->slug.'.js');
+		}
+		return $_arr;
+	}
 	/**
 	 * Actions to perform when sign up via Sign Up module is sent
 	 *
@@ -45,21 +58,22 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 		if ( empty( $params['usr'] ) ) {
 			$errs[] = __( 'Please enter a username', 'themify' );
 		}
-		if ( username_exists( $params['usr'] ) ) {
-			$errs[] = __( 'Username already taken', 'themify' );
-		}
-		if ( !validate_username( $params['usr'] ) ) {
+		elseif ( !validate_username( $params['usr'] ) ) {
 			$errs[] = __( 'Invalid username', 'themify' );
 		}
-		if ( !is_email( $params['email']) ) {
+		elseif ( username_exists( $params['usr'] ) ) {
+			$errs[] = __( 'Username already taken', 'themify' );
+		}
+		if (empty($params['email']) || !is_email( $params['email']) ) {
 			$errs[] = __( 'Invalid email', 'themify' );
 		}
-		if ( email_exists( $params['email'] ) ) {
+		elseif ( email_exists( $params['email'] ) ) {
 			$errs[] = __( 'Email already registered', 'themify' );
 		}
 		if ( empty( $params['pwd'] ) ) {
 			$errs[] = __( 'Please enter a password', 'themify' );
 		}
+
 
 		if ( empty( $errs ) ) {
 			$new_user_id = wp_insert_user( array(
@@ -68,7 +82,7 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 					'user_email' => $params['email'],
 					'first_name' => $params['first_n'],
 					'last_name' => $params['last_n'],
-					'description' => $params['bio'],
+					'description' => isset( $params['bio'] ) ? $params['bio'] : '',
 					'user_registered' => date( 'Y-m-d H:i:s' ),
 					'role' => $role
 				)
@@ -77,9 +91,10 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 
 				// newsletter subscription
 				if ( isset( $params['optin'] ) && $params['optin'] == '1' ) {
-					if ( ! class_exists( 'Builder_Optin_Services_Container' ) )
+					if ( ! class_exists( 'Builder_Optin_Service' ) ){
 						include_once( THEMIFY_BUILDER_INCLUDES_DIR. '/optin-services/base.php' );
-					$optin_instance = Builder_Optin_Services_Container::get_instance()->get_provider( $params['optin-provider'] );
+					}
+					$optin_instance = Builder_Optin_Service::get_providers( $params['optin-provider'] );
 					if ( $optin_instance ) {
 						// collect the data for optin service
 						$data = array(
@@ -155,8 +170,8 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 				),
 				'class' => 'large',
 				'binding' => array(
-					'c' => array( 'show' => array( 'redirect_to' ), 'hide' => array( 'msg_success' ) ),
-					'm' => array( 'hide' => array( 'redirect_to' ), 'show' => array( 'msg_success' ) ),
+					'c' => array( 'show' => 'redirect_to', 'hide' => 'msg_success'),
+					'm' => array( 'hide' =>  'redirect_to', 'show' => 'msg_success'),
 				)
 			),
 			array(
@@ -231,8 +246,8 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 				'type' => 'toggle_switch',
 				'label' => __( 'Newsletter Optin', 'themify' ),
 				'options' => array(
-					'on' => array( 'name' => 'yes', 'value' => __( 'Enabled', 'themify' ) ),
-					'off' => array( 'name' => 'no', 'value' => __( 'Disabled', 'themify' ) ),
+					'on' => array( 'name' => 'yes', 'value' =>'en' ),
+					'off' => array( 'name' => 'no', 'value' =>'dis'),
 				),
 				'binding' => array(
 					'yes' => array( 'show' => array( 'optin_label', 'provider' ) ),
@@ -257,8 +272,8 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 					'off' => array( 'name' => '', 'value' => 'dis' )
 				),
 				'binding' => array(
-					'checked' => array( 'show' => array( 'gdpr_label' ) ),
-					'not_checked' => array( 'hide' => array( 'gdpr_label' ) ),
+					'checked' => array( 'show' => 'gdpr_label'),
+					'not_checked' => array( 'hide' =>  'gdpr_label' )
 				)
 			),
 			array(
@@ -304,7 +319,7 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 		);
 	}
 
-	public function get_default_settings() {
+	public function get_live_default() {
 		return array(
 			'success_action' => 'c',
 			'l_name' => __( 'Name', 'themify' ),
@@ -432,6 +447,21 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 					) )
 				)
 			),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 			// Height & Min Height
 			self::get_expand( 'ht', array(
 					self::get_height(),
@@ -471,6 +501,8 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 					) )
 				)
 			),
+			// Display
+			self::get_expand('disp', self::get_display())
 		);
 
 		$labels = array(
@@ -614,6 +646,100 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 					)
 				) )
 			) )
+		);
+		
+		$checkbox = array(
+		    self::get_expand('bg', array(
+			   self::get_tab(array(
+				   'n' => array(
+				   'options' => array(
+						self::get_color(' input[type="checkbox"]', 'b_c_cb', 'bg_c', 'background-color'),
+						self::get_color(' input[type="checkbox"]', 'f_c_cb'),
+				   )
+				   ),
+				   'h' => array(
+				   'options' => array(
+						self::get_color(' input[type="checkbox"]', 'b_c_cb', 'bg_c', 'background-color','h'),
+						self::get_color(' input[type="submit"]', 'f_c_cb',null,null,'h'),
+				   )
+				   )
+			   ))
+		    )),
+		    // Border
+		    self::get_expand('b', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_border(' input[type="checkbox"]','b_cb')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_border(' input[type="checkbox"]','b_cb','h')
+					)
+					)
+				))
+		    )),
+			// Padding
+			self::get_expand('p', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_padding(' input[type="checkbox"]', 'p_cb')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_padding(' input[type="checkbox"]', 'p_cb', 'h')
+					)
+					)
+				))
+			)),
+			// Margin
+			self::get_expand('m', array(
+				self::get_tab(array(
+					'n' => array(
+					'options' => array(
+						self::get_margin(' #commentform input[type="checkbox"]', 'm_cb')
+					)
+					),
+					'h' => array(
+					'options' => array(
+						self::get_margin(' #commentform input[type="checkbox"]', 'm_cb', 'h')
+					)
+					)
+				))
+			)),
+			// Rounded Corners
+			self::get_expand('r_c', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_border_radius(' input[type="checkbox"]', 'r_c_cb')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_border_radius(' input[type="checkbox"]', 'r_c_cb', 'h')
+						)
+					)
+				))
+			)),
+			// Shadow
+			self::get_expand('sh', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_box_shadow(' input[type="checkbox"]', 's_cb')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_box_shadow(' input[type="checkbox"]', 's_cb', 'h')
+						)
+					)
+				))
+			))
 		);
 
 		$send_button = array(
@@ -931,6 +1057,10 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
 						'label' => __( 'Input Fields', 'themify' ),
 						'options' => $inputs
 					),
+					'cb' => array(
+						'label' => __( 'Checkbox', 'themify' ),
+						'options' => $checkbox
+					),
 					'send_button' => array(
 						'label' => __( 'Submit Button', 'themify' ),
 						'options' => $send_button
@@ -959,14 +1089,14 @@ class TB_Signup_Form_Module extends Themify_Builder_Component_Module
                     <label>
                         <span class="tb_signup_label">{{{ data.l_name }}}</span>
                     </label>
-                    <div class="row_inner">
-                        <div class="col2-1 first">
+                    <div class="tf_box tf_w row_inner tf_clearfix">
+                        <div class="module_column col2-1 first">
                             <label>
                                 <input type="text" name="first_n"/>
                                 <span>{{{ data.l_firstname }}}</span>
                             </label>
                         </div>
-                        <div class="col2-1 last">
+                        <div class="module_column col2-1 last">
                             <label>
                                 <input type="text" name="last_n"/>
                                 <span>{{{ data.l_lastname }}}</span>

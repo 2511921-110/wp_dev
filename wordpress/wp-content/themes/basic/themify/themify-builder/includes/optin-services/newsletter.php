@@ -1,5 +1,11 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Newsletter plugin
+ * @link https://wordpress.org/plugins/newsletter/
+ */
 class Builder_Optin_Service_Newsletter extends Builder_Optin_Service {
 
 	function is_available() {
@@ -11,7 +17,7 @@ class Builder_Optin_Service_Newsletter extends Builder_Optin_Service {
 	}
 
 	function get_label() {
-		return __( 'Newsletter', 'themify' );
+		return __( 'Newsletter plugin', 'themify' );
 	}
 
 	function get_options() {
@@ -63,63 +69,27 @@ class Builder_Optin_Service_Newsletter extends Builder_Optin_Service {
 	 * @return bool|WP_Error
 	 */
 	function check_user_data( $fields_args ) {
-		if ( $this->is_available() ) {
-			return true;
-		} else {
-			return new WP_Error( 'missing_plugin', __( 'Newsletter plugin is missing or is not active.', 'themify' ) );
-		}
+		return $this->is_available()?true:new WP_Error( 'missing_plugin', __( 'Newsletter plugin is missing or is not active.', 'themify' ) );
 	}
 
 	/**
 	 * Subscribe action
+	 *
+	 * Based on NewsletterSubscription::hook_newsletter_action() method
 	 */
 	function subscribe( $args ) {
 		$instance = NewsletterSubscription::instance();
 
-		$ip = $instance->get_remote_ip();
-		$email = $instance->normalize_email( $args['email'] );
-		$first_name = $instance->normalize_name( $args['fname'] );
-		$last_name = $instance->normalize_name( $args['lname'] );
-		$full_name = sprintf( '%s %s', $first_name, $last_name );
-
-		// validation, based on NewsletterSubscription::hook_wp_loaded()
-		if ( $instance->is_missing_domain_mx( $email ) ) {
-			return new WP_Error( 'error', $email . ' - ' . $ip . ' - MX check failed' );
-		}
-		if ( $instance->is_ip_blacklisted( $ip ) ) {
-			return new WP_Error( 'error', $email . ' - ' . $ip . ' - IP blacklisted' );
-		}
-		if ( $instance->is_address_blacklisted( $email ) ) {
-			return new WP_Error( 'error', $email . ' - ' . $ip . ' - Address blacklisted' );
-		}
-		if ( $instance->is_spam_by_akismet( $email, $full_name, $ip, $_SERVER['HTTP_USER_AGENT'], $_SERVER['HTTP_REFERER'] ) ) {
-			return new WP_Error( 'error', $email . ' - ' . $ip . ' - Akismet blocked' );
-		}
-		if ( $instance->is_flood( $email, $ip ) ) {
-			return new WP_Error( 'error', $email . ' - ' . $ip . ' - Antiflood triggered' );
-		}
-
-		// hijack $_REQUEST, this is required for $instance->subscribe() method
-		$_REQUEST = array(
-			'ne' => $email,
-			'nn' => $full_name,
-			'nhr' => '',
-		);
+		$subscription = $instance->get_default_subscription();
+        $data = $subscription->data;
+		$data->email = $instance->normalize_email( $args['email'] );
+		$data->name = $instance->normalize_name( $args['fname'] );
+		$data->surname = $instance->normalize_name( $args['lname'] );
 		if ( isset( $args['newsletter_list'] ) ) {
-			$_REQUEST['nl'] = array( (int) $args['newsletter_list'] );
+			$data->lists[ $args['newsletter_list'] ] = 1;
 		}
-		$user = $instance->subscribe();
 
-		if ( $user->status == 'E' )
-			return new WP_Error( 'error', __( 'Error', 'themify' ) );
-		if ( $user->status == 'C' )
-			// confirmed
-			return true;
-		if ( $user->status == 'A' )
-			// already_confirmed
-			return true;
-		if ( $user->status == 'S' )
-			// confirmation
-			return true;
+		$result = $instance->subscribe2( $subscription );
+		return is_wp_error( $result )?$result:true;
 	}
 }

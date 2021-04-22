@@ -1,5 +1,4 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 
@@ -78,18 +77,24 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 			?>
             <div class="wrap">
                 <h2><?php _e('Themify Builder', 'themify') ?></h2>
+
                 <form method="post" action="options.php">
                     <div class="icon32" id="icon-options-general"><br /></div><h2 class="nav-tab-wrapper themify-nav-tab-wrapper">
                         <input type="hidden" name="<?php echo esc_attr( $this->option_name ); ?>[tabs_active]" value="<?php echo esc_attr( $this->current_tab ); ?>">
 						<?php
 						$tabs = array(
 							'builder' => __( 'Settings', 'themify' ),
+							'performance' => __( 'Performance', 'themify' ),
 							'role_access' => __( 'Role Access', 'themify' ),
 							'image_setting' => __( 'Image Script', 'themify' ),
 							'custom_css' => __('Custom CSS', 'themify'),
-							'builder_settings'=>__('Integration API','themify'),
-							'tools'=>__('Tools','themify')
+							'builder_settings'=>__('Integration API','themify')
 						);
+						if ( Themify_Builder_Model::builder_check() ) {
+							$tabs += array(
+								'tools'=>__('Tools','themify')
+							);
+						}
 						$tabs = apply_filters('themify_builder_settings_tab_array', $tabs);
 
 						foreach ( $tabs as $name => $label ) {
@@ -140,12 +145,142 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 			<?php
 		}
 
+		function lazy_load() {
+			$name = $this->current_tab . '-disable-lazy';
+			$field_name = $this->option_name . '['.$name.']';
+			$checked = isset($this->option_value[$name]) ? $this->option_value[$name] : '';
+			echo '<input id="themify_setting-disable-lazy" type="checkbox" name="'.$field_name.'" class="" value="1" '.checked( $checked, 1, false ).'/>',
+				'<label for="themify_setting-disable-lazy">&nbsp; '.__('Disable Lazy Load',
+					'themify').'</label>';
+
+			echo '<br>';
+
+			$name = $this->current_tab . '-disable-lazy-native';
+			$field_name = $this->option_name . '['.$name.']';
+			$checked = isset($this->option_value[$name]) ? $this->option_value[$name] : '';
+			echo '<input id="themify_setting-disable-lazy-native" type="checkbox" name="'.$field_name.'" class="" value="1" '.checked( $checked, 1, false ).'/>',
+				'<label for="themify_setting-disable-lazy-native">&nbsp; '.__('Use native lazy load',
+					'themify').'</label>';
+		}
+
+		function minify() {
+			$name = $this->current_tab . '-script_minification-min';
+			$field_name = $this->option_name . '['.$name.']';
+			$checked = isset($this->option_value[$name]) ? $this->option_value[$name] : '';
+			echo '<input id="themify_setting-script_minification-min" type="checkbox" name="'.$field_name.'" class="" value="1" '.checked( $checked, 1, false ).'/>',
+				'<label for="themify_setting-script_minification-min">&nbsp; '.__('Disable minified scripts (css/js files)',
+					'themify').'</label>';
+		}
+
+		function gzip() {
+			$htaccess_file = Themify_Enqueue_Assets::getHtaccessFile();
+			$disabled = ' disabled';
+			if ( Themify_Filesystem::is_file( $htaccess_file ) && Themify_Filesystem::is_writable( $htaccess_file ) ) {
+				$disabled = '';
+			}
+			$name = $this->current_tab . '-cache_gzip';
+			$field_name = $this->option_name . '['.$name.']';
+			$checked = isset($this->option_value[$name]) ? $this->option_value[$name] : '';
+			echo '<input id="themify_setting-cache_gzip" type="checkbox" name="'.$field_name.'" class="" value="1" '.checked( $checked, 1, false ) . $disabled .' />',
+				'<label for="themify_setting-cache_gzip">&nbsp; '.__('Enable Gzip scripts (recommended)',
+					'themify').'</label>';
+			if ( empty( $disabled ) ) {
+				echo '<p class="description">' . sprintf( __( 'Enabling Gzip will add code to your .htaccess file (%s)', 'themify' ), $htaccess_file ) . '</p>';
+			} else {
+				echo '<p class="description">' . __( 'The htaccess file %s isn`t writable. Please allow to write to enable this feauture','themify' ) . '</p>';
+			}
+		}
+
+		function jquery_migrate() {
+			$name = $this->current_tab . '-jquery_migrate';
+			$field_name = $this->option_name . '['.$name.']';
+			$checked = isset($this->option_value[$name]) ? $this->option_value[$name] : '';
+			echo '<input id="themify_setting-jquery_migrate" type="checkbox" name="'.$field_name.'" class="" value="1" '.checked( $checked, 1, false ) . ' />',
+				'<label for="themify_setting-jquery_migrate">&nbsp; '.__('Enable jQuery Migrate script',
+					'themify').'</label>';
+			echo '<p class="description">' . __( 'Enable this option if you have plugins that use deprecated jQuery versions.','themify' ) . '</p>';
+		}
+
+		function webp() {
+			$disabled = '';
+			if ( ! class_exists( 'Imagick' ) && ! function_exists( 'imagewebp' ) ) {
+				$disabled = ' disabled';
+			}
+			$name = $this->current_tab . '-webp';
+			$field_name = $this->option_name . '['.$name.']';
+			$checked = isset($this->option_value[$name]) ? $this->option_value[$name] : '';
+			echo '<input id="themify_setting-webp" type="checkbox" name="'.$field_name.'" class="" value="1" '.checked( $checked, 1, false ) .  $disabled . ' />',
+				'<label for="themify_setting-webp">&nbsp; '.__('Enable WebP image (recommended)',
+					'themify').'</label>';
+			echo '<br>';
+			if ( ! empty( $disabled ) ) {
+				echo '<p class="description">' . __( 'The GD library and Imagick extensions are not installed. Ask your host provider to enable them to use this feature.', 'themify' ) . '</p>';
+			}
+			echo '<a href="#" data-action="themify_clear_all_webp" data-clearing-text="'.__('Clearing...','themify').'" data-done-text="'.__('Done','themify').'" data-default-text="'.__('Clear WebP Images','themify').'" data-default-icon="ti-eraser" class="button button-outline js-clear-cache"><i class="ti-eraser"></i> <span>'.__('Clear WebP Images','themify').'</span></a>';
+		}
+
+		function concate() {
+			echo '<a href="#" data-action="themify_clear_all_concate" data-clearing-text="'.__('Clearing...','themify').'" data-done-text="'.__('Done','themify').'" data-default-text="'.__('Clear Concate CSS Cache','themify').'" data-default-icon="ti-eraser" class="button button-outline js-clear-cache"><i class="ti-eraser"></i> <span>'.__('Clear Concate CSS Cache','themify').'</span></a>';
+		}
+
 		public function page_init() {
 			register_setting( 'themify_builder_option_group', $this->option_name, array( $this, 'before_save' ) );
 			$current_tab = ( empty( $_GET['tab'] ) ) ? 'builder' : sanitize_text_field( urldecode( $_GET['tab'] ) );
 			$this->current_tab = $current_tab;
 
 			switch ( $current_tab ) {
+				case 'performance':
+					add_settings_section(
+						'setting_builder_performance',
+						__( '', 'themify' ),
+						'',
+						self::$slug
+					);
+					add_settings_field(
+						'lazy_load',
+						__('Disable Lazy Load', 'themify'),
+						array( $this, 'lazy_load' ),
+						self::$slug,
+						'setting_builder_performance'
+					);
+					add_settings_field(
+						'minifiy',
+						__('Minified Scripts', 'themify'),
+						array( $this, 'minify' ),
+						self::$slug,
+						'setting_builder_performance'
+					);
+					add_settings_field(
+						'gzip',
+						__('Gzip Scripts', 'themify'),
+						array( $this, 'gzip' ),
+						self::$slug,
+						'setting_builder_performance'
+					);
+					add_settings_field(
+						'jquery-migrate',
+						__('Enable jQuery Migrate', 'themify'),
+						array( $this, 'jquery_migrate' ),
+						self::$slug,
+						'setting_builder_performance'
+					);
+					add_settings_field(
+						'webp',
+						__('WebP Images', 'themify'),
+						array( $this, 'webp' ),
+						self::$slug,
+						'setting_builder_performance'
+					);
+					add_settings_field(
+						'concate',
+						__('Concate CSS', 'themify'),
+						array( $this, 'concate' ),
+						self::$slug,
+						'setting_builder_performance'
+					);
+
+					break;
+
 				case 'image_setting':
 					// image script settings
 					add_settings_section(
@@ -242,6 +377,13 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 						self::$slug,
 						'setting_builder_settings_section'
 					);
+                    add_settings_field(
+                        'cloudflare',
+                        __('Cloudflare API','themify'),
+                        array( $this, 'cloudflare_field' ),
+                        self::$slug,
+                        'setting_builder_settings_section'
+                    );
 					if ( Themify_Builder_Model::check_module_active( 'optin' ) ) {
 						add_settings_field(
 							'optin',
@@ -299,30 +441,7 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 
 					if ( Themify_Builder_Model::builder_check() ) {
 
-						add_settings_field(
-							'builder_cache',
-							__( 'Builder Cache', 'themify' ),
-							array( $this, 'builder_disable_cache' ),
-							self::$slug,
-							'setting_builder_section'
-						);
 
-						if ( TFCache::check_version()) {
-							add_settings_field(
-								'builder_clear_cache',
-								null,
-								array( $this, 'builder_clear_cache' ),
-								self::$slug,
-								'setting_builder_section'
-							);
-						}
-						add_settings_field(
-							'builder_minify',
-							__( 'Minified Scripts', 'themify' ),
-							array( $this, 'builder_minify' ),
-							self::$slug,
-							'setting_builder_section'
-						);
 						add_settings_field(
 							'builder_shortcuts',
 							__( 'Keyboard Shortcuts', 'themify' ),
@@ -396,13 +515,24 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 			}
 		}
 
-		function before_save($input) {
+		function before_save( $input ) {
 			$active_tabs = $input['tabs_active'];
 			$exist_data = get_option( $this->option_name );
 			$exist_data = is_array($exist_data) ? $exist_data : array();
 
+			Themify_Enqueue_Assets::rewrite_htaccess( empty( $input['performance-cache_gzip'] ), empty( $input['performance-webp'] ) );
+			foreach ( array( 'tablet_landscape', 'tablet', 'mobile' ) as $breakpoint ) {
+				if ( isset( $input["builder_responsive_design_{$breakpoint}"], $exist_data["builder_responsive_design_{$breakpoint}"] ) && $input["builder_responsive_design_{$breakpoint}"] !== $exist_data["builder_responsive_design_{$breakpoint}"] ) {
+					Themify_Builder_Stylesheet::regenerate_css_files();
+					break;
+				}
+			}
+
 			foreach($exist_data as $k => $v) {
 				if ( strpos( $k, $active_tabs ) !== false ) {
+					if($active_tabs==='builder' && strpos( $k, 'builder_settings' ) !== false){
+						continue;
+					}
 					unset($exist_data[$k]);
 				}
 			}
@@ -454,78 +584,6 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
                 </p>
 			<?php
 			endforeach;
-		}
-
-		/**
-		 * Disable builder cache field.
-		 *
-		 * @since 1.5.4
-		 * @access public
-		 */
-		public function builder_disable_cache() {
-			if(TFCache::check_version()){
-				$pre = $this->current_tab . '_';
-				$disable_cache_status = isset( $this->option_value[$pre.'disable_cache'] ) ? $this->option_value[$pre.'disable_cache'] : '';
-				$out = sprintf( '<p><label for="%s"><input type="radio" id="%s" class="builder-disable-cache" name="%s" value="%s" %s> %s %s</label><br/><label for="%s"><input type="radio" id="%s" class="builder-disable-cache" name="%s" value="%s" %s> %s %s</label></p>',
-					$pre . 'disable_cache' ,
-					$pre . 'disable_cache' ,
-					$this->option_name . '[' . $pre . 'disable_cache' . ']' ,
-					'disable' ,
-					checked( 'disable', $disable_cache_status, false ) . checked( 'on', $disable_cache_status, false ) . checked( '', $disable_cache_status, false ),
-					'Disable' ,
-					wp_kses_post( __('(disable it if you experience Builder issues and conflicts)', 'themify') ),
-					$pre . 'enable_cache' ,
-					$pre . 'enable_cache',
-					$this->option_name . '[' . $pre . 'disable_cache' . ']' ,
-					'enable' ,
-					checked( 'enable', $disable_cache_status, false ),
-					'Enable',
-					wp_kses_post( __('(enable it for faster page load)', 'themify') )
-				);
-				echo $out;
-			}
-			else{
-				_e('Your server does not support Builder cache, thus it is disabled. It requires PHP 5.4+','themify');
-			}
-		}
-
-		/**
-		 * Clear builder cache.
-		 *
-		 * @since 1.5.4
-		 * @access public
-		 */
-		public function builder_clear_cache() {
-			$pre = $this->current_tab . '_';
-			$out='<div style="display: none" data-show-if-element=".builder-disable-cache:checked" data-show-if-value="enable" data-sync-row-el="th">';
-			$expire =  isset( $this->option_value[$pre.'cache_expiry'] )?$this->option_value[$pre.'cache_expiry']:'';
-			$expire = $expire>0?(int)$expire:2;
-			$out.=sprintf('<input type="text" class="width2" value="%s" name="%s" />  &nbsp;&nbsp;<span>%s</span>',
-				$expire,
-				$this->option_name . '[' . $pre . 'cache_expiry' . ']' ,
-				__( 'Expire Cache (days)', 'themify' )
-			);
-			$out.='<br/><br/>';
-			$out.= sprintf( '<a href="#" data-action="themify_clear_all_caches" data-confim="'.__( 'This will clear all builder caches. click ok to continue.', 'themify' ).'" data-clearing-text="%s" data-done-text="%s" data-default-text="%s" data-default-icon="ti-eraser" class="button button-secondary js-clear-builder-cache"> <i class="ti-eraser"></i> <span>%s</span></a>',
-				esc_html__( 'Clearing cache...', 'themify' ),
-				esc_html__( 'Done', 'themify' ),
-				esc_html__( 'Clear cache', 'themify' ),
-				esc_html__( 'Clear cache', 'themify' )
-			);
-			$out.='</div>';
-			echo $out;
-		}
-
-		public function builder_minify(){
-			$pre = $this->current_tab . '_';
-			$out = sprintf( '<p><label for="%s"><input type="checkbox" id="%s" name="%s"%s> %s</label></p>',
-				$pre . 'minified',
-				$pre . 'minified',
-				$this->option_name . '[' . $pre . 'minified' . ']' ,
-				checked( true, isset( $this->option_value[$pre.'minified'] ), false ),
-				wp_kses_post( __( 'Disable minified scripts (css/js files)', 'themify') )
-			);
-			echo $out;
 		}
 
 		/**
@@ -641,7 +699,7 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 			$bp_tablet = ! empty( $this->option_value[ $pre . 'tablet'] ) ? $this->option_value[ $pre . 'tablet'] : $break_points['tablet'][1];
 			$bp_mobile = ! empty( $this->option_value[ $pre . 'mobile'] )  ? $this->option_value[ $pre . 'mobile'] : $break_points['mobile'];
 
-			$out = sprintf( '<div class="themify-ui-slider clearfix"><div class="themify-slider-label label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" class="width4" readonly> px</div></div>',
+			$out = sprintf( '<div class="themify-ui-slider tf_clearfix"><div class="themify-slider-label label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" class="width4"> px</div></div>',
 				esc_html__( 'Tablet Landscape', 'themify' ),
 				$this->option_name . '[' . $pre . 'tablet_landscape' . ']',
 				$bp_tablet_landscape,
@@ -649,7 +707,7 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 				$break_points['tablet_landscape'][1],
 				$bp_tablet_landscape
 			);
-			$out .= sprintf( '<div class="themify-ui-slider clearfix"><div class="themify-slider-label label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" class="width4" readonly> px</div></div>',
+			$out .= sprintf( '<div class="themify-ui-slider tf_clearfix"><div class="themify-slider-label label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" class="width4"> px</div></div>',
 				esc_html__( 'Tablet Portrait', 'themify' ),
 				$this->option_name . '[' . $pre . 'tablet' . ']',
 				$bp_tablet,
@@ -657,7 +715,7 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 				$break_points['tablet'][1],
 				$bp_tablet
 			);
-			$out .= sprintf( '<div class="themify-ui-slider clearfix"><div class="themify-slider-label label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" class="width4" readonly> px</div></div>',
+			$out .= sprintf( '<div class="themify-ui-slider tf_clearfix"><div class="themify-slider-label label">%s</div><div class="label input-range width10"><div class="range-slider width8"></div><input type="text" name="%s" value="%s" data-min="%d" data-max="%d" class="width4"> px</div></div>',
 				esc_html__( 'Mobile', 'themify' ),
 				$this->option_name . '[' . $pre . 'mobile' . ']',
 				$bp_mobile,
@@ -797,7 +855,7 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 				esc_attr( $this->option_name . '[' . $pre . 'google_map_key' . ']' )
 			);
 			$out.='<br/><p class="description">';
-			$out.= __('Google API key is required to use Builder Map module.','themify').' <a href="//developers.google.com/maps/documentation/javascript/get-api-key#key" target="_blank">'.__( 'Generate Api key', 'themify' ).'</a>';
+			$out.= sprintf( __( 'Google API key is required to use Builder Map module and Map shortcode. <a href="%s" target="_blank">Generate an API key</a> and insert it here.' ), '//developers.google.com/maps/documentation/javascript/get-api-key#key' );
 			$out.='</p></div>';
 			echo $out;
 
@@ -806,26 +864,49 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 		function bing_map_api_key_field(){
 			$pre = $this->current_tab . '_';
 			$bing_map_key =  isset( $this->option_value[$pre.'bing_map_key'] )?$this->option_value[$pre.'bing_map_key']:'';
-			$out = '<div>';
-			$out.= sprintf('<input type="text" style="min-width:300px;" value="%s" name="%s" />',
+			$out= sprintf('<input type="text" style="min-width:300px;" value="%s" name="%s" />',
 				$bing_map_key,
 				esc_attr( $this->option_name . '[' . $pre . 'bing_map_key' . ']' )
 			);
-			$out .= '<br/><p class="description"><span class="pushlabel">'.__('To use Bing Maps,','themify').' <a href="https://msdn.microsoft.com/en-us/library/ff428642.aspx" target="_blank">' . __( 'Generate an API key', 'themify' ) . '</a> and insert it here.</span></p>';
+			$out .= '<br/><p class="description"><span class="pushlabel">'. sprintf( __( 'To use Bing Maps, <a href="%s" target="_blank">generate an API key</a> and insert it here.', 'themify' ), 'https://msdn.microsoft.com/en-us/library/ff428642.aspx' ) . '</span></p>';
 			echo $out;
 		}
 
+        function cloudflare_field(){
+            $pre = $this->current_tab . '_';
+            $key='clf_email';
+            $email=isset( $this->option_value[$pre.$key] )?$this->option_value[$pre.$key]:'';
+            $out= sprintf('<p><label>%s<br/><input type="email" style="min-width:200px;" value="%s" name="%s" /></label></p>',
+                __('Account Email:'),
+                $email,
+                esc_attr( $this->option_name . '[' . $pre . $key . ']' )
+            );
+            $key='clf_key';
+            $api=isset( $this->option_value[$pre.$key] )?$this->option_value[$pre.$key]:'';
+            $out.= sprintf('<p><label>%s<br/><input type="text" style="min-width:300px;" value="%s" name="%s" /></label></p>',
+                __('API Key:'),
+                $api,
+                esc_attr( $this->option_name . '[' . $pre . $key . ']' )
+            );
+            $key='clf_zone'.crc32($email.$api);
+            $zone=isset( $this->option_value[$pre.$key] )?$this->option_value[$pre.$key]:'';
+            if(!empty($zone)){
+                $out.= sprintf('<input type="hidden" value="%s" name="%s" />',
+                    $zone,
+                    esc_attr( $this->option_name . '[' . $pre . $key . ']' )
+                );
+            }
+            echo $out;
+        }
+
 		function optin_field() {
 			$pre = 'setting-';
-			if ( isset( $_GET['tb_option_flush_cache'] ) ) {
-				$services = Builder_Optin_Services_Container::get_instance()->get_providers();
-				foreach ( $services as $id => $instance ) {
+			$clear=isset( $_GET['tb_option_flush_cache'] );
+			$providers = Builder_Optin_Service::get_providers();
+			foreach ( $providers as $id => $instance ) {
+				if ( $clear===true ) {
 					$instance->clear_cache();
 				}
-			}
-
-			$providers = Builder_Optin_Services_Container::get_instance()->get_providers();
-			foreach ( $providers as $id => $instance ) {
 				if ( $options = $instance->get_global_options() ) {
 					?>
                     <br><hr>
@@ -851,7 +932,7 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 
             <br><hr>
             <p>
-                <a href="<?php echo add_query_arg( 'tb_option_flush_cache', 1 ); ?>" class="button button-secondary tb_option_flush_cache"><span><?php _e( 'Clear Cache', 'themify' ); ?></span> </a>
+                <a href="<?php echo add_query_arg( 'tb_option_flush_cache', 1 ); ?>" class="button button-secondary tb_option_flush_cache"><span><?php _e( 'Clear API Cache', 'themify' ); ?></span> </a>
             </p>
 
 			<?php
@@ -872,7 +953,7 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 			$value = $in_progress ? __('Replacing ...','themify') : __('Replace','themify');
 			$output = '<br/><div>';
 			$output .= '<label>'.__('Search for','themify').'   </label><input type="url" style="min-width:500px;" value="" id="original_string" />';
-			$output .='<br/>';
+			$output .='<br/><br/>';
 			$output .= '<label>'.__('Replace to','themify').'   </label><input type="url" style="min-width:500px;" value="" id="replace_string" />';
 			$output .='<br/><br/>';
 			$output .= '<input id="builder-find-and-replace-btn" type="button" name="builder-find-and-replace-btn" '.$disabled.' value="'.$value.'" class="button big-button"/>';
@@ -898,9 +979,11 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 
 		function load_enqueue_scripts( $page ) {
 			if ( 'toplevel_page_themify-builder' === $page ) {
+				wp_enqueue_style( 'tf-base', THEMIFY_URI . '/css/base.min.css', null, THEMIFY_VERSION);
+				wp_enqueue_style( 'themify-ui',  themify_enque( THEMIFY_URI . '/css/themify-ui.css' ), array( 'tf-base' ), THEMIFY_VERSION );
 				wp_enqueue_script( 'jquery-ui-slider' );
 				wp_enqueue_script( 'jquery-ui-sortable' );
-				wp_enqueue_script( 'themify-builder-plugin-upgrade', themify_enque(THEMIFY_BUILDER_URI . '/js/themify.builder.upgrader.js'), array('jquery'), THEMIFY_VERSION, true );
+				wp_enqueue_script( 'themify-builder-plugin-upgrade', themify_enque(THEMIFY_BUILDER_URI . '/js/plugin/themify.builder.upgrader.js'), array('jquery'), THEMIFY_VERSION, true );
 
 				add_action( 'admin_head', array( $this, 'custom_admin_css' ) );
 			}
@@ -912,11 +995,11 @@ if ( ! class_exists( 'Themify_Builder_Options' ) ) {
 		 * @access public
 		 */
 		public function custom_admin_css() {
-			echo '<style type="text/css" rel="stylesheet">
+			echo '<style>
 			.width8 { width: 300px; }
 			.width4 { width: 80px; }
 			.width10 { width: 68%; }
-			@media only screen and (max-width: 820px) {
+			@media screen and (max-width: 820px) {
                             .width4,.width8 {
                                 max-width: 100%;
                             }

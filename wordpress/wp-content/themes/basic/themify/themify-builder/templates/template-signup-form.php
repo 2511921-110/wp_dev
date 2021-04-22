@@ -1,5 +1,7 @@
 <?php
-if ( !defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Template Sing Up
  *
@@ -33,26 +35,28 @@ $fields_default = array(
 );
 $fields_args = wp_parse_args( $args['mod_settings'], $fields_default );
 unset( $args['mod_settings'] );
-
+$fields_default=null;
 $mod_name=$args['mod_name'];
 $builder_id = $args['builder_id'];
-$element_id = isset($args['element_id'])?'tb_'.$args['element_id']:$args['module_ID'];
+$element_id = $args['module_ID'];
 
 $container_class = apply_filters( 'themify_builder_module_classes', array(
 	'module',
 	'module-' . $mod_name,
 	$element_id,
-	$fields_args['css'],
-	self::parse_animation_effect( $fields_args['animation_effect'], $fields_args )
+	$fields_args['css']
 ), $mod_name, $element_id, $fields_args );
 
-$container_props = apply_filters( 'themify_builder_module_container_props', array(
+$container_props = apply_filters( 'themify_builder_module_container_props', self::parse_animation_effect($fields_args,array(
 	'class' => implode( ' ', $container_class ),
-), $fields_args, $mod_name, $element_id );
+)), $fields_args, $mod_name, $element_id );
 $args = null;
 $nonce = wp_create_nonce( 'tb_signup_nonce' );
 //Store the user role as transient for security reason and use it in signup_process function
 set_transient( 'tb_signup_' . $nonce, $fields_args['u_role'], HOUR_IN_SECONDS );
+if(Themify_Builder::$frontedit_active===false){
+    $container_props['data-lazy']=1;
+}
 ?>
 <!-- module signup form -->
 <div <?php echo self::get_element_attributes( self::sticky_element_props( $container_props, $fields_args ) ); ?>>
@@ -60,25 +64,25 @@ set_transient( 'tb_signup_' . $nonce, $fields_args['u_role'], HOUR_IN_SECONDS );
 		do_action('themify_builder_background_styling',$builder_id,array('styling'=>$fields_args,'mod_name'=>$mod_name),$element_id,'module');
 	?>
 	<?php if ( $fields_args['mod_title'] !== '' ) : ?>
-		<?php echo $fields_args['before_title'] . apply_filters( 'themify_builder_module_title', $fields_args['mod_title'], $fields_args ) . $fields_args['after_title']; ?>
+		<?php echo $fields_args['before_title'] , apply_filters( 'themify_builder_module_title', $fields_args['mod_title'], $fields_args ), $fields_args['after_title']; ?>
 	<?php endif; ?>
     <form class="tb_signup_form" name="tb_signup_form">
         <div class="tb_signup_messages"></div>
 		<?php if ( 'm' === $fields_args['success_action'] && !empty( $fields_args['msg_success'] ) ): ?>
-            <div class="tb_signup_messages tb_signup_success"><?php echo esc_html( $fields_args['msg_success'] ) ?></div>
+            <div class="tf_hide tb_signup_messages tb_signup_success"><?php echo esc_html( $fields_args['msg_success'] ) ?></div>
 		<?php endif; ?>
         <div>
             <label>
                 <span class="tb_signup_label"><?php echo esc_html( $fields_args['l_name'] ) ?></span>
             </label>
-            <div class="row_inner">
-                <div class="col2-1 first">
+            <div class="tf_box tf_w row_inner tf_clearfix">
+                <div class="module_column col2-1 first">
                     <label>
                         <input type="text" name="first_n"/>
                         <span><?php echo esc_html( $fields_args['l_firstname'] ) ?></span>
                     </label>
                 </div>
-                <div class="col2-1 last">
+                <div class="module_column col2-1 last">
                     <label>
                         <input type="text" name="last_n"/>
                         <span><?php echo esc_html( $fields_args['l_lastname'] ) ?></span>
@@ -116,9 +120,10 @@ set_transient( 'tb_signup_' . $nonce, $fields_args['u_role'], HOUR_IN_SECONDS );
 
 		<?php if ( $fields_args['optin'] === 'yes' ) : ?>
 			<?php
-			if ( ! class_exists( 'Builder_Optin_Services_Container' ) )
+			if ( ! class_exists( 'Builder_Optin_Service' ) ){
 				include_once( THEMIFY_BUILDER_INCLUDES_DIR. '/optin-services/base.php' );
-			$optin_instance = Builder_Optin_Services_Container::get_instance()->get_provider( $fields_args['provider'] );
+			}
+			$optin_instance = Builder_Optin_Service::get_providers( $fields_args['provider'] );
 			if ( $optin_instance ) : ?>
 				<div>
 					<label>

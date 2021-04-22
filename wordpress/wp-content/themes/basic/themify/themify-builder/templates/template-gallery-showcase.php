@@ -1,5 +1,7 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Template Gallery Showcase
  * 
@@ -8,28 +10,20 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
  */
 
 $first_image = '';
-$disable = Themify_Builder_Model::is_img_php_disabled();
 if ( is_object( $args['settings']['gallery_images'][0] ) ) :
-	$alt = get_post_meta($args['settings']['gallery_images'][0]->ID, '_wp_attachment_image_alt', true);
 	$caption = $args['settings']['gallery_images'][0]->post_excerpt;
 	$title = $args['settings']['gallery_images'][0]->post_title;
-	
-	if ( $disable ) {
-		$first_image = wp_get_attachment_image_src($args['settings']['gallery_images'][0]->ID, $args['settings']['s_image_size_gallery']);
-		$first_image = $first_image[0];
-	} else {
-		$first_image = themify_do_img($args['settings']['gallery_images'][0]->ID, $args['settings']['s_image_w_gallery'], $args['settings']['s_image_h_gallery']);
-		$first_image = $first_image['url'];
-	} ?>
-
+	$disable = Themify_Builder_Model::is_img_php_disabled();
+	$first_image = $disable===true?wp_get_attachment_image($args['settings']['gallery_images'][0]->ID, $args['settings']['s_image_size_gallery']):themify_get_image(array('src'=>$args['settings']['gallery_images'][0]->ID, 'w'=> $args['settings']['s_image_w_gallery'], 'h'=> $args['settings']['s_image_h_gallery'])); 
+	?>
 	<div class="gallery-showcase-image">
-		<div class="image-wrapper">
-			<img src="<?php echo esc_url($first_image); ?>" alt="<?php echo esc_attr($alt) ?>" />
+		<div class="image-wrapper gallery-icon tf_rel">
+			<?php echo $first_image?>
 			<?php if( ! empty( $args['settings']['gallery_image_title'] ) || ( $args['settings']['gallery_exclude_caption'] !== 'yes' ) ) : ?>
-                <div class="gallery-showcase-title">
+                <div class="gallery-showcase-title tf_hidden tf_abs tf_textl">
 					<?php
 					! empty( $args['settings']['gallery_image_title'] )
-					&& printf( '<strong class="gallery-showcase-title-text">%s</strong>'
+					&& printf( '<strong class="gallery-showcase-title-text tf_block">%s</strong>'
 								, esc_attr( $title ) );
 					
 						$args['settings']['gallery_exclude_caption'] !== 'yes'
@@ -39,36 +33,32 @@ if ( is_object( $args['settings']['gallery_images'][0] ) ) :
 				</div>
 			<?php endif; ?>
 		</div>
-
     </div>
-    <div class="gallery-images">
+    <div class="gallery-images tf_hidden">
         <?php
-        foreach ($args['settings']['gallery_images'] as $image) :
-            $alt = get_post_meta($image->ID, '_wp_attachment_image_alt', true);
-            $title = $image->post_title;
-            $caption = $image->post_excerpt;
-            if ($disable) {
-                $img = wp_get_attachment_image($image->ID, $args['settings']['image_size_gallery']);
-                $link = wp_get_attachment_image_src($image->ID, $args['settings']['s_image_size_gallery']);
-                $link = $link[0];
-            } else {
-                if ($args['settings']['thumb_w_gallery'] !== '') {
-                    $img = themify_do_img($image->ID, $args['settings']['thumb_w_gallery'], $args['settings']['thumb_h_gallery']);
-                    $img = "<img src='{$img['url']}' width='{$img['width']}' height='{$img['height']}' alt='{$alt}' />";
-                } else {
-                    $img = wp_get_attachment_image($image->ID, $args['settings']['image_size_gallery']);
-                }
-                $link = themify_do_img($image->ID, $args['settings']['s_image_w_gallery'], $args['settings']['s_image_h_gallery']);
-                $link = $link['url'];
-            }
+        foreach ($args['settings']['gallery_images'] as $image):?>
+			<div class="gallery-icon">
+				<?php
+				if ($disable===true) {
+					$img = wp_get_attachment_image($image->ID, $args['settings']['image_size_gallery']);
+					$link = wp_get_attachment_image_src($image->ID, $args['settings']['s_image_size_gallery']);
+					$link = !empty($link[0])?$link[0]:'';
+				} else {
+					if ($args['settings']['thumb_w_gallery'] !== '') {
+						$img = themify_get_image(array('src'=>$image->ID,'w'=>$args['settings']['thumb_w_gallery'],'h'=>$args['settings']['thumb_h_gallery']));
+					} else {
+						$img = wp_get_attachment_image($image->ID, $args['settings']['image_size_gallery']);
+					}
+					$link = themify_get_image(array('src'=>$image->ID, 'w'=>$args['settings']['s_image_w_gallery'], 'h'=>$args['settings']['s_image_h_gallery'],'urlonly'=>true));
+				}
 
-			if ( ! empty( $link ) ) {
-				echo '<a data-image="' . esc_url( $link ) . '" title="' . esc_attr( $title ) . '" data-caption="' . esc_attr( $caption ) . '" href="#">';
-			}
-			echo $img;
-			if ( ! empty( $link ) ) echo '</a>';
-
-        endforeach; // end loop 
-        ?>
+				if ( ! empty( $link ) ) {
+					echo '<a data-image="' . esc_url( $link ) . '" title="' . esc_attr($image->post_title ) . '" data-caption="' . esc_attr( $image->post_excerpt ) . '" href="#">';
+				}
+				echo $img;
+				if ( ! empty( $link ) ) echo '</a>';
+			?>
+		</div>
+        <?php endforeach;?>
     </div>
-<?php endif; ?>
+<?php endif; 

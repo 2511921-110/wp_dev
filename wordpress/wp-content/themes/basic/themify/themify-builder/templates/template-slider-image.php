@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Template Slider Image
  * 
@@ -10,21 +11,8 @@ if (!defined('ABSPATH'))
 if (!empty($args['settings']['img_content_slider'])):
     $image_w = $args['settings']['img_w_slider'];
     $image_h = $args['settings']['img_h_slider'];
-    $is_img_disabled = Themify_Builder_Model::is_img_php_disabled();
-    if ($is_img_disabled===true) {
-        // get image preset
-        global $_wp_additional_image_sizes;
-        $preset = $args['settings']['image_size_slider'] !== '' ? $args['settings']['image_size_slider'] : themify_builder_get('setting-global_feature_size', 'image_global_size_field');
-        if (isset($_wp_additional_image_sizes[$preset]) && $image_size_slider !== '') {
-            $image_w = (int) $_wp_additional_image_sizes[$preset]['width'];
-            $image_h = (int) $_wp_additional_image_sizes[$preset]['height'];
-        } else {
-            $image_w = $image_w !== '' ? $image_w : get_option($preset . '_size_w');
-            $image_h = $image_h !== '' ? $image_h : get_option($preset . '_size_h');
-        }
-    } else {
-        $param_image_src = array('w' => $image_w, 'h' => $image_h, 'ignore' => true);
-    }
+	$image_size = $args['settings']['image_size_slider'] !== '' ? $args['settings']['image_size_slider'] : themify_builder_get('setting-global_feature_size', 'image_global_size_field');
+	$param_image_src = array('w' => $image_w, 'h' => $image_h,'is_slider'=>true,'image_size'=>$image_size);
     ?>
     <!-- module slider image -->
 
@@ -32,31 +20,18 @@ if (!empty($args['settings']['img_content_slider'])):
         <?php $image_title = isset($content['img_title_slider']) ? trim($content['img_title_slider']) : '';
 		$isAlt=false;
 	?>
-        <li>
+         <div class="swiper-slide">
             <div class="slide-inner-wrap"<?php if ($args['settings']['margin'] !== ''): ?> style="<?php echo $args['settings']['margin']; ?>"<?php endif; ?>>
                 <?php if ( ! empty( $content['img_url_slider'] ) ) : ?>
-                    <div class="slide-image">
+                    <div class="tf_rel tf_lazy slide-image">
                         <?php
-			    if ( $image_title===''  ) {
-				$image_title = Themify_Builder_Model::get_alt_by_url( $content['img_url_slider'] );
-				$isAlt=true;
-			    }
-                        if ($is_img_disabled===true) {
-							$upload_dir = wp_upload_dir();
-							$base_url = $upload_dir['baseurl'];
-							$attachment_id = themify_get_attachment_id_from_url($content['img_url_slider'], $base_url);
-							if (!empty($attachment_id)) {
-								$image = wp_get_attachment_image($attachment_id, $preset);
-                                $image=preg_replace('/width=\"([0-9]{1,})\"/','width="'.$image_w.'"',$image);
-                                $image=preg_replace('/height=\"([0-9]{1,})\"/','height="'.$image_h.'"',$image);
-							}else{
-								$image = '<img src="' . esc_url($content['img_url_slider']) . '" alt="' . esc_attr($image_title) .'" width="' . $image_w . '" height="' . $image_h . '" />';
-							}
-                        } else {
-                            $param_image_src['src'] = $content['img_url_slider'];
-                            $param_image_src['alt'] = $image_title;
-                            $image = themify_get_image($param_image_src);
-                        }
+						if ( $image_title===''  ) {
+							$image_title = Themify_Builder_Model::get_alt_by_url( $content['img_url_slider'] );
+							$isAlt=true;
+						}
+                       $param_image_src['src'] = $content['img_url_slider'];
+						$param_image_src['alt'] = $image_title;
+						$image = themify_get_image($param_image_src);
                         ?>
                         <?php if (!empty($content['img_link_slider'])): ?>
                             <?php
@@ -65,7 +40,7 @@ if (!empty($args['settings']['img_content_slider'])):
                                 $attr = $content['img_link_params'] === 'lightbox' ? ' data-rel="' . $args['module_ID'] . '" class="themify_lightbox"' : ($content['img_link_params'] === 'newtab' ? ' target="_blank" rel="noopener"' : '');
                             }
                             ?>
-                            <a href="<?php echo esc_url(trim($content['img_link_slider'])); ?>" alt="<?php echo esc_attr( $image_title ); ?>"<?php echo $attr; ?>>
+                            <a href="<?php echo esc_url(trim($content['img_link_slider'])); ?>" <?php echo $attr; ?>>
                                 <?php echo $image; ?>
                             </a>
                         <?php else: ?>
@@ -95,6 +70,6 @@ if (!empty($args['settings']['img_content_slider'])):
                     </div><!-- /slide-content -->
                 <?php endif; ?>
             </div>
-        </li>
+        </div>
     <?php endforeach; ?>
-<?php endif; ?>
+<?php endif; 

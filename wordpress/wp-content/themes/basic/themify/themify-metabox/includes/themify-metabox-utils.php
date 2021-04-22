@@ -11,7 +11,13 @@ function themify_metabox_get_field_names( $arr ) {
 	if( ! empty( $arr ) ){ 
 	    foreach( $arr as $metabox ){
 		    if( ! empty( $metabox['options'] ) ) {
-			    $list = array_merge( $list, wp_list_pluck( themify_metabox_make_flat_fields_array( $metabox['options'] ), 'name' ) );
+				$options = themify_metabox_make_flat_fields_array( $metabox['options'] );
+				$options = array_filter( $options, function ( $item ) {
+					if ( isset( $item['name'] ) )
+						return true;
+					return false;
+				} );
+			    $list = array_merge( $list, wp_list_pluck( $options, 'name' ) );
 		    }
 	    }
 	}
@@ -100,14 +106,23 @@ function themify_verify_assignments( $assignments ) {
 			if (! empty( $assignments['post_type'] ) ) {
 				foreach ( $assignments['post_type'] as $post_type => $posts ) {
 					$posts = array_keys( $posts );
+
+					/* child pages have unique names based on their permalink */
+					if ( $post_type === 'page' && ! empty( $query_object->post_parent ) ) {
+						$post_name = str_replace( home_url(), '', get_permalink( $query_object->ID ) );
+						if ( in_array( $post_name, $posts ) ) {
+							return true;
+						}
+					}
+
 					if (
 						// Post single
 						( $post_type === 'post' && is_single() && is_single( $posts ) )
 						// Page view
 						|| ( $post_type === 'page' && (
-								( is_page() && is_page( $posts ) )
+								( is_page( $posts ) )
 								|| ( ! is_front_page() && is_home() && in_array( get_post_field( 'post_name', get_option( 'page_for_posts' ) ), $posts ,true ) ) // check for Posts page
-								|| ( class_exists( 'WooCommerce', false ) && function_exists( 'is_shop' ) && is_shop() && in_array( get_post_field( 'post_name', wc_get_page_id( 'shop' )), $posts,true  ) ) // check for Shop page
+								|| ( themify_metabox_is_shop() && in_array( get_post_field( 'post_name', themify_metabox_shop_pageId()), $posts,true  ) ) // check for Shop page
 						) )
 						// Custom Post Types single view check
 						|| ( is_singular( $post_type ) && in_array( $query_object->post_name, $posts,true ) )
@@ -153,4 +168,71 @@ function themify_array_to_input( $array, $prefix = '' ) {
 	}
 
 	return $output;
+}
+
+/**
+ * Checks if Woocommerce plugin is active and returns the proper value
+ *
+ * @return bool
+ */
+function themify_metabox_is_woocommerce_active() {
+	if(function_exists('themify_is_woocommerce_active')){
+		return themify_is_woocommerce_active();
+	}
+	static $is = null;
+	if ( $is===null ) {
+		$plugin = 'woocommerce/woocommerce.php';
+		include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		return is_plugin_active( $plugin )
+			// validate if $plugin actually exists, the plugin might be active however not installed.
+			&& is_file( trailingslashit( WP_PLUGIN_DIR ) . $plugin );
+	}
+	return $is;
+}
+
+/**
+ * Returns the ID of the designated Shop page in WC plugin
+ *
+ * @return false|int
+ */
+function themify_metabox_shop_pageId(){
+	if(function_exists('themify_shop_pageId')){
+		return themify_shop_pageId();
+	}
+	static $id = null;
+	if ( $id === null ) {
+		if ( themify_metabox_is_woocommerce_active() ) {
+			$id = (int) wc_get_page_id( 'shop' );
+			if ( $id <= 0 ) { //wc bug, page id isn't from wc settings,the default should be page with slug 'shop'
+				$page = get_page_by_path( 'shop' );
+				$id = ! empty( $page ) ? (int) $page->ID : false;
+			}
+		} else {
+			$id = false;
+	    }
+	}
+
+	return $id;
+}
+
+
+function themify_metabox_is_shop(){
+	if(function_exists('themify_is_shop')){
+		return themify_is_shop();
+	}
+	return themify_metabox_is_woocommerce_active() && is_shop();
+}
+
+function themify_metabox_enque($url){
+	if(function_exists('themify_enque')){
+		return themify_enque($url);
+	}
+	if(!defined( 'SCRIPT_DEBUG' ) || !SCRIPT_DEBUG){
+		$f = pathinfo( $url );
+		if( isset( $f['extension'] ) && strpos( $f['basename'], '.min.', 2 ) === false){
+			$name= $f['filename'].'.min.' . $f['extension'];
+			$url = trailingslashit( $f['dirname'] ) . $name;
+		}
+	}
+	return $url;
 }

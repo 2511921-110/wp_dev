@@ -10,13 +10,12 @@
  */
 class Themify_Menu_Icons {
 
-
 	public static function get_instance() {
-            static $instance = NULL;
-            if($instance===null){
-                $instance = new self;
-            }
-            return $instance;
+		static $instance = NULL;
+		if ( $instance === null ) {
+			$instance = new self;
+		}
+		return $instance;
 	}
 
 	/**
@@ -30,23 +29,23 @@ class Themify_Menu_Icons {
 			add_action( 'wp_update_nav_menu_item', array( $this, 'wp_update_nav_menu_item' ), 10, 3 );
 			add_action( 'delete_post', array( $this, 'delete_post' ), 1, 3 );
 		} else {
-			add_filter( 'wp_nav_menu_args', array( $this, 'wp_nav_menu_args' ) );
-			add_filter( 'wp_nav_menu', array( $this, 'wp_nav_menu' ) );
+			add_filter( 'wp_nav_menu_objects', array( $this, 'wp_nav_menu_objects' ) );
+			add_filter( 'wp_nav_menu_items', array( $this, 'wp_nav_menu_items' ) );
 		}
 	}
 
 	/**
 	 * Start looking for menu icons
 	 */
-	function wp_nav_menu_args( $args ) {
+	function wp_nav_menu_objects( $items ) {
 		add_filter( 'the_title', array( $this, 'the_title' ), 10, 2 );
-		return $args;
+		return $items;
 	}
 
 	/**
-	 * The menu is rendered, we longer need to look for menu icons
+	 * The menu is rendered, we no longer need to look for menu icons
 	 */
-	function wp_nav_menu( $nav_menu ) {
+	function wp_nav_menu_items( $nav_menu ) {
 		remove_filter( 'the_title', array( $this, 'the_title' ), 10, 2 );
 		return $nav_menu;
 	}
@@ -57,10 +56,10 @@ class Themify_Menu_Icons {
 	 * @since 1.6.8
 	 */
 	function wp_update_nav_menu_item( $menu_id, $menu_item_db_id, $args ) {
-		if( isset( $_POST['menu-item-icon'] ) && isset( $_POST['menu-item-icon'][$menu_item_db_id] ) ) {
+		if ( isset( $_POST['menu-item-icon'] ) && isset( $_POST['menu-item-icon'][ $menu_item_db_id ] ) ) {
 			$meta_key = '_menu_item_icon';
 			$meta_value = $this->get_menu_icon( $menu_item_db_id );
-			$menu_item_icon =  $_POST['menu-item-icon'][$menu_item_db_id];
+			$menu_item_icon =  $_POST['menu-item-icon'][ $menu_item_db_id ];
 			$new_meta_value = stripcslashes( $menu_item_icon );
 
 			if ( $new_meta_value && '' == $meta_value )
@@ -80,7 +79,7 @@ class Themify_Menu_Icons {
 	 * @since 1.6.8
 	 */
 	function delete_post( $post_id ) {
-		if( is_nav_menu_item( $post_id ) ) {
+		if ( is_nav_menu_item( $post_id ) ) {
 			delete_post_meta( $post_id, '_menu_item_icon' );
 		}
 	}
@@ -92,15 +91,13 @@ class Themify_Menu_Icons {
 	 */
 	function wp_nav_menu_item_custom_fields( $item_id, $item, $depth, $args ) {
 		$saved_meta = $this->get_menu_icon( $item_id );
-		if( ! wp_style_is( 'themify-font-icons-css' ) ) {
-			themify_enque_style( 'themify-font-icons-css', THEMIFY_URI . '/fontawesome/css/font-awesome.min.css', null, THEMIFY_VERSION );
-		}
+		$item_id = esc_attr( $item_id );
 	?> 
 		<p class="field-icon description description-thin">
-			<label for="edit-menu-item-icon-<?php echo esc_attr( $item_id ); ?>">
+			<label for="edit-menu-item-icon-<?php echo $item_id; ?>">
 				<?php _e( 'Icon', 'themify' ) ?><br/>
-				<input type="text" name="menu-item-icon[<?php echo esc_attr( $item_id ); ?>]" id="edit-menu-item-icon-<?php echo esc_attr( $item_id ) ?>" size="8" class="edit-menu-item-icon themify_field_icon" value="<?php echo esc_attr( $saved_meta ); ?>">
-				<a class="button button-secondary hide-if-no-js themify_fa_toggle" href="#" data-target="#edit-menu-item-icon-<?php echo esc_attr( $item_id ) ?>"><?php _e( 'Insert Icon', 'themify' ); ?></a>
+				<input type="text" name="menu-item-icon[<?php echo $item_id; ?>]" id="edit-menu-item-icon-<?php echo $item_id?>" size="8" class="edit-menu-item-icon themify_field_icon" value="<?php esc_attr_e( $saved_meta ); ?>">
+				<a class="button button-secondary hide-if-no-js themify_fa_toggle" href="#" data-target="#edit-menu-item-icon-<?php echo $item_id ?>"><?php _e( 'Insert Icon', 'themify' ); ?></a>
 			</label>
 		</p>
 	<?php }
@@ -117,7 +114,7 @@ class Themify_Menu_Icons {
 	 */
 	function the_title( $title, $id = '' ) {
 		if ( '' != $id && $icon = $this->get_menu_icon( $id ) ) {
-			$title = '<i class="' . esc_attr( themify_get_icon( $icon ) ) . '"></i> ' . $title;
+		    $title = '<i> '. themify_get_icon( $icon ) . '</i> ' . $title;
 		}
 		return $title;
 	}
@@ -132,4 +129,3 @@ class Themify_Menu_Icons {
 		return get_post_meta( $item_id, '_menu_item_icon', true );
 	}
 }
-Themify_Menu_Icons::get_instance();

@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Service Menu
  * Description: Display a Service item
@@ -19,7 +19,17 @@ class TB_Service_Menu_Module extends Themify_Builder_Component_Module {
 	    'slug' => 'service-menu'
 	));
     }
-
+    
+    public function get_icon(){
+	return 'menu-alt';
+    }
+	
+    public function get_assets() {
+	    return array(
+		    'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+	    );
+    }
+	
     public function get_options() {
 	return array(
 	    array(
@@ -36,7 +46,14 @@ class TB_Service_Menu_Module extends Themify_Builder_Component_Module {
 		    array('img' => 'image_horizontal', 'value' => 'image-horizontal', 'label' => __('Horizontal Image', 'themify'))
 		)
 	    ),
-	    array(
+        array(
+            'id' => 'title_tag',
+            'type' => 'select',
+            'label' => __('Menu Title Tag', 'themify'),
+            'h_tags' => true,
+            'default' => 'h4'
+        ),
+        array(
 		'id' => 'title_service_menu',
 		'type' => 'text',
 		'label' => self::$texts['title_service_menu'],
@@ -71,12 +88,12 @@ class TB_Service_Menu_Module extends Themify_Builder_Component_Module {
 		    ),
 		    'binding' => array(
 			    'checked' => array(
-				    'show' => array( 'tb_repeat_opt#price_fields_holder' ),
-				    'hide' => array( 'price_service_menu' )
+				    'show' => 'tb_repeat_opt#price_fields_holder' ,
+				    'hide' => 'price_service_menu' 
 			    ),
 			    'not_checked' => array(
-				    'hide' => array( 'tb_repeat_opt#price_fields_holder'),
-				    'show' => array( 'price_service_menu'),
+				    'hide' => 'tb_repeat_opt#price_fields_holder',
+				    'show' => 'price_service_menu'
 			    )
 		    ),
 	    ),
@@ -250,8 +267,9 @@ class TB_Service_Menu_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
+	    'title_tag' => 'h4',
 	    'title_service_menu' => esc_html__('Menu title', 'themify'),
 	    'description_service_menu' => esc_html__('Description', 'themify'),
 	    'price_service_menu' => '$200',
@@ -371,6 +389,22 @@ class TB_Service_Menu_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Width
+		self::get_expand('w', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_width('', 'w')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_width('', 'w', 'h')
+					)
+				)
+			))
+		)),
+
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -410,6 +444,8 @@ class TB_Service_Menu_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 
 	$menu_title = array(
@@ -697,28 +733,27 @@ class TB_Service_Menu_Module extends Themify_Builder_Component_Module {
 		?>
         <# data.highlight_color_service_menu = undefined === data.highlight_color_service_menu || 'default' === data.highlight_color_service_menu ? 'tb_default_color' : data.highlight_color_service_menu; #>
         <div class="module module-<?php echo $this->slug; ?> <# data.appearance_image_service_menu ? print( data.appearance_image_service_menu.split('|').join(' ') ) : ''; #> {{ data.style_service_menu }} {{ data.css_service_menu }} <# data.highlight_service_menu ? print( 'has-highlight ',data.highlight_color_service_menu ) : print('no-highlight '); #>">
-			<# if (data.highlight_service_menu && data.highlight_text_service_menu !== '') { #>
+	    <# if (data.highlight_service_menu && data.highlight_text_service_menu !== '') { #>
                 <div class="tb-highlight-text">{{ data.highlight_text_service_menu}}</div>
-			<# } #>
-            <# if (data.image_service_menu){ #>
-            <div class="tb-image-wrap">
-                <# var alt = '' !== data.title_service_menu ? data.title_service_menu : data.description_service_menu; #>
-                <# if (data.link_service_menu !== '') { #>
-                    <# var link_attrs = ''; #>
-                    <# link_attrs += data.link_options === 'lightbox' ? 'class="lightbox-builder themify_lightbox" ' : ''; #>
-                    <# link_attrs += data.link_options === 'newtab' ? 'rel="noopener" target="_blank" ' : ''; #>
-                    <# if(data.link_options === 'lightbox'){ #>
-                        <# var units = {'pixels' : 'px','percents' : '%'}; #>
-                        <# if (data.lightbox_width !== '' || data.lightbox_height !== '') { #>
-                            <# var lightbox_settings = []; #>
-                            <# lightbox_settings.push(data.lightbox_width !== '' ? data.lightbox_width + units[data.lightbox_size_unit_width] : ''); #>
-                            <# lightbox_settings.push(data.lightbox_height !== '' ? data.lightbox_height + units[data.lightbox_size_unit_height] : ''); #>
-                            <# link_attrs += 'data-zoom-config="'+lightbox_settings.join("|");+'" '; #>
-                        <# } #>
-                    <# } #>
+	    <# }
+            if (data.image_service_menu){ #>
+            <div class="tb-image-wrap tf_left">
+                <# var alt = '' !== data.title_service_menu ? data.title_service_menu : data.description_service_menu;
+		    if (data.link_service_menu !== '') {
+			var link_attrs = data.link_options === 'lightbox' ? 'class="lightbox-builder themify_lightbox" ' : '',
+			icon=data.link_options == 'newtab'?'fa-external-link':'fa-search';
+			link_attrs += data.link_options === 'newtab' ? 'rel="noopener" target="_blank" ' : ''; 
+			if(data.link_options === 'lightbox' && (data.lightbox_width !== '' || data.lightbox_height !== '')){
+				var lightbox_settings = [],
+					units = {'pixels' : 'px','percents' : '%'};
+				lightbox_settings.push(data.lightbox_width !== '' ? data.lightbox_width + units[data.lightbox_size_unit_width] : '');
+				lightbox_settings.push(data.lightbox_height !== '' ? data.lightbox_height + units[data.lightbox_size_unit_height] : '');
+				link_attrs += 'data-zoom-config="'+lightbox_settings.join("|");+'" ';
+			}
+		    #>
                 <a href="{{ data.link_service_menu }}" {{ link_attrs }} >
                     <# if (data.image_zoom_icon === 'zoom' && data.link_options !== 'regular') { #>
-                    <span class="zoom fa <# data.link_options === 'newtab' ? print('fa-external-link') : print('fa-search'); #>"></span>
+                    <span class="zoom"><# print(tb_app.Utils.getIcon(icon).outerHTML) #></span>
                     <# } #>
                     <img src="{{ data.image_service_menu }}" alt="{{ alt }}" width="{{ data.width_service_menu }}" height="{{ data.height_service_menu }}" class="tb_menu_image">
                 </a>
@@ -727,36 +762,38 @@ class TB_Service_Menu_Module extends Themify_Builder_Component_Module {
                 <# } #>
             </div>
             <# } #>
-            <div class="tb-image-content">
+            <div class="tb-image-content tf_overflow">
                 <div class="tb-menu-title-wrap">
                     <# if (data.title_service_menu !== '') { #>
-                    <h4 class="tb-menu-title">{{ data.title_service_menu }}</h4>
-                    <# } #>
-                    <# if (data.description_service_menu !== '') { #>
+                    <# var tag = data.title_tag?data.title_tag:'h4'; #>
+                    <{{tag}} class="tb-menu-title">{{ data.title_service_menu }}</{{tag}}>
+                    <# }
+                    if (data.description_service_menu !== '') { #>
                     <div class="tb-menu-description">{{ data.description_service_menu }}</div>
                     <# } #>
                 </div>
                 <!-- /tb-menu-title-wrap -->
                     <# if (data.price_service_menu !== ''  || data.add_price_check !== undefined ) { #>
                 <div class="tb-menu-price">
-                        <# if( data.price_service_menu !== '' && data.add_price_check !== 'yes' ){ #>
-                    {{ data.price_service_menu }}
-                    <# if (data._render_plain_content && true === data._render_plain_content ) { #>
-                    <br />
-                            <# } #>
-                        <# }else if( data.add_price_check != undefined && data.add_price_check === 'yes'){ #>
-                        <# _.each( data.price_fields_holder, function( item,i ){ #>
+		    <# if( data.price_service_menu !== '' && data.add_price_check !== 'yes' ){
+			print(data.price_service_menu);
+			if (data._render_plain_content && true === data._render_plain_content ) { #>
+			    <br />
+		    <# }
+		    }
+		    else if( data.add_price_check != undefined && data.add_price_check === 'yes'){
+			_.each( data.price_fields_holder, function( item,i ){ #>
                             <div class="tb-price-item">
                                 <# if(item.label !== ''){ #>
                                     <div class="tb-price-title">{{ item.label }}</div>
-                                <# } #>
+                                <# }
 
-                                <# if(item.price !== ''){ #>
+                                if(item.price !== ''){ #>
                                     <div class="tb-price-value">{{item.price}}</div>
                                 <# } #>
                             </div>
-                        <# }); #>
-                    <# } #>
+                        <# });
+		    } #>
                 </div>
                 <# } #>
             </div>

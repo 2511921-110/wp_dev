@@ -160,12 +160,12 @@ MAIN NAVIGATION
 
 /* show dropdown ul */
 #main-nav li.dropdown-open > ul,
-.no-touch #main-nav li:hover > ul {
+#main-nav li:hover > ul {
 	display: block;
 	left: 50%;
 }
 #main-nav li li.dropdown-open > ul.sub-menu,
-.no-touch #main-nav li li:hover > ul.sub-menu {
+#main-nav li li:hover > ul.sub-menu {
 	left: 100%;
 	margin-left: 0;
 }

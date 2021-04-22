@@ -223,4 +223,3 @@ class Themify_Access_Role {
 	}  
 }
 endif;
-Themify_Access_Role::get_instance();
