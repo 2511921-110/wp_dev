@@ -1,9 +1,12 @@
-<?php if ( ! empty( $revisions )):?>
-    <div class="tb_options_tab_wrapper">
+<?php
+
+defined( 'ABSPATH' ) || exit;
+
+if ( ! empty( $revisions )):?>
 	<ul class="tb_revision_lists">
 	    <?php foreach( $revisions as $revision ):?>
 	    <?php 
-		if(!$this->check_has_builder( $revision->ID )){
+		if(!Themify_Builder_Revisions::check_has_builder( $revision->ID )){
 			continue;
 		}
 		$rev_comment = get_metadata( 'post', $revision->ID, '_builder_custom_rev_comment', true );
@@ -16,19 +19,18 @@
 	    ?>
 	    <li>
 		<?php if($is_deleteable===true):?>
-		    <a href="#" title="<?php esc_attr_e( 'Click to restore this revision', 'themify' )?>" class="builder-restore-revision-btn js-builder-restore-revision-btn" data-rev-id="<?php echo $revision->ID ?>"><?php echo sprintf( '%s (%s ago)', $date, $time_diff ); ?></a>
+		    <a href="#" title="<?php esc_attr_e( 'Click to restore this revision', 'themify' )?>" class="js-builder-restore-revision-btn" data-rev-id="<?php echo $revision->ID ?>"><?php echo sprintf( '%s (%s ago)', $date, $time_diff ); ?></a>
 		<?php endif;?>
 
 		<?php if(! empty( $rev_comment )):?>
 		    <small>(<?php echo $rev_comment?>)</small>
 		<?php endif;?>
 		<?php if($is_deleteable===true):?>
-		    <a href="#" title="<?php esc_attr_e( 'Delete this revision', 'themify' )?>" class="builder-delete-revision-btn js-builder-delete-revision-btn ti-close" data-rev-id="<?php echo $revision->ID ?>"></a>
+		    <a href="#" title="<?php esc_attr_e( 'Delete this revision', 'themify' )?>" class="js-builder-delete-revision-btn tf_close" data-rev-id="<?php echo $revision->ID ?>"></a>
 		<?php endif;?>
 	      </li>
 	    <?php endforeach?>
 	</ul>
-    </div>
 <?php else:?>
     <p><?php _e( 'No Revision found.', 'themify' ) ?></p>
 <?php endif;

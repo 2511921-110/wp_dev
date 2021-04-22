@@ -1,20 +1,32 @@
 <?php
-if ( !defined( 'ABSPATH' ) )
-	exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Module Name: Social Share
  */
-class TB_Social_Share_Module extends Themify_Builder_Component_Module
-{
+class TB_Social_Share_Module extends Themify_Builder_Component_Module{
 
 	function __construct() {
 		parent::__construct( array(
-			'name' => __( 'Social Share', 'themify' ),
-			'slug' => 'social-share'
+		    'name' => __( 'Social Share', 'themify' ),
+		    'slug' => 'social-share'
 		) );
 	}
-
+	
+	public function get_icon(){
+	    return 'twitter';
+	}
+	
+	public function get_assets() {
+		$_arr= array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+		if(!Themify_Builder_Model::is_front_builder_activate()){
+		    $_arr['js']=themify_enque(THEMIFY_BUILDER_JS_MODULES.$this->slug.'.js');
+		}
+		return $_arr;
+	}
 	public function get_options() {
 
 		return array(
@@ -81,7 +93,7 @@ class TB_Social_Share_Module extends Themify_Builder_Component_Module
 		);
 	}
 
-	public function get_default_settings() {
+	public function get_live_default() {
 		return array(
 			'mod_title_social_share' => '',
 			'networks' => 'fb|tw|pi|em',
@@ -414,7 +426,7 @@ class TB_Social_Share_Module extends Themify_Builder_Component_Module
         em:{icon:'ti-email',title:'<?php _e( 'Email', 'themify' ); ?>',type:'email'}
         };
         } #>
-        <div class="module module-<?php echo $this->slug; ?> {{ data.css_social_share }} tb_ss_style_{{ data.style }} tb_ss_arrangement_{{ data.arrangement }} tb_ss_shape_{{ data.shape }} tb_ss_size_{{ data.size }}">
+        <div class="module module-<?php echo $this->slug; ?> {{ data.css_social_share }} tb_ss_style_{{ data.style }} tb_ss_shape_{{ data.shape }} tb_ss_size_{{ data.size }}">
 			<# if ( data.mod_title ) { #>
 			<?php echo $module_args['before_title']; ?>{{{ data.mod_title }}}<?php echo $module_args['after_title']; ?>
 			<# } #>
@@ -425,9 +437,9 @@ class TB_Social_Share_Module extends Themify_Builder_Component_Module
 			<?php echo $module_args['after_title']; ?>
             <# } 
              for(var i = 0,len=nets.length; i < len; ++i){ #>
-			 <div class="ss_anchor_wrap">
+			 <div class="ss_anchor_wrap<# if('h'===data.arrangement) print(' tf_inline_b') #>">
             <a href="#" data-type="{{ info[nets[i]].type }}">
-                <i class="tb_social_share_icon {{ info[nets[i]].icon }}"></i>
+                <i class="tb_social_share_icon"><# print(tb_app.Utils.getIcon(info[nets[i]].icon).outerHTML)#></i>
                 <# if('no' === data.title){ #>
                 <span class="tb_social_share_title">{{{ info[nets[i]].title }}}</span>
                 <# } #>

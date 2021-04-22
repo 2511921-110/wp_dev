@@ -1,369 +1,244 @@
-/**
- * Themify Scroll to element based on its class and highlight it when a menu item is clicked.
- * Copyright (c) Themify
- */
-var themifyScrollHighlight = (function($, window, document) {
-
+/* Themify Scroll to element based on its class and highlight it when a menu item is clicked.*/
+(function($,Themify, window, document) {
 	'use strict';
-
-	/* Deprecated jQuery plugin. This prevents error. */
-	$.fn['themifyScrollHighlight'] = function(options) {};
-
-	var isWorking = false,
-		$window = $(window),
-		isScrolling = false,
-		activeSection = null,
-		hederDiff = 0;
-
-	return {
-
-		defaults: {
-			speed: parseInt(tbScrollHighlight.speed),
-			prefix: '.tb_section-',
-			navigation: tbScrollHighlight.navigation,
-			context: 'body',
-			element: '.module_row',
-			scrollRate: 250,
-			considerHeader: false,
-			fixedHeaderHeight: 0,
-			updateHash: true,
-			scroll: 'internal' // can be 'external' so no scroll is done here but by the theme. Example: Fullpane.
-		},
-		scrolling: false,
-		cleanupURL: function(url) {
-			return url.replace(/#.*$/, '').replace(/\/$/, '');
-		},
-		requestInterval: function(fn, delay) {
-			var start = new Date().getTime();
-			window.requestAnimationFrame(function loop() {
-				var current = new Date().getTime();
-				if (current - start >= delay) {
-					fn.call();
-					start = current;
-				}
-				window.requestAnimationFrame(loop);
-			});
-		},
-		cleanHash: function(hash) {
-			return decodeURIComponent(hash instanceof $ ? hash.prop('hash') : hash);
-		},
-		updateOffset: function(topOffset) {
-			var customOffset = parseInt( themify_vars.scrollTo );
-			if ( customOffset ) {
-				// option set in Builder settings page. Ignore fixed header and use provided value instead
-				return Math.ceil( topOffset - customOffset );
-			} else {
-				return Math.ceil( topOffset - this.options.fixedHeaderHeight + hederDiff );
-			}
-		},
-		setHeaderHeight: function() {
-			if (Themify.body[0].classList.contains('fixed-header')) {
-				var $headerWrap = $('#headerwrap'),
-					$fixedheader;
-				if ($headerWrap.length !== 0) {
-					$fixedheader = $headerWrap.clone();
-					$fixedheader.find('*').add($fixedheader).css('cssText', 'transition: all 0s ease 0s !important;');
-					$fixedheader.removeClass('fixed-header')
-						.css({
-							visibility: 'hidden',
-							left: '-10000px'
-						})
-						.appendTo('body');
-
-					this.options.fixedHeaderHeight = $fixedheader.outerHeight(true);
-
-					$fixedheader.addClass('fixed-header');
-
-					// Check if header is transparent
-					var bgImage = $fixedheader.css('background-image'),
-						bgColor = $fixedheader.css('background-color');
-
-					if (bgColor && bgColor.indexOf('rgba') > -1) {
-						bgColor = bgColor.replace(/^.*,(.+)\)/, '$1').trim();
-						bgColor = parseFloat(bgColor) === 0 ? 'transparent' : 1;
-					}
-					if (bgColor === 'transparent' && (!bgImage || bgImage === 'none')) {
-						this.options.fixedHeaderHeight = 0;
-						hederDiff = 0;
-					} else {
-						hederDiff = this.options.fixedHeaderHeight - $fixedheader.outerHeight(true);
-					}
-					$fixedheader.remove();
-				}
-			}
-		},
-		highlightLink: function(hash) {
-			var self = this;
-			this.dehighlightLinks();
-
-			if ('' != hash) {
-				var $linkHash = $(this.options.navigation).find('a[href*="' + hash + '"]');
-
-				if ($linkHash.length) {
-					$linkHash.each(function() {
-						var $link = $(this);
-
-						if (self.cleanHash($link) === hash) {
-							$link.parent().addClass('current_page_item');
-							/**
-							 * Fires event scrollhighlight.themify
-							 * Receives anchor with hash
-							 */
-							Themify.body.triggerHandler('scrollhighlight.themify', [hash]);
-							return;
-						}
-					});
-				}
-			}
-		},
-		dehighlightLinks: function() {
-			$(this.options.navigation).find('a[href*="#"]').each(function() {
-				var p = this.parentNode;
-				p.classList.remove('current_page_item');
-				p.classList.remove('current-menu-item');
-			});
-		},
-		isInViewport: function($t) {
-			if (!($t instanceof $) || !('offset' in $t))
-				return false;
-
-			var windowTop = $window.scrollTop() + ( this.options.fixedHeaderHeight - hederDiff ), // include fixed header when calculating if element is visible
-				// Divided by X to tell it's visible when the section is half way into viewport
-				windowBottom = windowTop + ($window.height() / 4),
-				eleTop = this.updateOffset($t.offset().top),
-				eleBottom = eleTop + $t.height();
-
-			return (eleTop <= windowBottom) && (eleBottom >= windowTop);
-		},
-		isHash: function(hash) {
-			return hash && '#' !== hash;
-		},
-		removeHash: function() {
-			if (this.isCorrectHash() && this.isHash(window.top.location.hash)) {
-				window.top.history.replaceState('', document.title, window.top.location.pathname + window.top.location.search);
-				this.dehighlightLinks();
-			}
-		},
-		changeHash: function(href) {
-			if (activeSection && ('#' === href || href === this.cleanHash(window.location.hash)))
-				return;
-
-			if (this.options.updateHash) {
-				window.top.history.replaceState(null, null, href);
-			}
-			this.highlightLink(href);
-			isWorking = false;
-		},
-		isCorrectHash: function() {
-			var hash = location.hash.slice(1);
-			// Compatiblity with Ecwid Plugin
-			return !!(hash != '' && hash.indexOf('!') === -1);
-		},
-		linkScroll: function(obj, href) {
-			var hash = obj.replace(this.options.prefix, '#'),
-				to, el;
-
-			obj = $(obj);
-
-			if (obj.length > 1) {
-				obj = obj.filter(':visible').first();
-				if (obj.length === 0) {
-					obj = obj.first();
-					if (obj.length === 0) {
-						isWorking = false;
-						return;
-					}
-				}
-			}
-
-			// Set offset from top
-			el = obj.get(0);
-
-
-			/**
-			 * Fires event scrollhighlightstart.themify before the scroll begins.
-			 * Receives anchor with hash.
-			 */
-			Themify.body.triggerHandler('scrollhighlightstart.themify', [hash]);
-
-			to = $( el ).offset().top;
-			to=to<0?$(el.parentNode).offset().top:to;
-
-			this.scrolling = false;
-			isScrolling = true;
-
-			if ('internal' === this.options.scroll) {
-				var self = this,
-					// Complete callback
-					completeCallback = function() {
-						isWorking = false;
-						isScrolling = false;
-					};
-				if (Themify.body[0].classList.contains('fixed-header') && !Themify.body[0].classList.contains('header-bottom')) {
-					to = this.updateOffset(to);
-				}
-				// Animate scroll
-				Themify.scrollTo(to, +this.options.speed, completeCallback);
-			} else {
-				isWorking = false;
-				this.changeHash(href);
-			}
-		},
-		manualScroll: function(elementsToCheck) {
-
-			this.scrolling = false;
-
-			if ($window.scrollTop() < this.options.fixedHeaderHeight) {
-				this.removeHash();
-			} else {
-				for (var i = 0, len = elementsToCheck.length; i < len; ++i) {
-					var el = elementsToCheck[i];
-					if (!el.data('hideAnchor') && el.data('anchor') && this.isInViewport(el)) {
-						this.changeHash('#' + el.data('anchor'));
-						activeSection = el;
-						break;
-					}
-				}
-				if (activeSection) {
-					if (!this.isInViewport(activeSection)) {
-						this.removeHash();
-						activeSection = null;
-					}
-				} else {
-					isWorking = false;
-				}
-			}
-		},
-		init: function(options) {
-			var self = this,
-				elementsToCheck = [];
-			this.options = $.extend({}, self.defaults, options);
-
-			if (!Themify.is_builder_active) {
-				// Build list of elements to check visibility
-				$('div[class*=' + self.options.prefix.replace('.', '') + ']:visible,.module[id]:visible').not(self.options.exclude).each(function() {
-					elementsToCheck.push($(this));
-				});
-
-				if (!elementsToCheck.length)
-					return;
-
-			}
-			self.setHeaderHeight();
-			// Smooth Scroll and Link Highlight
-			var startX,
-				startY;
-
-			function getCoord(e, c) {
-				return /touch/.test(e.type) ? (e.originalEvent || e).changedTouches[0]['page' + c] : e['page' + c];
-			}
-			$(this.options.context).on('touchstart.themifyScroll', 'a[href*="#"], area[href*="#"]', function(e) {
-				e.stopPropagation();
-				startX = getCoord(e, 'X');
-				startY = getCoord(e, 'Y');
-			}).on('click.themifyScroll touchend.themifyScroll', 'a[href*="#"], area[href*="#"]', function(e) {
-				/* on touch devices ensure visitor means to "tap" the link rather than sliding over it */
-				if ( /touch/.test( e.type ) ) {
-					if (!(Math.abs(getCoord(e, 'X') - startX) < 20 && Math.abs(getCoord(e, 'Y') - startY) < 20)) {
-						return;
-					}
-				}
-				/* ensure the link points to the current page */
-				if ( ! ( this.host === window.location.host && this.pathname === window.location.pathname ) ) {
-					return;
-				}
-				if (isWorking === false && !this.classList.contains('ab-item')) {
-					// Build class to scroll to
-					var href = self.cleanHash($(this));
-					if (href !== '#' && '' !== href) {
-						href = href.indexOf('/') != -1 ? href.substring(0, href.indexOf('/')) : href;
-						var classToScroll = href.replace(/#/, self.options.prefix),
-							$el = $(classToScroll);
-						if($el.length<1 && this.closest('.module')==null){
-							$el = $(href+'.module,.module '+href).first();
-							classToScroll = href;
-						}
-						// If the section exists in this page
-						if ($el.length > 0) {
-							e.preventDefault();
-							e.stopPropagation();
-							isWorking = true;
-							self.linkScroll(classToScroll, href);
-							if (Themify.is_builder_active) {
-								activeSection = true;
-								self.changeHash(href);
+        
+	let isScrolling=false,
+            observer=null,
+            isFixedHeader=true,
+            isFirst=true,
+            isInit=false,
+            currentUrl=null;
+        const options=Object.assign({
+			speed:900,
+			element:'module_row',
+			offset:null,
+			navigation:'#main-nav,.module-menu .nav',
+			updateHash:true
+        },tbLocalScript['scrollHighlight']),
+		_OFFSET=parseInt(options['offset']),
+        w=window.top,
+		header=document.getElementById('headerwrap'),
+        TB_ScrollHighlight={
+            init(el){
+                isFixedHeader=(header!==null && Themify.body[0].classList.contains('fixed-header-enabled')) || _OFFSET>0;
+                if(isInit===false){
+                    const hash = w.location.hash.replace('#','');
+                    if(hash && hash!=='#'){
+                            let item=getCurrentViewItem(document.querySelectorAll('.'+options['element']+'[data-anchor="'+hash+'"]'));
+							if ( ! item ) {
+								// deep linking to content in Builder
+								let deep_link = document.querySelector('.module [data-id="'+hash+'"]');
+								if ( deep_link ) {
+									item = deep_link.closest( '.module' );
+								}
 							}
+                            if(item){
+                                    this.scrollTo(item,hash);
+                            }
+                    }else if(_OFFSET){
+                        Themify.scrollTo(_OFFSET, options['speed']);
+                    }
+                    isInit=true;
+                }
+                this.createObserver(el);
+            },
+            changeHash(){
+                if(isScrolling===false){	
+                        const hash = w.location.hash.replace('#',''),
+                        menus =  document.querySelectorAll(options.navigation);	
+                        for(let i=menus.length-1;i>-1;--i){
+							let selected=menus[i].getElementsByClassName('current-menu-item');
+							for(let j=selected.length-1;j>-1;--j){
+								if(currentUrl===null){
+									currentUrl=selected[j].getElementsByTagName('a')[0].getAttribute('href');
+								}
+								selected[j].classList.remove('current_page_item','current-menu-item');
+							}
+							selected=hash!=='' && hash!=='#'?menus[i].querySelectorAll('a[href*="#' + hash + '"]'):null;
+							if(!selected || selected.length===0){
+								selected =menus[i].querySelectorAll('a[href="' + currentUrl + '"]');
+							}
+							for(let j=selected.length-1;j>-1;--j){
+								let p =selected[j].parentNode;
+								p.classList.add('current-menu-item');
+								if(p.classList.contains('menu-item-object-page')){
+									p.classList.add('current_page_item');
+								}
+							}
+                        }
+						if(currentUrl===null){
+							currentUrl=w.location.href.split('#')[0];
 						}
-					}
-				}
-			});
-
-			if (!Themify.is_builder_active) {
-
-				// Setup scroll event
-				$window.on('scroll', function() {
-					self.scrolling = true;
-				});
-
-				this.requestInterval(function() {
-					if ( !isScrolling && self.scrolling ) {
-						self.manualScroll(elementsToCheck);
-					}
-				}, self.options.scrollRate);
-
-				// Initial section visibility check and link highlight
-				$window.on('load hashchange', function(e) {
-					if (isWorking === false) {
-						isWorking = true;
-						if ( self.isHash(window.location.hash) ) {
-							// If there's a hash, scroll to it
-							var hash = self.cleanHash(window.location.hash),
-								found = false,
-								current_url = self.cleanupURL(window.location.href),
-								$linkHash = $(self.options.context).find('a[href="' + hash + '"], a[href="' + current_url + hash + '"], a[href="' + current_url + '/' + hash + '"]');
-
-							if ($linkHash.length) {
-								$linkHash.each(function() {
-									var $link = $(this);
-									if (self.cleanHash($link) === hash) {
-										found = true;
-										setTimeout(function() {
-											isWorking = false;
-											$link.trigger('click.themifyScroll');
-										}, 600);
-										return;
-									}
+                }
+            },
+            calculatePosition(item){
+                let offset=$(item).offset().top+2;
+                if(isFixedHeader===true){
+                    if(_OFFSET){
+                            offset-=_OFFSET-2;
+                    }
+                    else if(header.classList.contains('fixed-header')){
+                            const bottom=header.getBoundingClientRect().bottom+2;
+                            if(offset>=bottom){
+                                  offset-=bottom;
+                            }
+                    }
+                }
+              return offset;
+            },
+            scrollTo(item,hash){
+                    isScrolling=true;
+					Themify.lazyScroll(Themify.convert(Themify.selectWithParent('[data-lazy]',item)).reverse(),true);
+                    const isDisabled=Themify.lazyScrolling,
+						self=this,
+						_isInit=isInit===false,
+						complete=function(){
+                            //browsers bug intersection sometimes doesn't work after page scrolling on the prev/next row
+                            const type=getCurrentView(),
+									items=document.getElementsByClassName(options.element),
+								obs2=new IntersectionObserver(function (entries, _self) {
+									for (let i = entries.length-1; i>-1;--i) {
+										if (entries[i].isIntersecting === true) {
+											Themify.lazyScroll(Themify.convert(Themify.selectWithParent('[data-lazy]',entries[i].target)).reverse(),true);
+                                        }
+                                    }
+								   _self.disconnect();
+								},{
+									rootMargin:'300px 0px 300px 0px',
+									threshold:.01
 								});
-								if (found === false) {
-									isWorking = false;
-								}
-							} else {
-								// Build class to scroll to
-								var classToScroll = hash.replace(/#/, self.options.prefix);
-								// If the section exists in this page
-								if (-1 === classToScroll.search('/') && $(classToScroll).length) {
-									setTimeout(function() {
-										self.linkScroll(classToScroll, hash);
-									}, 600);
-								} else {
-									isWorking = false;
+							for(let i=items.length-1;i>-1;--i){
+								if(items[i].hasAttribute('data-lazy') && !items[i].classList.contains('hide-'+type)){
+									obs2.observe(items[i]);
 								}
 							}
-						} else {
-							isWorking = false;
-							self.manualScroll(elementsToCheck);
+							if(isFixedHeader===true && (_OFFSET || header.classList.contains('fixed-header'))){
+								Themify.scrollTo(self.calculatePosition(item), options['speed']);  
+							}
+							Themify.lazyScrolling=isDisabled;
+							isScrolling=false;
+							if(_isInit===false){
+								hash=item.hasAttribute('data-hide-anchor')?'':('#' + hash.replace('#',''));
+								w.history.replaceState(null, null,hash);
+							}
+							changeHash();
+                    },
+					progress=isFixedHeader===true && (_OFFSET || !header.classList.contains('fixed-header'))?
+					function(){
+						if(_OFFSET || header.classList.contains('fixed-header')){
+							Themify.scrollTo(self.calculatePosition(item), options['speed'],complete);  
 						}
+					}:null;
+                    Themify.lazyScrolling=true;
+                    Themify.scrollTo(self.calculatePosition(item), options['speed'],complete,progress);
+                    document.activeElement.blur();
+            },
+            createObserver(el){
+                if (options.updateHash) {
+                    if(observer===null){
+                        observer=new window['IntersectionObserver'](function (entries, _self) {
+                            if(isScrolling===false){
+                                    let intersect=false;
+                                    for (let i = 0,len=entries.length; i<len;++i) {
+                                        if (entries[i].isIntersecting === true) {
+                                            intersect=entries[i].target.getAttribute('data-anchor');
+                                        }
+                                    }
+                                    if(intersect===false){	
+                                            if(isFirst===false){
+                                                w.history.replaceState(null, null, ' ');
+                                            }
+                                            else{
+                                                isFirst=false;
+                                            }
+                                    }
+                                    else{
+										w.history.replaceState(null, null, '#' + intersect);
+										changeHash();
+                                    }
+                            }
+                        }, {
+                            rootMargin:'0px 0px -100%',
+                            thresholds:[0,1]
+                        });
+                    }
+                    const items=Themify.selectWithParent(options.element,el);
+                    for(let i=items.length-1;i>-1;--i){
+                        if(!items[i].hasAttribute('data-hide-anchor')){
+                            let hash=items[i].getAttribute('data-anchor');
+                            if(hash && hash!=='#'){
+                                observer.observe(items[i]);
+                            }
+                        }
+                    }
+                }
+            }
+        },
+		getCurrentView=function(){
+			const w = Themify.w,
+				bp=tbLocalScript.breakpoints;
+			for(let k in bp){
+				if(Array.isArray(bp[k])){
+					if(w>=bp[k][0] && w<=bp[k][1]){
+						return k;
 					}
-				});
+				}
+				else if(w<=bp[k]){
+					return k;
+				}
 			}
-
-			// after window.load wait an arbitrary amount of time, waiting
-			// for other stuff to load and redo the header height calculation
-			$( window ).load( function() {
-				setTimeout( function() {
-					self.setHeaderHeight();
-				}, 10000 );
-			} );
-		}
-	};
-})(jQuery, window, document);
+			return 'desktop';
+		},
+		getCurrentViewItem=function(items){
+			if(!items[1]){
+				return items[0]?items[0]:null;
+			}
+			let type=getCurrentView();
+			for(let i=0,l=items.length;i<l;++i){
+				if(!items[i].classList.contains('hide-'+type)){
+					return items[i];
+				}
+			}
+			return null;
+		},
+        changeHash=function(){
+                TB_ScrollHighlight.changeHash();
+        };
+        Themify.on('tb_scroll_highlight_enable',function(){
+            w.addEventListener('hashchange',changeHash,{passive:true});
+            Themify.body.on('click.tb_scroll_highlight','[href*="#"]',function(e){
+                let href = this.getAttribute('href');
+                if(href!=='' && href!==null && href!=='#'){
+                    const parseUrl=new URL(href,w.location);
+                    if(parseUrl.hostname===w.location.hostname && parseUrl.hash && parseUrl.pathname===w.location.pathname){
+                        const hash = parseUrl.hash;
+                        if(hash!=='' && hash!=='#'){
+                            const item=getCurrentViewItem(document.querySelectorAll('.'+options['element']+'[data-anchor="'+hash.replace('#','')+'"]'));
+                            if(item || getCurrentViewItem(document.querySelectorAll(hash+'.module,'+hash+'.module_row'))){
+                                Themify.trigger('tf_side_menu_hide_all');
+                                if(item){
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    TB_ScrollHighlight.scrollTo(item,hash);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .on('tb_scroll_highlight_disable',function(){
+            if(observer){
+                observer.disconnect();
+                observer=null;
+            }
+            w.removeEventListener('hashchange',changeHash,{passive:true});
+            Themify.body.off('click.tb_scroll_highlight');
+        })
+        .on('tb_init_scroll_highlight',function(el){
+			TB_ScrollHighlight.init(el);
+			Themify.trigger( 'tb_scroll_highlight_enable' );
+        });
+        
+        
+})(jQuery,Themify, window, document);

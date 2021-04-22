@@ -1,7 +1,7 @@
 <div id="tmpl-builder-restriction"<?php if ($takeover): ?> class="tb_istakeover"<?php endif; ?>>
     <div class="tb_locked_popup">
         <div class="tb_locked_avatar">
-            <?php echo get_avatar($this->restriction_id, 64, 'mystery') ?>
+            <?php echo get_avatar( self::$restriction_id, 64, 'mystery' ) ?>
         </div>
         <div class="tb_locked_content">
             <div class="tb_locked_info">

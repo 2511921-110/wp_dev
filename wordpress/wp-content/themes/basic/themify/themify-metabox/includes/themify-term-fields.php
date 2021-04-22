@@ -1,4 +1,7 @@
 <?php
+
+defined( 'ABSPATH' ) || exit;
+
 if( ! class_exists( 'Themify_Term_Meta' ) ) :
 /**
  * Manage custom fields for taxonomy terms

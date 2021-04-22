@@ -1,5 +1,5 @@
 var ThemifyStyles;
-(function (window, document, undefined) {
+(function (window, document) {
     'use strict';
     if (typeof String.prototype.trimRight !== 'function') {
         String.prototype.trimRight = function () {
@@ -19,8 +19,9 @@ var ThemifyStyles;
         disableNestedSel:null,
         fonts: {},
         cf_fonts: {},
+        bgImages:[],
         GS:{},
-        init: function (data, breakpointsReverse,bid) {
+        init(data, breakpointsReverse,bid) {
             this.breakpointsReverse = breakpointsReverse;
             AllFields = data;
             this.builder_id=bid;
@@ -32,7 +33,7 @@ var ThemifyStyles;
         getRules:function(module){
             return module?Rules[Rules]:Rules;
         },
-        getStorageRules: function () {
+        getStorageRules() {
             if (themifyBuilder.debug) {
                 return false;
             }
@@ -43,7 +44,7 @@ var ThemifyStyles;
             record = JSON.parse(record);
             return record;
         },
-        setStorageRules: function (v) {
+        setStorageRules(v) {
 
         },
         getStyleData:function(styles,p){
@@ -78,7 +79,7 @@ var ThemifyStyles;
 			}
             return res;
         },
-        extend: function () {
+        extend() {
             // Variables
             var extended = {},
                     deep = false,
@@ -110,7 +111,7 @@ var ThemifyStyles;
             }
             return extended;
         },
-        InitInlineStyles: function () {
+        InitInlineStyles() {
             var points = this.breakpointsReverse,
                 f = document.createDocumentFragment();
             if(tb_app.GS.isGSPage===false){
@@ -124,7 +125,7 @@ var ThemifyStyles;
                     f.appendChild(style);
                 }
             }
-            for (i = points.length - 1; i > -1; --i) {
+            for (var i = points.length - 1; i > -1; --i) {
                 style = document.createElement('style');
                 style.type= 'text/css';
                 style.id = this.styleName + points[i];
@@ -138,22 +139,28 @@ var ThemifyStyles;
                 el.parentNode.replaceChild(f, el);
             }
             else{
-                document.body.appendChild(f);
+				el=document.getElementById('themify_concate-css');
+				if(el!==null){
+					el.parentNode.insertBefore(f, el.nextSibling);
+				}
+				else{
+					document.body.appendChild(f);
+				}
             }
         },
-        getSheet: function (breakpoint,isGlobal) {
+        getSheet(breakpoint,isGlobal) {
             if(isGlobal===true){
                breakpoint+='_global'; 
             }
             return  document.getElementById(this.styleName+breakpoint).sheet;
         },
-        getBaseSelector: function (type, id) {
+        getBaseSelector(type, id) {
             var selector= '.themify_builder_content-'+this.builder_id+' .tb_' + id + '.module';
                 selector += type === 'row' || type === 'column' || type === 'subrow' ? '_' : '-';
                 selector += type;
             return selector;
         },
-        getNestedSelector: function (selectors) {
+        getNestedSelector(selectors) {
             if(this.disableNestedSel===null){
                 var nested = ['p', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'span'],
                         nlen = nested.length;
@@ -171,7 +178,7 @@ var ThemifyStyles;
             }
             return selectors;
         },
-        toRGBA: function (color) {
+        toRGBA(color) {
             if (color !== undefined && color !== '' && color !== '#') {
                 if(color.indexOf('rgba') >= 0){
                     return color;
@@ -192,7 +199,7 @@ var ThemifyStyles;
             }
             return color;
         },
-        getStyleVal: function (id, data) {
+        getStyleVal(id, data) {
             if (this.breakpoint === 'desktop') {
                 return data[id] !== '' ? data[id] : undefined;
             }
@@ -330,7 +337,7 @@ var ThemifyStyles;
                 }
                 return data;
         },
-        createCss: function (data, elType, saving,gsClass,isGSCall) {
+        createCss(data, elType, saving,gsClass,isGSCall) {
             if (!elType) {
                 elType = 'row';
             }
@@ -402,6 +409,9 @@ var ThemifyStyles;
                                             if (col['modules'] !== undefined) {
                                                 for (var m in col['modules']) {
                                                     var mod = col['modules'][m];
+													if ( mod === null ) {
+														continue;
+													}
                                                     if (mod['mod_name'] !== undefined) {
                                                         if(mod['mod_settings']!==undefined){
                                                             setData(mod['mod_name'],mod['element_id'],mod['mod_settings']);
@@ -429,15 +439,19 @@ var ThemifyStyles;
                 if(Object.keys(this.GS).length>0){
                     css['gs'] = this.GS;
                 }	
+                if(Object.keys(this.bgImages).length>0){
+                    css['bg']=this.bgImages;
+                }
                 this.fonts={};
                 this.GS={};
                 this.cf_fonts = {};
+                this.bgImages=[];
                 this.saving = null;
             }
             points=len=self=builder_id=recursiveLoop=null;
             return css;
         },
-        getStyleOptions: function (module) {
+        getStyleOptions(module) {
             if (Rules[module] === undefined) {
                 var all_fields = AllFields;
                 if (all_fields[module] !== undefined) {
@@ -467,12 +481,13 @@ var ThemifyStyles;
                                             }
                                         }
                                         else if(styles[i]['id']!==undefined){ 
+                                            
                                             var id = styles[i]['id'];
                                             if (styles[i]['prop'] !== undefined) {
                                                 Rules[module][id] = self.getStyleData(styles[i],parent);
                                                 var prop = styles[i]['prop'];
 
-                                                if(prop === 'font-size' || prop === 'line-height' || prop==='letter-spacing'){
+                                                if(prop === 'font-size' || prop === 'line-height' || prop==='letter-spacing' || ('range'===type && ('margin-top'===prop || 'margin-bottom'===prop))){
                                                     Rules[module][id+'_unit']={'type':'select','p':parent};
                                                 }
                                                 if (type === 'box_shadow' || type === 'text_shadow') {
@@ -613,7 +628,7 @@ var ThemifyStyles;
             }
             return Rules[module];
         },
-        getFieldCss: function (elementId, module, settings) {
+        getFieldCss(elementId, module, settings) {
             if (AllFields[module] !== undefined) {
 
                 var styles = {},
@@ -680,7 +695,7 @@ var ThemifyStyles;
         },
         fields: {
             frameCache: {},
-            imageGradient: function (id, type, args, data) {
+            imageGradient(id, type, args, data) {
                 var selector = false,
                         is_gradient = id.indexOf('-gradient', 3) !== -1,
                         checked = is_gradient === true ? id.replace('-gradient', '-type') : id + '-type';
@@ -708,7 +723,7 @@ var ThemifyStyles;
                 }
                 return selector;
             },
-            image: function (id, type, args, data) {
+            image(id, type, args, data) {
                 var v = this.getStyleVal(id, data),
                         selector = false;
                 if (v !== undefined) {
@@ -718,6 +733,7 @@ var ThemifyStyles;
                         if (checked && 'image' !== checked && 'video' !== checked ) {
                             return false;
                         }
+                        v = this.breakpoint !== 'desktop' && 'none'===this.getStyleVal('resp_no_bg', data) ? '' : v;
                     }
                     if (v === '') {
                         if (this.breakpoint !== 'desktop') {
@@ -725,12 +741,15 @@ var ThemifyStyles;
                         }
                     }
                     else {
-                        selector = args.prop + ':url(' + v + ');';
+                        if(this.saving===true){
+                            this.bgImages.push(v);
                         }
+                        selector=args.prop + ':url(' + v + ');';
                     }
+                }
                 return selector;
             },
-            gradient: function (id, type, args, data) {
+            gradient(id, type, args, data) {
                 var selector = false,
                     origId = args.id,
                     v = this.getStyleVal(id, data);
@@ -785,14 +804,14 @@ var ThemifyStyles;
                 }
                 return selector;
             },
-            icon_radio: function (id, type, args, data) {
+            icon_radio(id, type, args, data) {
                 var v = this.getStyleVal(id, data);
                 if (!v) {
                     return false;
                 }
                 return args.prop + ':' + v + ';';
             },
-            color: function (id, type, args, data) {
+            color(id, type, args, data) {
                 if (args.prop === 'column-rule-color') {
                     return false;
                 }
@@ -828,7 +847,7 @@ var ThemifyStyles;
                 }
                 return selector;
             },
-            fontColor: function (id, type, args, data) {
+            fontColor(id, type, args, data) {
                 var v = this.getStyleVal(id, data),
                         selector = false;
                 if (v === undefined || v.indexOf('_gradient') === -1) {
@@ -846,7 +865,7 @@ var ThemifyStyles;
                 }
                 return selector;
             },
-            padding: function (id, type, args, data) {
+            padding(id, type, args, data) {
                 var prop = args.prop,
                         propName = prop.indexOf('padding') !== -1 ? 'padding' : 'margin',
                         origId = args.id,
@@ -867,7 +886,7 @@ var ThemifyStyles;
                 }
                 return prop + ':' + v + unit + ';';
             },
-            box_shadow: function (id, type, args, data) {
+            box_shadow(id, type, args, data) {
                 var prop = args.prop,
                     origId = args.id,
                     v = this.getStyleVal(id, data);
@@ -902,10 +921,10 @@ var ThemifyStyles;
                 }
                 return false;
             },
-            text_shadow: function (id, type, args, data) {
+            text_shadow(id, type, args, data) {
                 return this.fields['box_shadow'].call(this,id, type, args, data);
             },
-            border_radius: function (id, type, args, data) {
+            border_radius(id, type, args, data) {
                 var origId = args.id,
                     apply_all = data['checkbox_' + origId + '_apply_all'],
                     prop=args.prop;
@@ -924,7 +943,7 @@ var ThemifyStyles;
                 }
                 return prop + ':' + v + unit + ';';
             },
-            border: function (id, type, args, data) {
+            border(id, type, args, data) {
                 var prop = args.prop,
                         origId = args.id,
                         val,
@@ -935,7 +954,8 @@ var ThemifyStyles;
                 var all = this.getStyleVal(origId + '-type', data);
                 if (all === undefined) {
                     all = 'top';
-                }else if (all === 'all') {
+                }
+				else if (all === 'all') {
                     if (prop.indexOf('border-top')===-1) {
                         return false;
                     }
@@ -947,6 +967,9 @@ var ThemifyStyles;
                     val = style;
                 }
                 else {
+					if(v===undefined){
+						return false;
+					}
                     if (!style) {
                         style = 'solid';
                     }
@@ -961,7 +984,7 @@ var ThemifyStyles;
                 }
                 return prop + ':' + val + ';';
             },
-            select: function (id, type, args, data) {
+            select(id, type, args, data) {
                 var prop = args.prop,
                         selector = '',
                         v = this.getStyleVal(id, data);
@@ -993,6 +1016,12 @@ var ThemifyStyles;
                             else {
                                 prop = 'background-size';
                                 selector = 'background-repeat:no-repeat;';
+                                if (v === 'builder-zooming') {
+                                    selector += 'background-position:center center;';
+                                }
+                                else if (v === 'builder-zoom-scrolling') {
+                                    selector += 'background-position:50%;';
+                                }
                             }
                             v = bg_values[v];
                         }
@@ -1066,7 +1095,7 @@ var ThemifyStyles;
                 selector += prop + ':' + v + ';';
                 return selector;
             },
-            position_box: function (id, type, args, data) {
+            position_box(id, type, args, data) {
                 var prop = args.prop,
                     selector = '',
                     v = this.getStyleVal(id, data),
@@ -1076,7 +1105,7 @@ var ThemifyStyles;
                     return false;
                 }
                 if (prop === 'background-position') {
-                    if (data[args['origId']] === undefined || data[args['origId']] === '') {
+                    if ((data[args['origId']] === undefined || data[args['origId']] === '') && !(data['__dc__'] && data['__dc__'][args['origId']] !== undefined && data['__dc__'][args['origId']] !== '')) {
                         return false;
                     }
                     if (v.indexOf('-')!==-1) {
@@ -1089,7 +1118,7 @@ var ThemifyStyles;
                 selector += prop + ':' + v + ';';
                 return selector;
             },
-            font_select: function (id, type, args, data) {
+            font_select(id, type, args, data) {
                 var v = data[id],
                         selector = '';
                 if (v === 'default' || v === '' || v === undefined) {
@@ -1131,11 +1160,11 @@ var ThemifyStyles;
                 selector += args.prop + ':'+this.parseFontName(v)+';';
                 return selector;
             },
-            frame: function (id, type, args, data) {
+            frame(id, type, args, data) {
                 return false;
             },
-            range: function (id, type, args, data) {
-                if (args.prop === 'column-gap' || args.prop === 'column-rule-width') {
+            range(id, type, args, data) {
+                if ((args.prop === 'column-gap' && args.grid_gap!==true) || args.prop === 'column-rule-width') {
                     return false;
                 }
                 var v = this.getStyleVal(id, data);
@@ -1150,7 +1179,7 @@ var ThemifyStyles;
                 }
                 return args.prop + ':' + v + unit + ';';
             },
-            radio: function (id, type, args, data) {
+            radio(id, type, args, data) {
                 if (args.prop === 'frame-custom') {
                     var side = id.split('-')[0],
                         layout,
@@ -1191,7 +1220,7 @@ var ThemifyStyles;
                                 callback(self.fields.frameCache[key]);
                             }
                             else{
-                                var url = isVisual !== true && typeof themifyBuilder !== 'undefined' ? themifyBuilder.builder_url : tbLocalScript.builder_url,
+                                var url = isVisual !== true && typeof themifyBuilder !== 'undefined' ? themifyBuilder.builder_url : ThemifyBuilderStyle.builder_url,
                                     xhr = new XMLHttpRequest();
                                 url += '/img/row-frame/' + layout + '.svg';
                                 xhr.open('GET', url, false);
@@ -1250,7 +1279,7 @@ var ThemifyStyles;
                 }
 
             },
-            multiColumns: function (id, type, args, data) {
+            multiColumns(id, type, args, data) {
                 if (args.prop !== 'column-count') {
                     return false;
                 }
@@ -1289,7 +1318,7 @@ var ThemifyStyles;
                 }
                 return selector;
             },
-            height: function (id, type, args, data) {
+            height(id, type, args, data) {
                 var prop = 'height', v, selector;
                 if ('auto' === this.getStyleVal(id + '_auto_height', data)) {
                     selector = prop + ':auto;';
@@ -1306,7 +1335,7 @@ var ThemifyStyles;
                 }
                 return selector;
             },
-            filters: function (id, type, args, data) {
+            filters(id, type, args, data) {
                 var ranges = {
                         hue: {
                             unit: 'deg',
@@ -1356,7 +1385,7 @@ var ThemifyStyles;
                 }
                 return 'filter:' + cssValue + ';';
             },
-            text: function (id, type, args, data) {
+            text(id, type, args, data) {
                 var v = this.getStyleVal(id, data),
                     selector = false;
                 if (v !== undefined && v !== '') {
@@ -1364,10 +1393,10 @@ var ThemifyStyles;
                 }
                 return selector;
             },
-            number:function (id, type, args, data) {
+            number(id, type, args, data) {
                 return  this.fields['text'].call(this,id, type, args, data);
             },
-            width: function (id, type, args, data) {
+            width(id, type, args, data) {
                 var prop = args.prop, v, selector,
                     v = this.getStyleVal(id , data);
                 if ('auto' === v) {
@@ -1384,7 +1413,7 @@ var ThemifyStyles;
                 }
                 return selector;
             },
-            position: function (id, type, args, data) {
+            position(id, type, args, data) {
                 var result,
                     v = this.getStyleVal(id, data);
                 if('' === v ){
@@ -1409,7 +1438,7 @@ var ThemifyStyles;
                 return result;
             }
         },
-        cleanUnusedStyles: function (items) {
+        cleanUnusedStyles(items) {
             for (var i in items) {
                 var suffix,
                         opt = [],
@@ -1639,7 +1668,7 @@ var ThemifyStyles;
                          }
                     }
                     for (var i in css) {
-                        if(i!=='gs'){
+                        if(i!=='gs' && i!=='bg'){
                             if (i !== 'fonts' && i !== 'cf_fonts') {
                                 var st = document.createElement('style'),
                                     cssText = '';
@@ -1672,7 +1701,7 @@ var ThemifyStyles;
                     var fontKeys = Object.keys(cssFonts);
                     for(var key = fontKeys.length-1;key>=0;--key){
                         if (cssFonts[fontKeys[key]].length > 0) {
-                            var url = 'fonts' === fontKeys[key] ? '//fonts.googleapis.com/css?family=' + cssFonts[fontKeys[key]].join('|') + '&subset=latin': tbLocalScript.cf_api_url + cssFonts[fontKeys[key]].join('|');
+                            var url = 'fonts' === fontKeys[key] ? '//fonts.googleapis.com/css?family=' + cssFonts[fontKeys[key]].join('|'): ThemifyBuilderStyle.cf_api_url + cssFonts[fontKeys[key]].join('|');
                             Themify.LoadCss(url, false);
                         }else {
                             delete css[fontKeys[key]];
@@ -1709,26 +1738,26 @@ var ThemifyStyles;
         };
         document.addEventListener('DOMContentLoaded',Regenerate );
         document.addEventListener('tb_regenerate_css',Regenerate );
-    }else if(window['themifyBuilder']!==undefined){
+    }
+    else if(window['themifyBuilder']!==undefined){
+        let fonts;
         if (themifyBuilder.google !== undefined) {
-            var fonts = themifyBuilder.google;
+            let fonts = themifyBuilder.google;
             themifyBuilder.google = {};
-            for (var i = fonts.length - 1; i > -1; --i) {
+            for (let i = fonts.length - 1; i > -1; --i) {
                 if ('' !== fonts[i].value && 'default' !== fonts[i].value) {
                     themifyBuilder.google[fonts[i].value] = {'n': fonts[i].name, 'v': fonts[i].variant};
                 }
             }
-            fonts = null;
         }
         if (themifyBuilder.cf !== undefined) {
-            var fonts = themifyBuilder.cf;
+            fonts = themifyBuilder.cf;
             themifyBuilder.cf = {};
-            for (var i = fonts.length - 1; i > -1; --i) {
+            for (let i = fonts.length - 1; i > -1; --i) {
                 if ('' !== fonts[i].value && 'default' !== fonts[i].value) {
                     themifyBuilder.cf[fonts[i].value] = {'n': fonts[i].name, 'v': fonts[i].variant};
                 }
             }
-            fonts = null;
         }
     }
-})(window, document, undefined);
+})(window, document);

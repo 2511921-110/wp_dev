@@ -1,19 +1,13 @@
-<?php get_header(); ?>
+<?php get_header();
 
-<?php 
-/** Themify Default Variables
- *  @var object */
-global $themify;
-?>
-
-<?php if( have_posts() ) while ( have_posts() ) : the_post(); ?>
+if( have_posts() ){ the_post(); ?>
 
 <!-- layout-container -->
-<div id="layout" class="pagewidth clearfix">
+<div id="layout" class="pagewidth tf_clearfix">
 
 	<?php themify_content_before(); // hook ?>
 	<!-- content -->
-	<div id="content" class="list-post">
+	<main id="content" class="list-post">
     	<?php themify_content_start(); // hook ?>
 		
 		<?php get_template_part( 'includes/loop' , 'single'); ?>
@@ -24,24 +18,14 @@ global $themify;
 
 		<?php get_template_part( 'includes/post-nav'); ?>
 
-		<?php if(!themify_check('setting-comments_posts')): ?>
-			<?php comments_template(); ?>
-		<?php endif; ?>
+		<?php themify_comments_template(); ?>
         
 		<?php themify_content_end(); // hook ?>	
-	</div>
+	</main>
 	<!-- /content -->
-    <?php themify_content_after(); // hook ?>
-
-<?php endwhile; ?>
-
-<?php 
-/////////////////////////////////////////////
-// Sidebar							
-/////////////////////////////////////////////
-if ($themify->layout != "sidebar-none"): get_sidebar(); endif; ?>
-
+    <?php themify_content_after(); // hook 
+}
+themify_get_sidebar();?>
 </div>
 <!-- /layout-container -->
-	
-<?php get_footer(); ?>
+<?php get_footer(); 

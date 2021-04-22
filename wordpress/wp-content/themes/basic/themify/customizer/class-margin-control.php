@@ -1,5 +1,6 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class to create a control to set the margin of an element.
@@ -42,7 +43,7 @@ class Themify_Margin_Control extends Themify_Control {
 				'bottom' => __( 'Padding Bottom', 'themify' ),
 				'left'   => __( 'Padding Left', 'themify' ),
 			);
-			$apply_to_all = __( 'Apply to all padding.', 'themify' );
+			$apply_to_all = __( 'Apply to all padding', 'themify' );
 		} else {
 			$property = __( 'Margin', 'themify' );
 			$dimension_type = 'margin';
@@ -53,7 +54,7 @@ class Themify_Margin_Control extends Themify_Control {
 				'bottom' => __( 'Margin Bottom', 'themify' ),
 				'left'   => __( 'Margin Left', 'themify' ),
 			);
-			$apply_to_all = __( 'Apply to all margin.', 'themify' );
+			$apply_to_all = __( 'Apply to all margin', 'themify' );
 		}
 				$label = $this->show_label && ! empty( $this->label );
 		?>

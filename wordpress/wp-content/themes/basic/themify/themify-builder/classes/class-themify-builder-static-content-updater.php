@@ -1,7 +1,6 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+
+defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'WP_Async_Request', false ) ) {
 	include_once( THEMIFY_BUILDER_INCLUDES_DIR . '/libraries/wp-async-request.php' );
@@ -31,9 +30,8 @@ class Themify_Builder_Static_Content_Updater extends WP_Background_Process {
 	 * @return mixed
 	 */
 	protected function task( $item ) {
-		global $ThemifyBuilder_Data_Manager;
 
-		$ThemifyBuilder_Data_Manager->run_static_content_updater( $item );
+		ThemifyBuilder_Data_Manager::run_static_content_updater( $item );
 
 		return false;
 	}

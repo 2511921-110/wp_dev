@@ -11,14 +11,15 @@
  ***************************************************************************/
 (function (exports, $) {
 
+	'use strict';
 	/**
 	 * Parse JSON string and returns object.
 	 *
-	 * Similar to $.parseJSON, however if parse fails returns an empty object instead of throwing errors.
+	 * If parse fails returns an empty object instead of throwing errors.
 	 */
 	function parseJSON( data ) {
 		try {
-			data = $.parseJSON( data );
+			data = JSON.parse( data );
 		}
 		catch( error ) {
 			data = {};
@@ -27,7 +28,7 @@
 		return data;
 	}
 
-	'use strict';
+
 	// Google Font Loader for fonts preview
 	var wf = document.createElement('script'),
             s = document.getElementsByTagName('script')[0];
@@ -102,7 +103,7 @@
 			$('.themify-control-sub-accordeon').hide();
 
 			$( 'body' ).on( 'mouseover', '.devices [data-device]', function( e ) {
-				var $title = 'Styling: ' + $( this ).data( 'device' ).replace( '_', ' ' );
+				var $title = '' + $( this ).data( 'device' ).replace( '_', ' ' );
 				$( this ).append( '<span class="themify_customize_tooltip">' + $title + '</span>' );
 			} ).on( 'mouseout', '.devices [data-device]', function( e ) {
 				$(this).children('.themify_customize_tooltip').remove();
@@ -183,11 +184,11 @@
 				});
 
 				file_frame.on('select', function () {
-					var attachment = file_frame.state().get('selection').first().toJSON();
+					var attachment = file_frame.state().get('selection').first().toJSON(),
 
-					var $imgPreview = $('<a href="#" class="remove-image ti-close"></a><img src="' + attachment.url + '" />').css('display', 'inline-block');
+                                        $imgPreview = $('<a href="#" class="remove-image tf_close"></a><img src="' + attachment.url + '" />').css('display', 'inline-block'),
 
-					var $preview = $('.themify_control_preview', control.container),
+                                        $preview = $('.themify_control_preview', control.container),
 							$close = $('a', $preview),
 							$imgPre = $('img', $preview);
 
@@ -1013,6 +1014,8 @@
 						control.value[control.id].family = parseJSON($('option:selected', $(this)).val());
 					}
 					if($variants){
+						$font_weight.closest( '.themify-customizer-brick' ).show();
+
 						$variants = $.trim($variants).split(',');
 						$font_weight.find('option').each(function(){
 							if($.inArray($(this).val(),$variants)===-1){
@@ -1032,9 +1035,14 @@
 								}
 							});
 						}
-					}
-					else{
-						$font_weight.find('option').show();
+					} else if ( typeof $variants === 'string' ) {
+						// empty data-variants, the font has no variant
+						$font_weight.val( '' ).find( 'option' ).hide()
+							.closest( '.themify-customizer-brick' ).hide();
+					} else {
+						// missing variation data (eg, web-safe fonts), show all available variants by default
+						$font_weight.find( 'option' ).show()
+							.closest( '.themify-customizer-brick' ).show();
 					}
 					$field.val(JSON.stringify(control.value[control.id])).trigger('change');
 					$('#themify_font_preview').hide();
@@ -1061,15 +1069,11 @@
 						if($cf_fonts.length>0){
 							for (var $i in $cf_fonts) {
 								var $name = $cf_fonts[$i].name,
-									$value = $cf_fonts[$i].value;
+                                                                    $value = $cf_fonts[$i].value,
+                                                                    $val = '{"fonttype":"cf","name":"' + $value + '"}';
 								$s = $selected && $selected == $value ? 'selected="selected"' : '';
-								$val = '{"fonttype":"cf"';
-								if ($cf_fonts[$i].subsets) {
-									$val += ',"subsets":"' + control.escapeHtml($cf_fonts[$i].subsets) + "'";
-								}
 								$name = control.escapeHtml($name);
-								$val += ',"name":"' + $value + '"}';
-								$html += "<option data-variants='"+$cf_fonts[$i].variant+"' data-value='" + $value + "' class='cf_font' " + $s + "  value='" + $val + "'>" + $name + "</option>";
+								$html += "<option data-variants='"+$cf_fonts[$i].variants+"' data-value='" + $value + "' class='cf_font' " + $s + "  value='" + $val + "'>" + $name + "</option>";
 							}
 							$cf_fonts = null;
 							$(this).children('optgroup').first().html($html);
@@ -1080,7 +1084,7 @@
 							var $name = $fonts[$i].value,
 								$s = $selected && $selected == $name ? 'selected="selected"' : '';
 							$name = control.escapeHtml($name);
-							var $val = '{"fonttype":"websafe","name":"' + $name + '"}';
+                                                        $val = '{"fonttype":"websafe","name":"' + $name + '"}';
 							$html += "<option " + $s + " data-value='" + $name + "' value='" + $val + "'>" + $fonts[$i].name + "</option>";
 						}
 						$fonts = null;
@@ -1088,14 +1092,11 @@
 						$html = '';
 						for (var $i in $google) {
 							var $name = $google[$i].name,
-								$s = $selected && $selected == $name ? 'selected="selected"' : '';
-								$val = '{"fonttype":"google"';
-							if ($google[$i].subsets) {
-								$val += ',"subsets":"' + control.escapeHtml($google[$i].subsets) + "'";
-							}
+                                                            $s = $selected && $selected == $name ? 'selected="selected"' : '',
+                                                            $val = '{"fonttype":"google"';
 							$name = control.escapeHtml($name);
 							$val += ',"name":"' + $name + '"}';
-							$html += "<option data-variants='"+$google[$i].variant+"' data-value='" + $name + "' class='google_font' " + $s + "  value='" + $val + "'>" + $google[$i].name + "</option>";
+							$html += "<option data-variants='"+$google[$i].variants+"' data-value='" + $name + "' class='google_font' " + $s + "  value='" + $val + "'>" + $google[$i].name + "</option>";
 						}
 						$google = null;
 						$(this).children('optgroup').last().html($html);
@@ -1125,10 +1126,6 @@
 							if($('#themify_font_preview').is(':visible') && !$this.find('.scombobox-list').is(':visible')){
 								$('#themify_font_preview').hide();
 							}
-						},callback:{
-							func: function(){
-								this.scombobox('open');
-							}
 						}
 					});
 
@@ -1148,7 +1145,7 @@
 			});
 		},
 		fontHover: function () {
-			$('.themify_combobox').delegate('.scombobox-list p', 'hover', function (e) {
+			$('.themify_combobox').delegate('.scombobox-list p', 'mouseover', function (e) {
 				e.stopImmediatePropagation();
 				var $preview = $('#themify_font_preview');
 				if ($(this).data('value') && $(this).is(':visible')) {
@@ -1990,9 +1987,8 @@
 					if ( 'true' === control.getParameterByName('cleared') ) {
 						window.location.reload();
 					} else {
-						var hashlink = control.addQueryArg('cleared', 'true', (window.top.location.href));
+						var hashlink = window.top.location.href;
 						hashlink = (hashlink[hashlink.length-1] == '#') ? hashlink.replace('#' , '') : hashlink;
-						console.log(hashlink);
 						window.top.location = hashlink;
 					}
 					api.ThemifyTools.field = false;
@@ -2082,25 +2078,32 @@
 	themifyResponsiveHelper();
 
 	// Mobile Menu Customizer
-	/* when closing the Mobile Menu accordion, close the sidemenu panel automatically */
-	$( 'body' ).on( 'click', '#customize-control-start_mobile_menu_acc_ctrl:not(.topen) > .themify-suba-toggle', function ( e ) {
+	$( 'body' )
+	.on( 'click', '#customize-control-start_mobile_menu_acc_ctrl > .themify-suba-toggle', function ( e ) {
 		var menuPreview = $('#customize-preview > iframe')[0].contentWindow;
-		menuPreview.jQuery('#menu-icon').themifySideMenu( 'hide' );
-	} )
-	/* when Mobile Menu toggle is opened, show the sidemenu panel, activate the Desktop breakpoint and resize the preview window */
-	.on( 'click', '#customize-control-start_mobile_menu_acc_ctrl.topen > .themify-suba-toggle', function ( e ) {
-		var menuPreview = $('#customize-preview > iframe')[0].contentWindow;
-		$('#customize-footer-actions .preview-desktop').click();
-		// wait 1 second for resizing to desktop to finish
-		setTimeout( function(){
-			if( $( '#customize-preview' ).width() > themifyCustomizerControls.mobile_menu_trigger_point ) {
-				$( '#customize-preview' ).css( {
-					width: themifyCustomizerControls.mobile_menu_trigger_point + 'px',
-					marginLeft: ( $( '#customize-preview' ).width() - themifyCustomizerControls.mobile_menu_trigger_point ) / 2
-				} );
-			}
-			menuPreview.jQuery('#menu-icon').themifySideMenu( 'show' );
-		}, 1000 );
+		if ( $( this ).closest( '.customize-control' ).hasClass( 'topen' ) ) {
+			/* when Mobile Menu toggle is opened, show the sidemenu panel, activate the Desktop breakpoint and resize the preview window */
+			$('#customize-footer-actions .preview-desktop').click();
+			// wait 1 second for resizing to desktop to finish
+			setTimeout( function(){
+				if( $( '#customize-preview' ).width() > themifyCustomizerControls.mobile_menu_trigger_point ) {
+					$( '#customize-preview' ).css( {
+						width: themifyCustomizerControls.mobile_menu_trigger_point + 'px',
+						marginLeft: ( $( '#customize-preview' ).width() - themifyCustomizerControls.mobile_menu_trigger_point ) / 2
+					} );
+				}
+				// open mobile menu
+				setTimeout( function(){
+					if ( ! menuPreview.jQuery( 'body' ).hasClass( 'mobile-menu-visible' ) ) {
+						menuPreview.jQuery( '#menu-icon span' ).click();
+					}
+				}, 1000 );
+
+			}, 1000 );
+		} else {
+			// on closing Mobile Menu settings, re-activate desktop breakpoint
+			$('#customize-footer-actions .preview-desktop').click();
+		}
 	})
 	/* when switching to a breakpoint other than desktop, close the Mobile Menu settings */
 	.on( 'click', '#customize-footer-actions button', function(){

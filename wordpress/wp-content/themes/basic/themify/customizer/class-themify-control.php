@@ -1,6 +1,6 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Parent class that holds methods used in children classes.
@@ -89,7 +89,7 @@ class Themify_Control extends WP_Customize_Control {
         <!-- Color & Opacity -->
         <div class="color-picker">
             <input type="text" class="color-select" value="<?php echo esc_attr($color); ?>" data-opacity="<?php echo esc_attr($opacity); ?>" id="<?php echo esc_attr($color_id); ?>"/>
-            <a class="remove-color ti-close" href="#" <?php echo ( '' != $color || '' != $opacity ) ? 'style="display:inline"' : ''; ?> ></a>
+            <a class="remove-color tf_close" href="#" <?php echo ( '' != $color || '' != $opacity ) ? 'style="display:inline"' : ''; ?> ></a>
             <?php if (true == $args['side_label']) : ?>
                 <label for="<?php echo esc_attr($color_id); ?>" class="color-picker-label"><?php echo esc_html($args['color_label']); ?></label>
             <?php endif; ?>
@@ -133,12 +133,12 @@ class Themify_Control extends WP_Customize_Control {
             <a href="#" class="open-media"
                data-uploader-title="<?php esc_attr_e('Browse Image', 'themify') ?>"
                data-uploader-button-text="<?php esc_attr_e('Insert Image', 'themify'); ?>">
-                <span class="ti-plus"></span></a>
+                <span class="tf_plus_icon"></span></a>
 
             <div class="themify_control_preview">
 
                 <?php if ('' != $thumb_src) : ?>
-                    <a href="#" class="remove-image ti-close"></a>
+                    <a href="#" class="remove-image tf_close"></a>
                     <img src="<?php echo esc_url($thumb_src); ?>" />
                 <?php endif; ?>
             </div>
@@ -146,7 +146,7 @@ class Themify_Control extends WP_Customize_Control {
             <?php if (true == $args['show_size_fields']) : ?>
                 <div class="image-size">
                     <label><input type="text" class="img-width" value="<?php echo esc_attr($img_width); ?>" /></label>
-                    <span class="ti-close"></span>
+                    <span class="tf_close"></span>
                     <label><input type="text" class="img-height" value="<?php echo esc_attr($img_height); ?>" /> <?php _e('px', 'themify'); ?></label>
                 </div>
             <?php endif; ?>
@@ -239,17 +239,17 @@ class Themify_Control extends WP_Customize_Control {
                         if (!empty($themify_gfonts)) {
 
                             foreach ($themify_gfonts as $v) {
-                                $v['variant'] = !empty($v['variant']) ? str_replace(array('regular', '700', '900', '400'), array('normal', 'bold', 'bolder', 'normal'), $v['variant']) : '';
-                                self::$googlefonts[$v['family']] = array('name' => $v['family'], 'subsets' => !empty($v['subsets']) ? $v['subsets'] : '', 'variant' => $v['variant']);
+                                $v['variants'] = !empty($v['variants']) ? str_replace(array('regular', '700', '900', '400'), array('normal', 'bold', 'bolder', 'normal'), $v['variants']) : array();
+                                self::$googlefonts[$v['label']] = array('name' => $v['label'], 'variants' => $v['variants']);
                             }
                         }
-						$themify_cf_fonts = Themify_Custom_Fonts::get_list('customizer');
-						if (!empty($themify_cf_fonts)) {
-							foreach ($themify_cf_fonts as $v) {
-								$v['variant'] = !empty($v['variant']) ? str_replace(array('regular', '700', '900', '400'), array('normal', 'bold', 'bolder', 'normal'), $v['variant']) : '';
-								self::$cfFonts[$v['value']] = array('value'=>$v['value'],'name' => $v['name'], 'subsets' => '', 'variant' => $v['variant']);
-							}
-						}
+			$themify_cf_fonts = Themify_Custom_Fonts::get_list('customizer');
+			if (!empty($themify_cf_fonts)) {
+				foreach ($themify_cf_fonts as $v) {
+					$v['variant'] = !empty($v['variant']) ? str_replace(array('regular', '700', '900', '400'), array('normal', 'bold', 'bolder', 'normal'), $v['variant']) : '';
+					self::$cfFonts[$v['value']] = array('value'=>$v['value'],'name' => $v['name'], 'variants' => $v['variant']);
+				}
+			}
                         ?>
                         <input id="themify_fonts_hidden" type="hidden" value="<?php echo esc_attr(wp_json_encode(array('cf' => array_values(self::$cfFonts),'google' => array_values(self::$googlefonts), 'fonts' => array_values(self::$webfonts)))); ?>" />
                     <?php endif; ?>
@@ -303,13 +303,19 @@ class Themify_Control extends WP_Customize_Control {
         <?php endif; // show_lineheight  ?>
         <?php if (!isset($args['hide_bold']) || !$args['hide_bold']) : ?>
             <?php $weights = array(100 => 100, 200 => 200, 300 => 300, 'normal' => 'normal', 500 => 500, 600 => 600, 'bold' => 'bold', 800 => 800, 'bolder' => 'bolder'); ?>
-            <div class="themify-customizer-brick">
+            <div class="themify-customizer-brick" <?php if ( $font_family && (
+								( isset( self::$googlefonts[ $font_family ] ) && empty( self::$googlefonts[ $font_family ]['variants'] ) )
+								|| ( isset( self::$cfFonts[ $font_family ] ) && empty( self::$cfFonts[ $font_family ]['variants'] ) )
+							) ) : ?>style="display:none;"<?php endif; ?>>
                 <!-- FONT WEIGHT -->
                 <div class="custom-select themify-font-weight">
                     <select class="font_weight_select">
                         <option></option>
-                        <?php foreach ($weights as $k => $w) : ?>
-                            <option <?php if ($font_family && ( (isset(self::$googlefonts[$font_family]) && !in_array($k, self::$googlefonts[$font_family]['variant']) ) || (isset(self::$cfFonts[$font_family]) && !in_array($k, self::$cfFonts[$font_family]['variant'])) )): ?>style="display:none;"<?php endif; ?> value="<?php echo $k; ?>" <?php selected($k, $weight); ?>><?php echo $w; ?></option>
+                        <?php foreach ( $weights as $k => $w ) : ?>
+                            <option <?php if ( $font_family && (
+								( isset( self::$googlefonts[ $font_family ] ) && ! in_array( $k, self::$googlefonts[ $font_family ]['variants'] ) )
+								|| ( isset( self::$cfFonts[ $font_family ] ) && ! in_array( $k, self::$cfFonts[ $font_family ]['variants'] ) )
+							) ) : ?>style="display:none;"<?php endif; ?> value="<?php echo $k; ?>" <?php selected( $k, $weight ); ?>><?php echo $w; ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -335,35 +341,35 @@ class Themify_Control extends WP_Customize_Control {
         <?php if ($args['show_decoration']) : ?>
             <!-- TEXT STYLE & DECORATION -->
             <div class="themify_font_style themify-customizer-brick">
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_italic, 'italic')); ?>" data-style="italic"><?php _e('i', 'themify'); ?></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_normal, 'normal')); ?>" data-style="normal"><?php _e('N', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_italic, 'italic')); ?>" data-style="italic" data-title="<?php esc_attr_e( 'Italic', 'themify' ) ?>"><?php _e('i', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_normal, 'normal')); ?>" data-style="normal" data-title="<?php esc_attr_e( 'Normal', 'themify' ) ?>"><?php _e('N', 'themify'); ?></button>
                 <?php if (isset($args['hide_bold']) && $args['hide_bold']): ?>
-                    <button type="button" class="button <?php echo esc_attr($this->style_is($font_weight, 'bold')); ?>" data-style="bold"><?php _e('B', 'themify'); ?></button>
+                    <button type="button" class="button <?php echo esc_attr($this->style_is($font_weight, 'bold')); ?>" data-style="bold" data-title="<?php esc_attr_e( 'Bold', 'themify' ) ?>"><?php _e('B', 'themify'); ?></button>
                 <?php endif; ?>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_underline, 'underline')); ?>" data-style="underline"><?php _e('U', 'themify'); ?></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_linethrough, 'linethrough')); ?>" data-style="linethrough"><?php _e('S', 'themify'); ?></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_nostyle, 'nostyle')); ?>" data-style="nostyle"><?php _e('&times;', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_underline, 'underline')); ?>" data-style="underline" data-title="<?php esc_attr_e( 'Underline', 'themify' ) ?>"><?php _e('U', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_linethrough, 'linethrough')); ?>" data-style="linethrough" data-title="<?php esc_attr_e( 'Line Through', 'themify' ) ?>"><?php _e('S', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_nostyle, 'nostyle')); ?>" data-style="nostyle" data-title="<?php esc_attr_e( 'No Styles', 'themify' ) ?>"><?php _e('&times;', 'themify'); ?></button>
             </div>
         <?php endif; // show_decoration  ?>
 
         <?php if ($args['show_transform']) : ?>
             <!-- TEXT TRANSFORM -->
             <div class="themify_text_transform themify-customizer-brick">
-                <button type="button" class="button <?php echo esc_attr($this->style_is($text_transform, 'uppercase')); ?>" data-texttransform="uppercase"><?php _e('AA', 'themify'); ?></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($text_transform, 'lowercase')); ?>" data-texttransform="lowercase"><?php _e('ab', 'themify'); ?></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($text_transform, 'capitalize')); ?>" data-texttransform="capitalize"><?php _e('Ab', 'themify'); ?></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($text_transform, 'notexttransform')); ?>" data-texttransform="notexttransform"><?php _e('&times;', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($text_transform, 'uppercase')); ?>" data-texttransform="uppercase" data-title="<?php esc_attr_e( 'Uppercase', 'themify' ) ?>"><?php _e('AA', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($text_transform, 'lowercase')); ?>" data-texttransform="lowercase" data-title="<?php esc_attr_e( 'Lowercase', 'themify' ) ?>"><?php _e('ab', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($text_transform, 'capitalize')); ?>" data-texttransform="capitalize" data-title="<?php esc_attr_e( 'Capitalize', 'themify' ) ?>"><?php _e('Ab', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($text_transform, 'notexttransform')); ?>" data-texttransform="notexttransform" data-title="<?php esc_attr_e( 'Disable', 'themify' ) ?>"><?php _e('&times;', 'themify'); ?></button>
             </div>
         <?php endif; // show_transform  ?>
 
         <?php if ($args['show_align']) : ?>
             <!-- TEXT ALIGN -->
             <div class="themify_font_align themify-customizer-brick">
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_align, 'left')); ?>" data-align="left"><span class="ti-align-left"></span></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_align, 'center')); ?>" data-align="center"><span class="ti-align-center"></span></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_align, 'right')); ?>" data-align="right"><span class="ti-align-right"></span></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_align, 'justify')); ?>" data-align="justify"><span class="ti-align-justify"></span></button>
-                <button type="button" class="button <?php echo esc_attr($this->style_is($font_noalign, 'noalign')); ?>" data-align="noalign"><?php _e('&times;', 'themify'); ?></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_align, 'left')); ?>" data-align="left" data-title="<?php esc_attr_e( 'Align Left', 'themify' ) ?>"><span class="ti-align-left"></span></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_align, 'center')); ?>" data-align="center" data-title="<?php esc_attr_e( 'Center', 'themify' ) ?>"><span class="ti-align-center"></span></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_align, 'right')); ?>" data-align="right" data-title="<?php esc_attr_e( 'Align Right', 'themify' ) ?>"><span class="ti-align-right"></span></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_align, 'justify')); ?>" data-align="justify" data-title="<?php esc_attr_e( 'Justify', 'themify' ) ?>"><span class="ti-align-justify"></span></button>
+                <button type="button" class="button <?php echo esc_attr($this->style_is($font_noalign, 'noalign')); ?>" data-align="noalign" data-title="<?php esc_attr_e( 'No Alignment', 'themify' ) ?>"><?php _e('&times;', 'themify'); ?></button>
             </div>
         <?php endif; // show_align  ?>
         <?php

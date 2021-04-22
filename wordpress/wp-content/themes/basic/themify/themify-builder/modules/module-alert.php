@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Alert
  * Description: Display Alert content
@@ -23,7 +24,11 @@ class TB_alert_Module extends Themify_Builder_Component_Module {
 	    'slug' => 'alert'
 	));
     }
-
+    public function get_assets() {
+	return array(
+		'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+	);
+    }
     public function get_plain_text($module) {
 	$text = isset($module['heading_alert']) ? $module['heading_alert'] : '';
 	if (isset($module['text_alert'])) {
@@ -102,9 +107,9 @@ class TB_alert_Module extends Themify_Builder_Component_Module {
 		    'url' => __('Go to URL', 'themify'),
 		),
 		'binding' => array(
-		    'close' => array('hide' => array('alert_message_text', 'action_btn_link_alert', 'open_link_new_tab_alert')),
-		    'message' => array('show' => array('alert_message_text'), 'hide' => array('action_btn_link_alert', 'open_link_new_tab_alert')),
-		    'url' => array('show' => array('action_btn_link_alert', 'open_link_new_tab_alert'), 'hide' => array('alert_message_text'))
+		    'close' => array('hide' => array('alert_message_text', 'action_btn_link_alert', 'open_link_new_tab_alert', 'lb_size_alert')),
+		    'message' => array('show' => 'alert_message_text', 'hide' => array('action_btn_link_alert', 'open_link_new_tab_alert', 'lb_size_alert')),
+		    'url' => array('show' => array('action_btn_link_alert', 'open_link_new_tab_alert', 'lb_size_alert'), 'hide' =>'alert_message_text')
 		)
 	    ),
 	    array(
@@ -124,9 +129,51 @@ class TB_alert_Module extends Themify_Builder_Component_Module {
 		'label' => __('Open Link', 'themify'),
 		'options' => array(
 		    array('value' => 'no', 'name' => __('Same Window', 'themify')),
-		    array('value' => 'yes', 'name' => __('New Window', 'themify'))
-		)
+		    array('value' => 'yes', 'name' => __('New Window', 'themify')),
+		    array('value' => 'lightbox', 'name' => __('Lightbox', 'themify')),
+		),
+		'option_js' => true,
 	    ),
+		array(
+			'type' => 'multi',
+			'id' => 'lb_size_alert',
+			'label' => __('Lightbox Dimension', 'themify'),
+			'options' => array(
+				array(
+					'id' => 'lightbox_width',
+					'label' => 'w', 
+					'type' => 'range',
+					'control'=>false,
+					'units' => array(
+						'px' => array(
+							'max' => 3500
+						),
+						'em' => array(
+							'min' => -10,
+							'max' => 10
+						),
+						'%' =>''
+					)
+				),
+				array(
+					'id' => 'lightbox_height',
+					'label' => 'ht',
+					'type' => 'range',
+					'control'=>false,
+					'units' => array(
+						'px' => array(
+							'max' => 3500
+						),
+						'em' => array(
+							'min' => -10,
+							'max' => 10
+						),
+						'%' => ''
+					)
+				)
+			),
+			'wrap_class' => 'tb_group_element_lightbox lightbox_size'
+		),
 	    array(
 		'id' => 'action_btn_color_alert',
 		'type' => 'layout',
@@ -198,10 +245,10 @@ class TB_alert_Module extends Themify_Builder_Component_Module {
 		),
 		'binding' => array(
 		    'checked' => array(
-			'show' => array('alert_auto_close_delay')
+			'show' =>'alert_auto_close_delay'
 		    ),
 		    'not_checked' => array(
-			'hide' => array('alert_auto_close_delay')
+			'hide' =>'alert_auto_close_delay'
 		    )
 		)
 	    ),
@@ -219,7 +266,7 @@ class TB_alert_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
 	    'heading_alert' => esc_html__('Alert Heading', 'themify'),
 	    'text_alert' => esc_html__('Alert Text', 'themify'),
@@ -230,7 +277,7 @@ class TB_alert_Module extends Themify_Builder_Component_Module {
 	    'color_alert' => 'tb_default_color'
 	);
     }
-
+    
     public function get_styling() {
 	$general = array(
 	    // Background
@@ -357,6 +404,21 @@ class TB_alert_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -396,6 +458,8 @@ class TB_alert_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 
 	$alert_title = array(
@@ -585,28 +649,28 @@ class TB_alert_Module extends Themify_Builder_Component_Module {
     }
 
     protected function _visual_template() {
-	$module_args = $this->get_module_args();
+	$module_args = self::get_module_args();
 	?>
-    <# data.color_alert = undefined === data.color_alert || 'default' === data.color_alert ? 'tb_default_color' : data.color_alert; #>
-    <# data.action_btn_color_alert = undefined === data.action_btn_color_alert || 'default' === data.action_btn_color_alert ? 'tb_default_color' : data.action_btn_color_alert; #>
+    <# data.color_alert = undefined === data.color_alert || 'default' === data.color_alert ? 'tb_default_color' : data.color_alert;
+	data.action_btn_color_alert = undefined === data.action_btn_color_alert || 'default' === data.action_btn_color_alert ? 'tb_default_color' : data.action_btn_color_alert; #>
 	<div class="module module-<?php echo $this->slug; ?> ui {{ data.layout_alert }} {{ data.color_alert }} {{ data.css_alert }} {{ data.background_repeat }} <# data.appearance_alert ? print( data.appearance_alert.split('|').join(' ') ) : ''; #>">
 	    <# if ( data.mod_title_alert ) { #>
 	    <?php echo $module_args['before_title']; ?>{{{ data.mod_title_alert }}}<?php echo $module_args['after_title']; ?>
 	    <# } #>
 	    <div class="alert-inner">
-		<div class="alert-content">
+		<div class="alert-content tf_left">
 		    <h3 class="alert-heading" contenteditable="false" data-name="heading_alert">{{{ data.heading_alert }}}</h3>
 		    <div class="tb_text_wrap" contenteditable="false" data-name="text_alert">{{{ data.text_alert }}}</div>
 		</div>
 		<# if ( data.action_btn_text_alert ) { #>
-		<div class="alert-button">
-		    <a href="{{ data.action_btn_link_alert }}" class="ui builder_button {{ data.action_btn_color_alert }} <# data.action_btn_appearance_alert  ? print( data.action_btn_appearance_alert.split('|').join(' ') ) : ''; #>">
+		<div class="alert-button tf_right tf_textr">
+            <a href="{{ data.action_btn_link_alert }}" class="ui builder_button {{ data.action_btn_color_alert }} <# data.action_btn_appearance_alert  ? print( data.action_btn_appearance_alert.split('|').join(' ') ) : ''; #><# 'url'!==data.alert_button_action ? print( ' alert-close' ) : ''; #>">
 			<span class="tb_alert_text" contenteditable="false" data-name="action_btn_text_alert">{{{ data.action_btn_text_alert }}}</span>
 		    </a>
 		</div>
 		<# } #>
 	    </div>
-	    <div class="alert-close ti-close"></div>
+	    <div class="alert-close tf_close"></div>
 	</div>
 	<?php
     }

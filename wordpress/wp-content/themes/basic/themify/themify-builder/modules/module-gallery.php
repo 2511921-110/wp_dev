@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Gallery
  * Description: Display WP Gallery Images
@@ -15,9 +15,14 @@ class TB_Gallery_Module extends Themify_Builder_Component_Module {
             'slug' => 'gallery'
         ));
     }
-
+	public function get_assets() {
+		return array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+    }
     public function get_options() {
         $is_img_enabled = Themify_Builder_Model::is_img_php_disabled();
+        $cols = array_combine( range( 1, 9 ), range( 1, 9 ) );
         return array(
             array(
                 'id' => 'mod_title_gallery',
@@ -68,10 +73,10 @@ class TB_Gallery_Module extends Themify_Builder_Component_Module {
 		),
 		'binding' => array(
 			'checked' => array(
-				'show' => array('gallery_per_page')
+				'show' => 'gallery_per_page'
 			),
 			'not_checked' => array(
-				'hide' => array('gallery_per_page')
+				'hide' =>'gallery_per_page'
 			)
 		),
 		'wrap_class' => 'tb_group_element_grid'
@@ -160,9 +165,27 @@ class TB_Gallery_Module extends Themify_Builder_Component_Module {
                 'id' => 'gallery_columns',
                 'type' => 'select',
                 'label' => __('Columns', 'themify'),
-                'options' => array_combine( range( 1, 9 ), range( 1, 9 ) ),
+                'options' => $cols,
                 'wrap_class' => 'tb_group_element_grid'
             ),
+			array(
+				'id' => 't_columns',
+				'type' => 'select',
+				'label' => '',
+				'after' => __('Tablet Columns', 'themify'),
+				'options' => array(''=>'')+$cols,
+				'wrap_class' => 'tb_group_element_grid',
+				'default'=>''
+			),
+			array(
+				'id' => 'm_columns',
+				'type' => 'select',
+				'label' => '',
+				'after' => __('Mobile Columns', 'themify'),
+				'options' => array(''=>'')+$cols,
+				'wrap_class' => 'tb_group_element_grid',
+				'default'=>''
+			),
             array(
                 'type' => 'slider',
                 'label' => __('Slider Options', 'themify'),
@@ -216,10 +239,12 @@ class TB_Gallery_Module extends Themify_Builder_Component_Module {
         );
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
         return array(
 	    'auto_scroll_opt_slider'=>'4',
             'gallery_columns' => '4',
+            't_columns' => '',
+            'm_columns' => '',
 	    'visible_opt_slider'=>'4',
 	    'show_arrow_slider'=>'yes',
 	    'wrap_slider'=>'yes',
@@ -362,6 +387,21 @@ class TB_Gallery_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -401,6 +441,8 @@ class TB_Gallery_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Display
+			self::get_expand('disp', self::get_display())
         );
 		
         $image = array(
@@ -419,6 +461,8 @@ class TB_Gallery_Module extends Themify_Builder_Component_Module {
 					)
 				))
 			)),
+			// Gutter
+			self::get_expand('i_g', self::get_grid_gap(' .module-gallery-grid')),
 			// Padding
 			self::get_expand('p', array(
 				self::get_tab(array(
@@ -497,6 +541,26 @@ class TB_Gallery_Module extends Themify_Builder_Component_Module {
 		
         );
 
+		$controls = array(
+			// Arrows
+			self::get_expand(__('Arrows', 'themify'), array(
+			self::get_tab(array(
+				'n' => array(
+				'options' => array(
+				   self::get_width(array(' .themify_builder_slider_vertical .carousel-prev',' .themify_builder_slider_vertical .carousel-next'), 'w_ctrl'),
+				   self::get_height(array(' .themify_builder_slider_vertical .carousel-prev',' .themify_builder_slider_vertical .carousel-next'), 'h_ctrl')
+				)
+				),
+				'h' => array(
+				'options' => array(
+					self::get_width(array(' .themify_builder_slider_vertical .carousel-prev:hover',' .themify_builder_slider_vertical .carousel-next:hover'), 'w_ctrl_h'),
+					self::get_height(array(' .themify_builder_slider_vertical .carousel-prev:hover',' .themify_builder_slider_vertical .carousel-next:hover'), 'h_ctrl_h')
+				)
+				)
+			))
+			))
+		);
+
         return array(
             'type' => 'tabs',
             'options' => array(
@@ -509,6 +573,10 @@ class TB_Gallery_Module extends Themify_Builder_Component_Module {
                 'i' => array(
 					'label' => __('Gallery Image', 'themify'),
                     'options' => $image
+                ),
+                'ctrl' => array(
+					'label' => __('Controls', 'themify'),
+                    'options' => $controls
                 ),
             )
         );

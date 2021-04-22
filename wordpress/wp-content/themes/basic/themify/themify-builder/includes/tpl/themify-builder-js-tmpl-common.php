@@ -1,23 +1,33 @@
+<?php
+	$eye= themify_get_icon('eye','ti');
+	$clipboard=themify_get_icon('clipboard','ti');
+	$files=themify_get_icon('files','ti');
+	$brush=themify_get_icon('brush','ti');
+	$settings=themify_get_icon('settings','ti');
+	$import=themify_get_icon('import','ti');
+	$export=themify_get_icon('export','ti');
+	$window=themify_get_icon('new-window','ti');
+?>
 <template id="tmpl-builder_lightbox">
     <?php //create fix overlay on top iframe,mouse position will be always on top iframe on resizing  ?>
     <div class="tb_resizable_overlay"></div>
     <div id="tb_lightbox_parent" class="themify_builder builder-lightbox <?php echo themify_is_themify_theme()?'is-themify-theme':'is-not-themify-theme'?>">
-	<ul class="tb_action_breadcrumb"></ul>
-        <div class="tb_lightbox_top_bar clearfix">
-            <ul class="tb_options_tab clearfix"></ul>
+		<ul class="tb_action_breadcrumb"></ul>
+        <div class="tb_lightbox_top_bar tf_clearfix">
+            <ul class="tb_options_tab tf_clearfix"></ul>
             <div class="tb_lightbox_actions">
-                <a class="builder_cancel_docked_mode"><i class="ti-new-window"></i></a>
-                <div class="tb_close_lightbox"><span><?php _e('Cancel', 'themify') ?></span><i class="ti-close"></i></div>
+                <a class="builder_cancel_docked_mode"><?php echo $window?></a>
+                <div class="tb_close_lightbox tf_close"><span><?php _e('Cancel', 'themify') ?></span></div>
                 <span class="tb_lightbox_actions_wrap"></span>	
             </div>
         </div>
-        <div id="tb_lightbox_container"></div>
-	    <div class="tb_resizable tb_resizable-st" data-axis="-y"></div>
-        <div class="tb_resizable tb_resizable-e" data-axis="x"></div>
-        <div class="tb_resizable tb_resizable-s" data-axis="y"></div>
-        <div class="tb_resizable tb_resizable-w" data-axis="w"></div>
-        <div class="tb_resizable tb_resizable-se" data-axis="se"></div>
-	    <div class="tb_resizable tb_resizable-we" data-axis="sw"></div>
+        <div id="tb_lightbox_container" class="tf_scrollbar"></div>
+		<div class="tb_resizable tb_resizable_st" data-axis="-y"></div>
+        <div class="tb_resizable tb_resizable_e" data-axis="x"></div>
+        <div class="tb_resizable tb_resizable_s" data-axis="y"></div>
+        <div class="tb_resizable tb_resizable_w" data-axis="w"></div>
+        <div class="tb_resizable tb_resizable_se" data-axis="se"></div>
+		<div class="tb_resizable tb_resizable_we" data-axis="sw"></div>
         <div class="tb_resizable tb_resizable_nw" data-axis="nw"></div>
         <div class="tb_resizable tb_resizable_ne" data-axis="ne"></div>
     </div>
@@ -41,62 +51,68 @@
 </script>
 <template id="tmpl-builder_row_item">
     <?php if(is_admin()):?>
-	<div class="page-break-overlay"></div>
+		<div class="page-break-overlay"></div>
     <?php endif;?>
-    <div class="tb_visibility_hint"></div>
+    <div class="tb_visibility_hint"><?php echo $eye;?></div>
     <span class="tb_row_anchor"></span>
     <div class="tb_action_wrap tb_row_action"></div>
-    <div class="row_inner"></div>
+    <div class="row_inner tf_box tf_w tf_rel"></div>
 </template>
 <template id="tmpl-builder_subrow_item">
-    <div class="tb_visibility_hint"></div>
-    <div class="tb_action_wrap tb_subrow_action"></div>
-    <div class="subrow_inner"></div>
+	<div class="module_subrow themify_builder_sub_row tb_{{ data.element_id }} tf_w tf_clearfix">
+		<div class="tb_visibility_hint"><?php echo $eye;?></div>
+		<div class="tb_action_wrap tb_subrow_action"></div>
+		<div class="subrow_inner tf_box tf_w"></div>
+	</div>
 </template>
 <template id="tmpl-builder_column_item">
     <div class="tb_action_wrap tb_column_action"></div>
-    <div class="tb_grid_drag tb_drag_right tb_disable_sorting"></div>
-    <div class="tb_grid_drag tb_drag_left tb_disable_sorting"></div>
+    <div class="tb_grid_drag tb_drag_right" draggable="true"></div>
+    <div class="tb_grid_drag tb_drag_left" draggable="true"></div>
     <div class="tb_holder"></div>
-    <div class="tb_column_btn_plus tb_disable_sorting"></div>
+    <div class="tf_plus_icon tb_column_btn_plus tb_disable_sorting"></div>
 </template>
 <template id="tmpl-builder_row_action">
     <ul class="tb_dropdown">
-	<li class="ti-move"></li>
-	<li class="tb_row_settings ti-settings" data-href="tb_row_options">
+	<li class="tb_move"><?php echo themify_get_icon('move','ti')?></li>
+	<li class="tb_row_settings" data-href="tb_row_options">
+	    <?php echo $settings; ?>
 	    <div class="themify_tooltip"><?php _e('Options', 'themify') ?></div>
 	</li>
-	<li class="tb_styling ti-brush">
+	<li class="tb_styling">
+	    <?php echo $brush; ?>
 	    <div class="themify_tooltip"><?php _e('Styling', 'themify') ?></div>
 	</li>
-	<li class="tb_duplicate ti-layers">
+	<li class="tb_duplicate">
+	    <?php echo themify_get_icon('layers','ti'); ?>
 	    <div class="themify_tooltip"><?php _e('Duplicate', 'themify') ?></div>
 	</li>
-	<li class="tb_delete_row_container tb_delete ti-close">
+	<li class="tb_delete_row_container tb_delete tf_close">
 	    <div class="themify_tooltip"><?php _e('Delete', 'themify') ?></div>
 	</li>
-	<li class="tb_action_more ti-more">
+	<li class="tb_action_more">
+	    <?php echo themify_get_icon('more','ti'); ?>
 	    <div class="themify_tooltip"><?php _e('More', 'themify') ?></div>
 	    <ul>
-		<li class="tb_save_component ti-save"> <?php _e('Save', 'themify') ?></li>
-		<li class="ti-export"><?php _e(' Export', 'themify') ?></li>
-		<li class="ti-import"><?php _e(' Import', 'themify') ?></li>
-		<li class="tb_copy_component ti-files"><?php _e(' Copy', 'themify') ?></li>
-		<li class="tb_inner_action_more ti-clipboard">
-		    <?php _e('Paste', 'themify') ?>
+		<li class="tb_save_component"><?php echo themify_get_icon('save','ti'), __(' Save', 'themify') ?></li>
+		<li class="tb_export"><?php echo $export,__(' Export', 'themify') ?></li>
+		<li class="tb_import"><?php echo $import,__(' Import', 'themify') ?></li>
+		<li class="tb_copy_component"><?php echo $files,__(' Copy', 'themify') ?></li>
+		<li class="tb_inner_action_more">
+		    <?php echo $clipboard,__(' Paste', 'themify') ?>
 		    <ul>
 			<li class="tb_paste_component"><?php _e('Paste', 'themify') ?></li>
 			<li class="tb_paste_style"><?php _e('Paste Styling', 'themify') ?></li>
 		    </ul>
 		</li>
-		<li class="tb_visibility_component ti-eye">
-		    <?php _e('Visibility', 'themify') ?>
+		<li class="tb_visibility_component">
+		    <?php echo $eye,__(' Visibility', 'themify') ?>
 		</li>
 	    </ul>
 	</li>
     </ul> 
     <div id="tb_row_options" class="tb_toolbar_tabs">
-	<a href="#" class="tb_row_hover_expand ti-new-window tb_edit"></a>
+	<a href="#" class="tb_row_hover_expand tb_edit"><?php echo $window?></a>
 	<ul class="tb_row_toolbar_menu">
 	    <li class="selected" data-href="tb_rgrids"><?php _e('Grid', 'themify') ?></li>
 	    <li data-href="tb_roptions"><?php _e('Row Options', 'themify') ?></li>
@@ -109,19 +125,24 @@
 </template>
 <template id="tmpl-builder_column_action">
     <ul class="tb_dropdown">
-	<li class="tb_styling ti-brush">
+	<li class="tb_styling">
+	    <?php echo $brush; ?>
 	    <div class="themify_tooltip"><?php _e('Styling', 'themify') ?></div>
 	</li>
-	<li class="ti-import">
+	<li class="tb_import">
+	    <?php echo $import; ?>
 	    <div class="themify_tooltip"><?php _e('Import', 'themify') ?></div>
 	</li>
-	<li class="ti-export">
+	<li class="tb_export">
+	    <?php echo $export; ?>
 	    <div class="themify_tooltip"><?php _e('Export', 'themify') ?></div>
 	</li>
-	<li class="ti-files tb_copy_component">
+	<li class="tb_copy_component">
+	    <?php echo $files; ?>
 	    <div class="themify_tooltip"><?php _e('Copy', 'themify') ?></div>
 	</li>
-	<li class="ti-clipboard tb_inner_action_more">
+	<li class="tb_inner_action_more">
+	    <?php echo $clipboard; ?>
 	    <div class="themify_tooltip"><?php _e('Paste', 'themify') ?></div>
 	    <ul>
 		<li class="tb_paste_component"><?php _e('Paste', 'themify') ?></li>
@@ -132,91 +153,101 @@
 </template>
 <template id="tmpl-builder_subrow_action">
     <ul class="tb_dropdown">
-	<li class="ti-move"></li>
-	<li class="tb_row_settings ti-settings" data-href="tb_rgrids">
+	<li class="tb_move"><?php echo themify_get_icon('move','ti'); ?></li>
+	<li class="tb_row_settings" data-href="tb_rgrids">
+	    <?php echo $settings; ?>
 	    <div class="themify_tooltip"><?php _e('Options', 'themify') ?></div>
 	</li>
-	<li class="tb_styling ti-brush">
+	<li class="tb_styling ">
+	    <?php echo $brush; ?>
 	    <div class="themify_tooltip"><?php _e('Styling', 'themify') ?></div>
 	</li>
-	<li class="tb_duplicate ti-layers">
+	<li class="tb_duplicate">
+	    <?php echo themify_get_icon('layers','ti'); ?>
 	    <div class="themify_tooltip"><?php _e('Duplicate', 'themify') ?></div>
 	</li>
-	<li class="tb_delete ti-close">
+	<li class="tb_delete tf_close">
 	    <div class="themify_tooltip"><?php _e('Delete', 'themify') ?></div>
 	</li>
-	<li class="tb_action_more ti-more">
+	<li class="tb_action_more">
+	    <?php echo themify_get_icon('more','ti'); ?>
 	    <div class="themify_tooltip"><?php _e('More', 'themify') ?></div>
 	    <ul>
-		<li class="ti-export">
-		    <?php _e('Export', 'themify') ?>
+		<li class="tb_export">
+		    <?php echo $export, __('Export', 'themify'); ?>
 		</li>
-		<li class="ti-import">
-		    <?php _e('Import', 'themify') ?>
+		<li class="tb_import">
+		    <?php echo $import, __('Import', 'themify'); ?>
 		</li>
-		<li class="tb_copy_component ti-files">
-		    <?php _e('Copy', 'themify') ?>
+		<li class="tb_copy_component">
+		    <?php echo $files, __('Copy', 'themify'); ?>
 		</li>
-		<li class="tb_inner_action_more ti-clipboard">
-		    <?php _e('Paste', 'themify') ?>
+		<li class="tb_inner_action_more">
+		    <?php echo $clipboard, __('Paste', 'themify'); ?>
 		    <ul>
 			<li class="tb_paste_component"><?php _e('Paste', 'themify') ?></li>
 			<li class="tb_paste_style"><?php _e('Paste Styling', 'themify') ?></li>
 		    </ul>
 		</li>
-		<li class="tb_visibility_component ti-eye">
-		    <?php _e('Visibility', 'themify') ?>
+		<li class="tb_visibility_component">
+		    <?php echo $eye, __('Visibility', 'themify'); ?>
 		</li>
 	    </ul>
 	</li>
     </ul>
     <div id="tb_rgrids" class="tb_toolbar_tabs">
-	<a href="#" class="tb_row_hover_expand ti-new-window tb_edit"></a>
+	<a href="#" class="tb_row_hover_expand tb_edit"><?php echo $window?></a>
 	<?php Themify_Builder_Model::grid(); ?>
     </div>
 </template>
 <template id="tmpl-builder_module_action">
     <ul class="tb_dropdown">
-	<li class="tb_edit tb_swap ti-settings">
+	<li class="tb_edit tb_settings tb_swap">
+	    <?php echo $settings; ?>
 	    <div class="themify_tooltip"><?php _e('Options', 'themify') ?></div>
 	</li>
-	<li class="tb_edit ti-pencil">
+	<li class="tb_edit">
+	    <?php echo themify_get_icon('pencil','ti'); ?>
 	    <div class="themify_tooltip"><?php _e('Edit', 'themify') ?></div>
 	</li>
-	<li class="tb_styling ti-brush">
+	<li class="tb_styling">
+	    <?php echo $brush; ?>
 	    <div class="themify_tooltip"><?php _e('Styling', 'themify') ?></div>
 	</li>
-	<li class="tb_duplicate ti-layers">
+	<li class="tb_duplicate">
+	    <?php echo themify_get_icon('layers','ti'); ?>
 	    <div class="themify_tooltip"><?php _e('Duplicate', 'themify') ?></div>
 	</li>
-	<li class="tb_swap ti-reload">
+	<li class="tb_swap">
+	    <?php echo themify_get_icon('reload','ti'); ?>
 	    <div class="themify_tooltip"><?php _e('Swap', 'themify') ?></div>
 	</li>
-	<li class="tb_delete ti-close">
+	<li class="tb_delete tf_close">
 	    <div class="themify_tooltip"><?php _e('Delete', 'themify') ?></div>
 	</li>
-	<li class="tb_action_more ti-more">
+	<li class="tb_action_more">
+	    <?php echo themify_get_icon('more','ti'); ?>
 	    <div class="themify_tooltip"><?php _e('More', 'themify') ?></div>
 	    <ul>
-            <li class="tb_save_component ti-save"> <?php _e('Save', 'themify') ?></li>
-		<li class="ti-export">
-		    <?php _e('Export', 'themify') ?>
+		<li class="tb_save_component"><?php echo themify_get_icon('save','ti'),__('Save', 'themify') ?></li>
+		<li class="tb_export">
+		    <?php echo $export,__('Export', 'themify') ?>
 		</li>
-		<li class="ti-import">
-		    <?php _e('Import', 'themify') ?>
+		<li class="tb_import">
+		    <?php echo $import,__('Import', 'themify') ?>
 		</li>
-		<li class="tb_copy_component ti-files">
-		    <?php _e('Copy', 'themify') ?>
+		<li class="tb_copy_component">
+		    <?php echo $files,__('Copy', 'themify') ?>
 		</li>
-		<li class="tb_inner_action_more ti-clipboard">
-		    <?php _e('Paste', 'themify') ?>
+		<li class="tb_inner_action_more">
+		    <?php echo $clipboard,__('Paste', 'themify') ?>
 		    <ul>
 			<li class="tb_paste_component"><?php _e('Paste', 'themify') ?></li>
 			<li class="tb_paste_style"><?php _e('Paste Styling', 'themify') ?></li>
 		    </ul>
 		</li>
-		<li class="tb_visibility_component ti-eye">
-		    <?php _e('Visibility', 'themify') ?>
+		<li class="tb_visibility_component">
+		    <?php echo $eye,__('Visibility', 'themify') ?>
 		</li>
 	    </ul>
 	</li>
@@ -242,12 +273,12 @@
     </ul>
     <div class="tb_gs_items_dropdown">
 	<div class="tb_gs_items_header">
-	    <label for="global-style-search"><input type="text" id="global-style-search" autocomplete="off"/></label>
+	    <label for="global-style-search"><?php echo themify_get_icon('search','ti'),__('', 'themify') ?><input type="text" id="global-style-search" autocomplete="off"/></label>
 	    <a class="tb_open_gs" href="<?php echo esc_url(admin_url( 'admin.php?page=themify-global-styles')); ?>" target="_blank">
-		<?php _e('Manage Styles', 'themify') ?>
+		<?php echo $window,__('Manage Styles', 'themify') ?>
 	    </a>
 	</div>
-	<div class="tb_gs_list">
+	<div class="tb_gs_list tf_scrollbar">
 	    <span class="tb_no_gs_item"><?php _e('No Global Styles found.', 'themify') ?></span>
 	</div>
     </div>
@@ -310,3 +341,4 @@
 	}
     $frames=$base=null;
     }
+	$eye= $clipboard=$files=$settings=$brush=$import=$export=$window=null;

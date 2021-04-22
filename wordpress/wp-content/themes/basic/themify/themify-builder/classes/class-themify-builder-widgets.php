@@ -12,7 +12,7 @@
  *
  ***************************************************************************/
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
 
 ///////////////////////////////////////////
 // Layout Parts Class

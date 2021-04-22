@@ -1,5 +1,6 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class to create tool buttons like Reset, Import and Export.
@@ -25,7 +26,7 @@ class Themify_Tools_Control extends WP_Customize_Control {
 
 		<span class="customize-control-title themify-control-title">
 			<a href="#" class="tool_wrapper clearall" data-sitename="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" data-tagline="<?php echo esc_attr( get_bloginfo( 'description' ) ); ?>">
-				<span class="ti-close clearall-icon"></span>
+				<span class="clearall-icon tf_close"></span>
 				<?php echo __( 'Clear All', 'themify' ); ?>
 			</a>
 			<span class="tool_wrapper customize-import">

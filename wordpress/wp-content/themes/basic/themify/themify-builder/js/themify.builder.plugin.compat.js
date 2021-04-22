@@ -30,7 +30,7 @@
                         return
                     }
 
-                    RankMathApp.refresh( 'content' )
+                    rankMathEditor.refresh( 'content' )
                 }
             });
         }

@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Template Plain Text
  * 
@@ -15,24 +16,27 @@ $fields_default = array(
 
 $fields_args = wp_parse_args($args['mod_settings'], $fields_default);
 unset($args['mod_settings']);
+$fields_default=null;
 $mod_name=$args['mod_name'];
 $builder_id = $args['builder_id'];
-$element_id = isset($args['element_id'])?'tb_'.$args['element_id']:$args['module_ID'];
+$element_id = $args['module_ID'];
 $container_class =  apply_filters('themify_builder_module_classes', array(
     'module', 
     'module-' . $mod_name, 
     $element_id,
-    $fields_args['add_css_text'],
-    self::parse_animation_effect($fields_args['animation_effect'], $fields_args)
+    $fields_args['add_css_text']
 ), $mod_name, $element_id, $fields_args);
 
 if(!empty($fields_args['global_styles']) && Themify_Builder::$frontedit_active===false){
     $container_class[] = $fields_args['global_styles'];
 }
-$container_props = apply_filters('themify_builder_module_container_props', array(
+$container_props = apply_filters('themify_builder_module_container_props', self::parse_animation_effect($fields_args,array(
 'class' => implode(' ',$container_class),
-    ), $fields_args, $mod_name, $element_id);
+    )), $fields_args, $mod_name, $element_id);
 $args=null;
+if(Themify_Builder::$frontedit_active===false){
+    $container_props['data-lazy']=1;
+}
 ?>
 <!-- module plain text -->
 <div <?php echo self::get_element_attributes(self::sticky_element_props($container_props,$fields_args)); ?>>

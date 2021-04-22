@@ -9,7 +9,7 @@
  * @subpackage Themify_Builder/classes
  */
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Duplicate builder class.
@@ -29,7 +29,7 @@ class ThemifyBuilderDuplicatePage {
 	 * @access public
 	 * @var string $new_url
 	 */
-	public static $new_url = '';
+	private static $new_url = '';
 
 	/**
 	 * Whether return edit link or permalink
@@ -38,31 +38,29 @@ class ThemifyBuilderDuplicatePage {
 	 * @access public
 	 * @var int $edit_link
 	 */
-	public static $edit_link = false;
+	private static $edit_link = false;
         
 	/**
 	 * Class Constructor.
 	 * 
 	 * @access public
 	 */
-	public function __construct() {
+	public static function init() {
 		// Actions
-		add_action( 'themify_builder_duplicate', array( $this, 'duplicate_data' ), 10, 2 );
-		add_action('wp_ajax_tb_duplicate_page', array($this, 'duplicate_page_ajaxify'), 10);
+		add_action( 'themify_builder_duplicate', array( __CLASS__, 'duplicate_data' ), 10, 2 );
+		add_action( 'wp_ajax_tb_duplicate_page', array( __CLASS__, 'duplicate_page_ajaxify' ), 10 );
 	}
 
-        
-        
 	/**
 	 * Duplicate page
 	 */
-	function duplicate_page_ajaxify() {
+	public static function duplicate_page_ajaxify() {
 		check_ajax_referer('tb_load_nonce', 'tb_load_nonce');
 		$post_id = (int) $_POST['postid'];
 		$post = get_post($post_id);
 		if( is_object($post) ) {
 			self::$edit_link = json_decode( $_POST['tb_is_admin'] );
-			$this->duplicate($post);
+			self::duplicate($post);
 			echo self::$new_url;
 		}
 		wp_die();
@@ -79,13 +77,13 @@ class ThemifyBuilderDuplicatePage {
 	 * @return int
 	 */
 	public static function duplicate( $post, $status = '', $parent_id = '' ) {
-                // We don't want to clone revisions
+		// We don't want to clone revisions
 		if ( $post->post_type === 'revision' ){
-                    return;
-                }
-                
+			return;
+		}
+
 		$prefix = $suffix = '';
-                
+
 		if ( $post->post_type !== 'attachment' ) {
 			$suffix = ' Copy';
 		}
@@ -108,8 +106,8 @@ class ThemifyBuilderDuplicatePage {
 
 		$new_post_id = wp_insert_post( $new_post );
 		// apply hook to duplicate action
-                do_action( 'themify_builder_duplicate', $new_post_id, $post );
-                
+		do_action( 'themify_builder_duplicate', $new_post_id, $post );
+
 		delete_post_meta( $new_post_id, '_themify_builder_dp_original' );
 		add_post_meta( $new_post_id, '_themify_builder_dp_original', $post->ID );
 
@@ -141,19 +139,23 @@ class ThemifyBuilderDuplicatePage {
 	 * @param int $new_id
 	 * @param object $post
 	 */
-	public function duplicate_postmeta( $new_id, $post ) {
+	private static function duplicate_postmeta( $new_id, $post ) {
 		$post_meta_keys = get_post_custom_keys( $post->ID );
 		if ( empty( $post_meta_keys ) ){
-                    return;
-                }
+			return;
+		}
 		$meta_keys = $post_meta_keys;
-                global $ThemifyBuilder, $ThemifyBuilder_Data_Manager;
+		global $ThemifyBuilder;
 		foreach ( $meta_keys as $meta_key ) {
 			if( $meta_key === '_themify_builder_settings_json' ) {
 				$builder_data = $ThemifyBuilder->get_builder_data( $post->ID ); // get builder data from original post
 				$builder_data=Themify_Builder_Model::removeElementIds((array)$builder_data);
-                                $ThemifyBuilder_Data_Manager->save_data( $builder_data, $new_id ); // save the data for the new post
+				ThemifyBuilder_Data_Manager::save_data( $builder_data, $new_id ); // save the data for the new post
 			} else {
+				if ( self::exclude_postmeta( $meta_key ) ) {
+					continue;
+				}
+
 				$meta_values = get_post_custom_values( $meta_key, $post->ID );
 				foreach ( $meta_values as $meta_value ) {
 					$meta_value = maybe_unserialize( $meta_value );
@@ -164,13 +166,23 @@ class ThemifyBuilderDuplicatePage {
 	}
 
 	/**
+	 * Check if a custom field must NOT be copied to duplicated post
+	 *
+	 * @return bool
+	 */
+	private static function exclude_postmeta( $meta_key ) {
+		/*oEmbed cache data or WP post edit*/
+		return substr( $meta_key, 0, 7 ) === '_oembed'  || in_array( $meta_key, array( '_edit_last', '_edit_lock' ),true) ;
+	}
+
+	/**
 	 * Duplicate categories and custom taxonomies
 	 * 
 	 * @access public
 	 * @param int $new_id
 	 * @param object $post
 	 */
-	public function duplicate_taxonomies( $new_id, $post ) {
+	private static function duplicate_taxonomies( $new_id, $post ) {
 		global $wpdb;
 		if ( isset( $wpdb->terms ) ) {
 			// Clear default category (added by wp_insert_post)
@@ -181,7 +193,7 @@ class ThemifyBuilderDuplicatePage {
 			foreach ( $taxonomies as $taxonomy ) {
 				$post_terms = wp_get_object_terms( $post->ID, $taxonomy, array( 'orderby' => 'term_order' ) );
 				$terms = array();
-                                $terms_count = count( $post_terms );
+				$terms_count = count( $post_terms );
 				for ( $i=0; $i < $terms_count; ++$i ) {
 					$terms[] = $post_terms[ $i ]->slug;
 				}
@@ -198,7 +210,7 @@ class ThemifyBuilderDuplicatePage {
 	 * @param int $new_id
 	 * @param object $post
 	 */
-	public function duplicate_attachment( $new_id, $post ) {
+	private static function duplicate_attachment( $new_id, $post ) {
 		// get children
 		$children = get_posts( array( 'post_type' => 'any', 
 		    'numberposts' => -1,
@@ -210,17 +222,17 @@ class ThemifyBuilderDuplicatePage {
 		// clone old attachments
 		foreach ( $children as $child ) {
 			if ( $child->post_type === 'attachment' || $child->post_type===$post->post_type){
-                            continue;
-                        }
-			$this->duplicate( $child, '', $new_id );
+				continue;
+			}
+			self::duplicate( $child, '', $new_id );
 		}
 	}
-        
-        public function duplicate_data($new_id, $post ){
-            $this->duplicate_postmeta($new_id, $post);
-            $this->duplicate_taxonomies($new_id, $post);
-            $this->duplicate_attachment($new_id, $post);
-        }
+
+	public static function duplicate_data($new_id, $post ){
+		self::duplicate_postmeta($new_id, $post);
+		self::duplicate_taxonomies($new_id, $post);
+		self::duplicate_attachment($new_id, $post);
+	}
 }
 
-new ThemifyBuilderDuplicatePage();
+ThemifyBuilderDuplicatePage::init();

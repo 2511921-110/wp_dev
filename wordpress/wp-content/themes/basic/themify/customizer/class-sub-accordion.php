@@ -1,5 +1,6 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class to output the beginning of a sub-accordion. Must have a Themify_Sub_Accordion_End match.

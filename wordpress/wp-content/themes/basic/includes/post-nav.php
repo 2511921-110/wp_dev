@@ -16,7 +16,7 @@ if ( ! themify_check( "setting-{$post_type}_nav_disable" ) ) :
 
 	if ( ! empty( $previous ) || ! empty( $next ) ) : ?>
 
-		<div class="post-nav clearfix">
+		<div class="post-nav tf_clearfix">
 			<?php echo $previous; ?>
 			<?php echo $next; ?>
 		</div>

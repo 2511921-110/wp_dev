@@ -1,5 +1,7 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
 class Builder_Optin_Service_MailerLite extends Builder_Optin_Service {
 
 	/**

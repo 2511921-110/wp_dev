@@ -15,7 +15,6 @@ $theme_includes = apply_filters( 'themify_theme_includes',
 			'themify/themify-utils.php',
 			'themify/themify-config.php',
 			'theme-options.php',
-			'theme-modules.php',
 			'theme-functions.php',
 			'custom-modules.php',
 			'custom-functions.php',
@@ -30,4 +29,3 @@ foreach ( $theme_includes as $include ) { locate_template( $include, true ); }
  * To add custom PHP functions to the theme, create a child theme (https://themify.me/docs/child-theme) and add it to the child theme functions.php file.
  * 
 ***********************************************************************************************************/
-?>

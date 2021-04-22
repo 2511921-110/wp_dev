@@ -1,79 +1,86 @@
 /*
  * Themify Mega Menu Plugin
  */
-;(function ($) {
-        'use strict';
-	$.fn.ThemifyMegaMenu = function( custom ) {
-
-		var options = $.extend({
-				events: 'mouseenter'
-			}, custom),
-			cacheMenu = {};
-
-		return this.each(function() {
-			var $thisMega = $(this),
-				$megaMenuPosts = $('.mega-menu-posts', $thisMega);
-
-			$thisMega.on(options.events+' touchend', '.mega-link', function(event) {
-
-				if ( $(window).width() < tf_mobile_menu_trigger_point ) {
+;
+(function ($, Themify, document) {
+    'use strict';
+	let maxW;
+    const cacheMenu = {},
+		 ev = Themify.isTouch?'click':'mouseover',
+            init = function (e) {
+				if (Themify.w < maxW || e.target.closest('.mega-menu-posts')) {
 					return;
 				}
-
-				event.preventDefault();
-				var $self = $(this),
+				let el=e.type==='mouseenter' || e.type==='focus'?this.getElementsByClassName('mega-link')[0]:e.target;
+				if(el.classList.contains('child-arrow')){
+					el=el.closest('.has-mega-sub-menu').getElementsByClassName('mega-link')[0];
+				}
+				el = el.classList.contains('mega-link')?el:el.closest('.tf_mega_taxes .mega-link');
+				if(!el){
+					return;
+				}
+				if(e.type==='click'){
+					e.preventDefault();
+				}
+				const $self = $(el),
 					termid = $self.data('termid'),
-					tax = $self.data('tax');
-
-				if( 'string' == typeof cacheMenu[termid] ) {
-					$megaMenuPosts.html( cacheMenu[termid] );
-				} else {
-					if( $self.hasClass( 'loading' ) ) {
-						return;
-					}
-					$self.addClass( 'loading' );
-					$.post(
-						themifyScript.ajax_url,
-						{
+					tax = $self.data('tax'),
+					cl=el.getElementsByTagName('a')[0].classList,
+					wrapper=$self.closest('.mega-sub-menu');
+				let megaMenuPosts = $self[0].getElementsByClassName('mega-menu-posts')[0];
+				if(!megaMenuPosts){
+					megaMenuPosts = document.createElement('div');
+					megaMenuPosts.className = 'mega-menu-posts tf_left tf_box';
+					$self[0].appendChild(megaMenuPosts);
+				}
+				wrapper.find('.tf_mega_selected').removeClass('tf_mega_selected');
+				$self.addClass('tf_mega_selected');
+				if (cacheMenu[termid] !== undefined) {
+					megaMenuPosts.innerHTML=cacheMenu[termid];
+				} 
+				else if (!cl.contains('tf_loader')) {
+					cl.add('tf_loader');
+					$.ajax({
+						url: themify_vars.ajax_url,
+						type: 'POST',
+						data: {
 							action: 'themify_theme_mega_posts',
 							termid: termid,
 							tax: tax
 						},
-						function( response ) {
-							$megaMenuPosts.html( response );
+						complete: function () {
+							cl.remove('tf_loader');
+						},
+						success: function (response) {
 							cacheMenu[termid] = response;
-							$self.removeClass( 'loading' );
+							megaMenuPosts.innerHTML=cacheMenu[termid];
 						}
-					);
+					});
 				}
-			});
-
-			// when hovering over top-level mega menu items, show the first one automatically
-			$thisMega.on( 'mouseenter', '> a', function(){
-				$( this ).closest( 'li' ).find( '.mega-sub-menu .mega-link:first' ).trigger( options.events );
-			} )
-			.on( 'dropdown_open', function(){
-				$( this ).find( '.mega-sub-menu .mega-link:first' ).trigger( options.events );
-			});
-
-		});
-	};
-
-	$(function() {
-            /* add required wrappers for mega menu items */
-            $( '.has-mega-sub-menu' ).each(function(){
-                    var $this = $( this );
-                    $this.find( '> ul' ).removeAttr( 'class' )
-                            .wrap( '<div class="mega-sub-menu sub-menu" />' )
-                            .after( '<div class="mega-menu-posts" />' )
-                            .find( 'li.menu-item-type-taxonomy' ) // only taxonomy terms can display mega posts
-                                    .addClass( 'mega-link' );
-                
-
-                $this.ThemifyMegaMenu({
-                        events: themifyScript.events
-                });
-            });
-	});
-
-})(jQuery);
+            };
+   
+    Themify.on('tf_mega_menu', function (menu,mob_point) {
+		const items=menu.getElementsByClassName('tf_mega_taxes');
+		maxW=mob_point;
+		for(let i=items.length-1;i>-1;--i){
+			items[i].addEventListener(ev,init);
+			if(ev==='mouseover'){
+				items[i].addEventListener('focusin',init);
+			}
+			let parent=items[i].closest('.has-mega-sub-menu');
+			if(parent){
+				if(ev==='mouseover'){
+					parent.addEventListener('mouseenter',init,{passive:true});
+					parent.querySelector('a').addEventListener('focus',init.bind(parent),{passive:true});
+				}else{
+					parent.getElementsByClassName('child-arrow')[0].addEventListener('click',init);
+				}
+			}
+		}
+    },true);
+    if(!Themify.isTouch){
+		setTimeout(function(){
+			Themify.edgeMenu();
+		},1500);
+	}
+})(jQuery, Themify, document);

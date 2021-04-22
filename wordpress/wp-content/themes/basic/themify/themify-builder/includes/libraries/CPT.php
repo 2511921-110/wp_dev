@@ -162,13 +162,13 @@ class CPT {
 		$this->register_taxonomies();
 
 		// add taxonomy to admin edit columns
-		$this->add_filter('manage_edit-' . $this->post_type_name . '_columns', array(&$this, 'add_admin_columns'));
+		$this->add_filter('manage_edit-' . $this->post_type_name . '_columns', array($this, 'add_admin_columns'));
 
 		// populate the taxonomy columns with the posts terms
-		$this->add_action('manage_' . $this->post_type_name . '_posts_custom_column', array(&$this, 'populate_admin_columns'), 10, 2);
+		$this->add_action('manage_' . $this->post_type_name . '_posts_custom_column', array($this, 'populate_admin_columns'), 10, 2);
 
 		// add filter select option to admin edit
-		$this->add_action('restrict_manage_posts', array(&$this, 'add_taxonomy_filters'));
+		$this->add_action('restrict_manage_posts', array($this, 'add_taxonomy_filters'));
 
 	}
 
@@ -896,10 +896,10 @@ class CPT {
 		$this->sortable = $columns;
 
 		// run filter to make columns sortable
-		$this->add_filter('manage_edit-' . $this->post_type_name . '_sortable_columns', array(&$this, 'make_columns_sortable'));
+		$this->add_filter('manage_edit-' . $this->post_type_name . '_sortable_columns', array($this, 'make_columns_sortable'));
 
 		// run action that sorts columns on request
-		$this->add_action('load-edit.php', array(&$this, 'load_edit'));
+		$this->add_action('load-edit.php', array($this, 'load_edit'));
 
 	}
 
@@ -940,7 +940,7 @@ class CPT {
 	function load_edit() {
 
 		// run filter to sort columns when requested
-		$this->add_filter( 'request', array(&$this, 'sort_columns') );
+		$this->add_filter( 'request', array($this, 'sort_columns') );
 
 	}
 

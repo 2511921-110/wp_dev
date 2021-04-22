@@ -1,5 +1,7 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
 class Builder_Optin_Service_ConvertKit extends Builder_Optin_Service {
 	/**
 	 * Version of ConvertKit API

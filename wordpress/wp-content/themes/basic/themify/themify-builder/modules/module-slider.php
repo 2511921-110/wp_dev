@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Slider
  * Description: Display slider content
@@ -16,19 +16,14 @@ class TB_Slider_Module extends Themify_Builder_Component_Module {
 	));
 	$this->setup_slider_cpt();
     }
+    
+    public function get_icon(){
+	return 'layout-slider';
+    }
 
     public function setup_slider_cpt() {
 	if (Themify_Builder_Model::is_cpt_active('slider')) {
-	    ///////////////////////////////////////
-	    // Load Post Type
-	    ///////////////////////////////////////
-	    $this->initialize_cpt(array(
-		'plural' => __('Slides', 'themify'),
-		'singular' => __('Slide', 'themify'),
-		'supports' => array('title', 'editor', 'author', 'thumbnail', 'custom-fields'),
-		'menu_icon' => 'dashicons-slides'
-	    ));
-
+		add_filter( 'themify_metabox/fields/themify-meta-boxes', array($this, 'cpt_meta_boxes'), 100 ); // requires low priority so that it loads after theme's metaboxes
 	    if (!shortcode_exists('themify_' . $this->slug . '_posts')) {
 		add_shortcode('themify_' . $this->slug . '_posts', array($this, 'do_shortcode'));
 	    }
@@ -137,9 +132,9 @@ class TB_Slider_Module extends Themify_Builder_Component_Module {
 		'label' => __('Order By', 'themify'),
 		'orderBy'=>true,
 		'binding' => array(
-		    'select' => array('hide' => array('meta_key_slider')),
-		    'meta_value' => array('show' => array('meta_key_slider')),
-		    'meta_value_num' => array('show' => array('meta_key_slider'))
+		    'select' => array('hide' => 'meta_key_slider'),
+		    'meta_value' => array('show' => 'meta_key_slider'),
+		    'meta_value_num' => array('show' => 'meta_key_slider')
 		),
 		'wrap_class' => 'tb_group_element_blog tb_group_element_slider tb_group_element_portfolio tb_group_element_testimonial'
 	    ),
@@ -311,7 +306,7 @@ class TB_Slider_Module extends Themify_Builder_Component_Module {
 		    array('img' => 'slider_agency', 'value' => 'slider-agency', 'label' => __('Agency', 'themify'))
 		),
 		'control'=>array(
-		    'classSelector'=>''
+		    'classSelector'=>'.module-slider'
 		)
 	    ),
 	    array(
@@ -354,8 +349,8 @@ class TB_Slider_Module extends Themify_Builder_Component_Module {
 					'off' => array( 'name' => 'no', 'value' => 'dis' ),
 				),
 				'binding' => array(
-					'checked' => array( 'hide' => array( 'slider_opt' ) ),
-					'not_checked' => array( 'show' => array( 'slider_opt' ) ),
+					'checked' => array( 'hide' => 'slider_opt' ) ,
+					'not_checked' => array( 'show' => 'slider_opt' ),
 				)
 			),
 			array(
@@ -374,7 +369,7 @@ class TB_Slider_Module extends Themify_Builder_Component_Module {
 	return $options;
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
 	    'posts_per_page_slider' => 4,
 	    'display_slider' => 'none',
@@ -523,6 +518,21 @@ class TB_Slider_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Width
+		self::get_expand('w', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_width('', 'w')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_width('', 'w', 'h')
+					)
+				)
+			))
+		)),
 		// Rounded Corners
 		self::get_expand('r_c', array(
 				self::get_tab(array(
@@ -555,6 +565,8 @@ class TB_Slider_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 
 	$container = array(
@@ -855,13 +867,17 @@ class TB_Slider_Module extends Themify_Builder_Component_Module {
 		    'n' => array(
 			'options' => array(
 			   self::get_color(array('.themify_builder_slider_vertical .carousel-prev','.themify_builder_slider_vertical .carousel-next', ' .carousel-prev', ' .carousel-next'), 'b_c_arrows_controls', 'bg_c', 'background-color'),
-			   self::get_color(array(' .carousel-prev',' .carousel-next'), 'f_c_arrows_controls')
+			   self::get_color(array(' .carousel-prev',' .carousel-next'), 'f_c_arrows_controls'),
+			   self::get_width(array('.themify_builder_slider_vertical .carousel-prev','.themify_builder_slider_vertical .carousel-next', ' .carousel-prev', ' .carousel-next'), 'w_arr_ctrl'),
+			   self::get_height(array('.themify_builder_slider_vertical .carousel-prev','.themify_builder_slider_vertical .carousel-next', ' .carousel-prev', ' .carousel-next'), 'h_arr_ctrl')
 			)
 		    ),
 		    'h' => array(
 			'options' => array(
-			    self::get_color(array('.themify_builder_slider_vertical .carousel-prev','.themify_builder_slider_vertical .carousel-next', ' .carousel-prev:hover', ' .carousel-next:hover'), 'b_c_h_arrows_controls', 'bg_c', 'background-color'),
-			    self::get_color(array(' .carousel-prev:hover',' .carousel-next:hover'), 'f_c_ar_c_h')
+			    self::get_color(array('.themify_builder_slider_vertical .carousel-prev:hover','.themify_builder_slider_vertical .carousel-next:hover', ' .carousel-prev:hover', ' .carousel-next:hover'), 'b_c_h_arrows_controls', 'bg_c', 'background-color'),
+			    self::get_color(array(' .carousel-prev:hover',' .carousel-next:hover'), 'f_c_ar_c_h'),
+			    self::get_width(array('.themify_builder_slider_vertical .carousel-prev:hover','.themify_builder_slider_vertical .carousel-next:hover', ' .carousel-prev:hover', ' .carousel-next:hover'), 'w_arr_ctrl_h'),
+			    self::get_height(array('.themify_builder_slider_vertical .carousel-prev:hover','.themify_builder_slider_vertical .carousel-next:hover', ' .carousel-prev:hover', ' .carousel-next:hover'), 'h_arr_ctrl_h')
 			)
 		    )
 		))

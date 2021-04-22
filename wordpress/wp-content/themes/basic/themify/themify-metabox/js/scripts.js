@@ -164,7 +164,6 @@ window.Themify_Metabox = (function($){
 				args.opacity = true;
 			} else if( format == 'rgb' ) {
 				args.format = 'rgb';
-			} else {
 			}
 			$( this ).minicolors( args );
 		});
@@ -172,9 +171,8 @@ window.Themify_Metabox = (function($){
 		// Set or clear color swatch based on input value
 		// Clear swatch and input
 		$context.find( '.clearColor' ).on( 'click', function() {
-			$(this).parent().find('.colorSelect').minicolors('value', '');
+			$(this).parent().find('.colorSelectInput').minicolors('value', '');
 			$(this).parent().find('.colorSelectInput').val('');
-			$(this).hide();
 		});
 	}
 
@@ -394,11 +392,11 @@ window.Themify_Metabox = (function($){
 					$icon = $a.find('i'),
 					$b = $a.next();
 				if ($b.hasClass('is-activated')) {
-					$icon.removeClass('ti-minus').addClass('ti-plus');
+					$icon.removeClass('ti-minus').addClass('tf_plus_icon');
 					$b.hide().removeClass('is-activated');
 				} else {
 					$b.show().addClass('is-activated');
-					$icon.removeClass('ti-plus').addClass('ti-minus');
+					$icon.removeClass('tf_plus_icon').addClass('ti-minus');
 				}
 				event.preventDefault();
 			});

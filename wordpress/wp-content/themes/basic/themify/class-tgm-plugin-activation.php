@@ -15,6 +15,8 @@
  * @license   GPL-2.0+
  */
 
+defined( 'ABSPATH' ) || exit;
+
 /*
 	Copyright 2011 Thomas Griffin (thomasgriffinmedia.com)
 
@@ -3513,7 +3515,7 @@ if ( ! function_exists( 'tgmpa_load_bulk_installer' ) ) {
 								// Automatic activation strings.
 								$this->upgrader->strings['skin_upgrade_start'] = __( 'The installation and activation process is starting. This process may take a while on some hosts, so please be patient.', 'themify' );
 								/* translators: 1: plugin name. */
-								$this->upgrader->strings['skin_update_successful'] = __( '%1$s installed and activated successfully.', 'themify' );
+								$this->upgrader->strings['skin_update_successful'] = __( '%1$s installed and activated successfully.', 'themify' ) . ' <a href="#" class="hide-if-no-js" onclick="%2$s"><span>' . esc_html__( 'Show Details', 'themify' ) . '</span><span class="hidden">' . esc_html__( 'Hide Details', 'themify' ) . '</span>.</a>';
 								$this->upgrader->strings['skin_upgrade_end']       = __( 'All installations and activations have been completed.', 'themify' );
 								/* translators: 1: plugin name, 2: action number 3: total number of actions. */
 								$this->upgrader->strings['skin_before_update_header'] = __( 'Installing and Activating Plugin %1$s (%2$d/%3$d)', 'themify' );
@@ -3521,15 +3523,10 @@ if ( ! function_exists( 'tgmpa_load_bulk_installer' ) ) {
 								// Default installation strings.
 								$this->upgrader->strings['skin_upgrade_start'] = __( 'The installation process is starting. This process may take a while on some hosts, so please be patient.', 'themify' );
 								/* translators: 1: plugin name. */
-								$this->upgrader->strings['skin_update_successful'] = esc_html__( '%1$s installed successfully.', 'themify' );
+								$this->upgrader->strings['skin_update_successful'] = esc_html__( '%1$s installed successfully.', 'themify' ) . ' <a href="#" class="hide-if-no-js" onclick="%2$s"><span>' . esc_html__( 'Show Details', 'themify' ) . '</span><span class="hidden">' . esc_html__( 'Hide Details', 'themify' ) . '</span>.</a>';
 								$this->upgrader->strings['skin_upgrade_end']       = __( 'All installations have been completed.', 'themify' );
 								/* translators: 1: plugin name, 2: action number 3: total number of actions. */
 								$this->upgrader->strings['skin_before_update_header'] = __( 'Installing Plugin %1$s (%2$d/%3$d)', 'themify' );
-							}
-
-							// Add "read more" link only for WP < 4.8.
-							if ( version_compare( $this->tgmpa->wp_version, '4.8', '<' ) ) {
-								$this->upgrader->strings['skin_update_successful'] .= ' <a href="#" class="hide-if-no-js" onclick="%2$s"><span>' . esc_html__( 'Show Details', 'tgmpa' ) . '</span><span class="hidden">' . esc_html__( 'Hide Details', 'tgmpa' ) . '</span>.</a>';
 							}
 						}
 					}
@@ -3770,3 +3767,167 @@ if ( ! class_exists( 'TGMPA_Utils' ) ) {
 		}
 	} // End of class TGMPA_Utils
 } // End of class_exists wrapper
+
+
+/**
+ * List of recommended and/or required plugins
+ *
+ * @since 4.6.0
+ * @return array
+ */
+function themify_tgmpa_plugins() {
+	$plugins = array(
+		array(
+			'name'               => __( ' Themify Updater', 'themify' ),
+			'slug'               => 'themify-updater',
+			'source'             => 'https://themify.me/files/themify-updater/themify-updater.zip',
+			'required'           => false,
+			'version'            => '1.1.0',
+			'force_activation'   => false,
+			'force_deactivation' => false,
+		),
+		array(
+			'name'               => __( 'HubSpot All-In-One Marketing', 'themify' ),
+			'slug'               => 'leadin',
+			'required'           => false,
+		),
+		array(
+			'name'               => __( 'Contact Form by WPForms', 'themify' ),
+			'slug'               => 'wpforms-lite',
+			'required'           => false,
+		),
+		array(
+			'name'               => __( 'WordPress Share Buttons Plugin – AddThis', 'themify' ),
+			'slug'               => 'addthis',
+			'required'           => false,
+		),
+		array(
+			'name'               => __( 'Widget Shortcode', 'themify' ),
+			'slug'               => 'widget-shortcode',
+			'required'           => false,
+		),
+	);
+	return apply_filters( 'themify_theme_required_plugins', $plugins );
+}
+
+function themify_register_required_plugins() {
+	$plugins = themify_tgmpa_plugins();
+
+	/**
+	 * Array of configuration settings. Amend each line as needed.
+	 * If you want the default strings to be available under your own theme domain,
+	 * leave the strings uncommented.
+	 * Some of the strings are added into a sprintf, so see the comments at the
+	 * end of each line for what each argument will be.
+	 */
+	$config = array(
+		'default_path' => '',                      // Default absolute path to pre-packaged plugins.
+		'menu'         => 'themify-install-plugins', // Menu slug.
+		'has_notices'  => true,                    // Show admin notices or not.
+		'dismissable'  => true,                    // If false, a user cannot dismiss the nag message.
+		'dismiss_msg'  => '',                      // If 'dismissable' is false, this message will be output at top of nag.
+		'is_automatic' => false,                   // Automatically activate plugins after installation or not.
+		'message'      => '',                      // Message to output right before the plugins table.
+		'strings'      => array(
+			'page_title'                      => __( 'Install Required Plugins', 'themify' ),
+			'menu_title'                      => __( 'Install Plugins', 'themify' ),
+			'installing'                      => __( 'Installing Plugin: %s', 'themify' ), // %s = plugin name.
+			'oops'                            => __( 'Something went wrong with the plugin API.', 'themify' ),
+			'notice_can_install_required'     => _n_noop( 'This theme requires the following plugin: %1$s.', 'This theme requires the following plugins: %1$s.', 'themify' ), // %1$s = plugin name(s).
+			'notice_can_install_recommended'  => _n_noop( 'This theme recommends the following plugin: %1$s.', 'This theme recommends the following plugins: %1$s.', 'themify' ), // %1$s = plugin name(s).
+			'notice_cannot_install'           => _n_noop( 'Sorry, but you do not have the correct permissions to install the %s plugin. Contact the administrator of this site for help on getting the plugin installed.', 'Sorry, but you do not have the correct permissions to install the %s plugins. Contact the administrator of this site for help on getting the plugins installed.', 'themify' ), // %1$s = plugin name(s).
+			'notice_can_activate_required'    => _n_noop( 'The following required plugin is currently inactive: %1$s.', 'The following required plugins are currently inactive: %1$s.', 'themify' ), // %1$s = plugin name(s).
+			'notice_can_activate_recommended' => _n_noop( 'The following recommended plugin is currently inactive: %1$s.', 'The following recommended plugins are currently inactive: %1$s.', 'themify' ), // %1$s = plugin name(s).
+			'notice_cannot_activate'          => _n_noop( 'Sorry, but you do not have the correct permissions to activate the %s plugin. Contact the administrator of this site for help on getting the plugin activated.', 'Sorry, but you do not have the correct permissions to activate the %s plugins. Contact the administrator of this site for help on getting the plugins activated.', 'themify' ), // %1$s = plugin name(s).
+			'notice_ask_to_update'            => _n_noop( 'The following plugin needs to be updated to its latest version to ensure maximum compatibility with this theme: %1$s.', 'The following plugins need to be updated to their latest version to ensure maximum compatibility with this theme: %1$s.', 'themify' ), // %1$s = plugin name(s).
+			'notice_cannot_update'            => _n_noop( 'Sorry, but you do not have the correct permissions to update the %s plugin. Contact the administrator of this site for help on getting the plugin updated.', 'Sorry, but you do not have the correct permissions to update the %s plugins. Contact the administrator of this site for help on getting the plugins updated.', 'themify' ), // %1$s = plugin name(s).
+			'activate_link'                   => _n_noop( 'Begin activating plugin', 'Begin activating plugins', 'themify' ),
+			'return'                          => __( 'Return to Required Plugins Installer', 'themify' ),
+			'plugin_activated'                => __( 'Plugin activated successfully.', 'themify' ),
+			'complete'                        => __( 'All plugins installed and activated successfully. %s', 'themify' ), // %s = dashboard link.
+			'nag_type'                        => 'updated' // Determines admin notice type - can only be 'updated', 'update-nag' or 'error'.
+		)
+	);
+
+	tgmpa( $plugins, $config );
+	add_action( 'admin_menu', 'themify_required_plugins_admin_menu', 11 );
+
+	/* prevent duplicate menu item showing from various themes */
+	remove_action( 'admin_menu', 'themify_theme_required_plugins_admin_menu', 11 );
+}
+
+/**
+ * Before TGMPA shows admin_notices, remove non-essential plugins registered by Themify.
+ * This prevents various notice messages from showing.
+ *
+ * @since 4.6.0
+ */
+function themify_tgmpa_before_notices() {
+	$GLOBALS['tf_tgmpa'] = $GLOBALS['tgmpa']->plugins; // backup copy of plugins list to be restored later
+	$themify_plugins = wp_list_pluck( themify_tgmpa_plugins(), 'slug' );
+	foreach ( $themify_plugins as $slug ) {
+		if (empty( $GLOBALS['tgmpa']->plugins[ $slug ]['required'] ) ) {
+		    unset( $GLOBALS['tgmpa']->plugins[ $slug ] );
+		}
+	}
+}
+
+/**
+ * Restore changes made in themify_tgmpa_before_notices()
+ *
+ * @since 4.6.0
+ */
+function themify_tgmpa_after_notices() {
+	$GLOBALS['tgmpa']->plugins = $GLOBALS['tf_tgmpa'];
+	unset( $GLOBALS['tf_tgmpa'] );
+}
+/**
+ * Relocate the tgmpa admin menu under Themify
+ *
+ * @since 1.0.0
+ */
+function themify_required_plugins_admin_menu() {
+	// Make sure privileges are correct to see the page
+	if ( ! current_user_can( 'install_plugins' ) ) {
+		return;
+	}
+
+	TGM_Plugin_Activation::get_instance()->populate_file_path();
+
+	foreach ( TGM_Plugin_Activation::get_instance()->plugins as $plugin ) {
+		if ( ! is_plugin_active( $plugin['file_path'] ) ) {
+			add_submenu_page( 'themify', __( 'Install Plugins', 'themify' ), __( 'Install Plugins', 'themify' ), 'manage_options', 'themify-install-plugins', array( TGM_Plugin_Activation::get_instance(), 'install_plugins_page' ) );
+			break;
+		}
+	}
+}
+
+
+/**
+ * Fix issue with tgmpa and WP multisite
+ *
+ * @since 1.0.0
+ */
+function themify_tgmpa_mu_fix( $links ) {
+	if( is_multisite() ) {
+		$links['install'] = '';
+		$links['update'] = '';
+	}
+
+	return $links;
+}
+/**
+ * Hide plugin activation link on WP Multisite
+ */
+function themify_tgmpa_mu_hide_activate_link() {
+	global $hook_suffix;
+
+	if ( $hook_suffix === 'appearance_page_themify-install-plugins' && is_multisite() ) {
+		echo '<style>.plugins .row-actions { display: none !important; }</style>';
+	}
+}
+add_filter( 'admin_head', 'themify_tgmpa_mu_hide_activate_link' );
+add_action( 'tgmpa_register', 'themify_register_required_plugins', 11 );
+add_action( 'admin_notices', 'themify_tgmpa_before_notices', 9 );
+add_action( 'admin_notices', 'themify_tgmpa_after_notices', 11 );
+add_filter( 'tgmpa_notice_action_links', 'themify_tgmpa_mu_fix' );

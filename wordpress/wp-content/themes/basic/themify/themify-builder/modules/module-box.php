@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Box
  * Description: Display box content
@@ -15,7 +16,16 @@ class TB_Box_Module extends Themify_Builder_Component_Module {
             'slug' => 'box'
         ));
     }
-
+	public function get_assets() {
+		return array(
+			'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+		);
+    }
+    
+    public function get_icon(){
+	return 'layout-width-full';
+    }
+    
     public function get_options() {
         return array(
             array(
@@ -51,7 +61,7 @@ class TB_Box_Module extends Themify_Builder_Component_Module {
         );
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
         return array(
             'content_box' => '<p>'.self::$texts['content_box'].'</p>'
         );
@@ -183,6 +193,21 @@ class TB_Box_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(' .module-box-content'),
@@ -222,6 +247,8 @@ class TB_Box_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+		// Display
+		self::get_expand('disp', self::get_display())
         );
 
         $heading = array();
@@ -232,7 +259,7 @@ class TB_Box_Module extends Themify_Builder_Component_Module {
 		$selector.=':not(.module-title)';
 	    }
             $heading = array_merge($heading, array(
-		self::get_expand(sprintf(__('Heading %s Font', 'themify'), $i), array(
+		self::get_expand($h.'_f', array(
                 self::get_tab(array(
                     'n' => array(
                         'options' => array(

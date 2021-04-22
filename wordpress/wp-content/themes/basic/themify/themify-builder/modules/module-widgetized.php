@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Widgetized
  * Description: Display any registered sidebar
@@ -168,6 +168,21 @@ class TB_Widgetized_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -207,6 +222,8 @@ class TB_Widgetized_Module extends Themify_Builder_Component_Module {
 					))
 				)
 			),
+			// Display
+			self::get_expand('disp', self::get_display())
         );
 
         $widgetized_container = array(

@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Icon
  * Description: Display Icon content
@@ -15,11 +16,21 @@ class TB_Icon_Module extends Themify_Builder_Component_Module {
 	    'slug' => 'icon'
 	));
     }
+    
+    public function get_icon(){
+	return 'control-record';
+    }
+    
+    public function get_assets() {
+	return array(
+	    'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+	);
+    }
 
     public function get_options() {
 
 	return array(
-	    array(
+        array(
             'id' => 'icon_size',
             'label' => __('Size', 'themify'),
             'type' => 'layout',
@@ -41,7 +52,6 @@ class TB_Icon_Module extends Themify_Builder_Component_Module {
 			    array('img' => 'rounded_button', 'value' => 'rounded', 'label' => __('Rounded', 'themify')),
 			    array('img' => 'squared_button', 'value' => 'squared', 'label' => __('Squared', 'themify')),
 			    array('img' => 'none','value' => 'none', 'label' => __('None', 'themify'))
-
 		    )
 	    ),
 		array(
@@ -58,106 +68,119 @@ class TB_Icon_Module extends Themify_Builder_Component_Module {
             'id' => 'icon_position',
             'type' => 'icon_radio',
             'label' => __('Icon Position ', 'themify'),
-            'options' => array(
-                array('value' => 'icon_position_left', 'name' => __('Left', 'themify'),'icon'=> '<span class="ti-align-left"></span>'),
-                array('value' => 'icon_position_center', 'name' => __('Center', 'themify'),'icon'=> '<span class="ti-align-center"></span>'),
-                array('value' => 'icon_position_right', 'name' => __('Right', 'themify'),'icon'=> '<span class="ti-align-right"></span>')
-            )
+            'aligment2' => true
 	    ),
 	    array(
 		'id' => 'content_icon',
 		'type' => 'builder',
 		'new_row' => __('Add new', 'themify'),
 		'options' => array(
-		    array(
-			'id' => 'icon',
-			'type' => 'icon',
-			'label' => __('Icon', 'themify'),
-			'class' => 'fullwidth'
+            array(
+                'id' => 'icon_type',
+                'type' => 'radio',
+                'label' => __('Type', 'themify'),
+                'options' => array(
+                    array('value'=>'icon','name'=>__('Icon', 'themify')),
+                    array('value'=>'image','name'=>__('Image', 'themify'))
+                ),
+                'option_js' => true
+            ),
+            array(
+                'id' => 'image',
+                'type' => 'image',
+                'label' => __('Image URL', 'themify'),
+                'wrap_class' => 'tb_group_element_image'
+            ),
+            array(
+                'id' => 'icon',
+                'type' => 'icon',
+                'label' => __('Icon', 'themify'),
+                'class' => 'fullwidth',
+                'wrap_class' => 'tb_group_element_icon'
 		    ),
 		    array(
-			'id' => 'icon_color_bg',
-			'type' => 'layout',
-			'mode' => 'sprite',
-			'class' => 'tb_colors',
-			'label' => '',
-			'color' => true,
-			'transparent'=>true
+                'id' => 'icon_color_bg',
+                'type' => 'layout',
+                'mode' => 'sprite',
+                'class' => 'tb_colors',
+                'label' => '',
+                'color' => true,
+                'transparent'=>true
 		    ),
 		    array(
-			'id' => 'label',
-			'type' => 'text',
-			'label' => self::$texts['icon_label'],
-			'class' => 'fullwidth',
-			'control' => array(
-			    'selector' => '.module-icon-item>span'
-			)
-		    ),
-		    array(
-			'id' => 'link',
-			'type' => 'url',
-			'label' => __('Link', 'themify'),
-			'class' => 'fullwidth',
-			'binding' => array(
-			    'empty' => array(
-				'hide' => array('link_options')
-			    ),
-			    'not_empty' => array(
-				'show' => array('link_options', 'lightbox_size')
+                'id' => 'label',
+                'type' => 'text',
+                'label' => self::$texts['icon_label'],
+                'class' => 'fullwidth',
+                'control' => array(
+			        'selector' => '.module-icon-item>span'
 			    )
-			)
+		    ),
+            array(
+                'id' => 'hide_label',
+                'type' => 'checkbox',
+                'label' => '',
+                'options' => array(
+                    array('name' => 'hide', 'value' => __('Hide label text', 'themify'))
+                )
+            ),
+		    array(
+                'id' => 'link',
+                'type' => 'url',
+                'label' => __('Link', 'themify'),
+                'class' => 'fullwidth',
+                'binding' => array(
+                    'empty' => array(
+                        'hide' => array('link_options', 'lightbox_size')
+                    ),
+                    'not_empty' => array(
+                        'show' => array('link_options', 'lightbox_size')
+                    )
+                )
 		    ),
 		    array(
-			'id' => 'link_options',
-			'type' => 'radio',
-			'label' => 'o_l',
-			'link_type' =>true,
-							'option_js' => true,
-							'wrap_class' => ' tb_compact_radios',
+                'id' => 'link_options',
+                'type' => 'radio',
+                'label' => 'o_l',
+                'link_type' =>true,
+                'option_js' => true,
+                'wrap_class' => ' tb_compact_radios',
 		    ),
 		    array(
 			'type' => 'multi',
 			'label' => __('Lightbox Dimension', 'themify'),
 			'options' => array(
 			    array(
-				'id' => 'lightbox_width',
-				'label' => 'w',
-				'control' => false,
-				'type' => 'range',
-				'units' => array(
-				    'px' => array(
-					'min' => 0,
-					'max' => 500
-				    ),
-				    '%' => array(
-					'min' => 0,
-					'max' => 100
-				    ),
-				    'em' => array(
-					'min' => -10,
-					'max' => 10
-				    )
-				)
+                    'id' => 'lightbox_width',
+                    'label' => 'w',
+                    'control' => false,
+                    'type' => 'range',
+                    'units' => array(
+                        'px' => array(
+                            'max' => 3500
+                        ),
+                        '%' => '',
+                        'em' => array(
+                            'min' => -10,
+                            'max' => 10
+                        )
+                    )
 			    ),
 			    array(
-				'id' => 'lightbox_height',
-				'label' => 'ht',
-				'control' => false,
-				'type' => 'range',
-				'units' => array(
-				    'px' => array(
-					'min' => 0,
-					'max' => 500
-				    ),
-				    '%' => array(
-					'min' => 0,
-					'max' => 100
-				    ),
-				    'em' => array(
-					'min' => -10,
-					'max' => 10
-				    )
-				)
+                    'id' => 'lightbox_height',
+                    'label' => 'ht',
+                    'control' => false,
+                    'type' => 'range',
+                    'units' => array(
+                        'px' => array(
+                            'max' => 3500
+                        ),
+                        '%' =>'',
+                        'em' => array(
+                            'min' => -10,
+                            'max' => 10
+                        )
+                    )
 			    )
 			),
 			'wrap_class' => 'tb_group_element_lightbox'
@@ -172,12 +195,15 @@ class TB_Icon_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
 	    'content_icon' => array(
 		array(
+		    'icon_type' => 'icon',
+		    'image' => '',
 		    'icon' => 'fa-home',
 		    'label' => __('Icon label', 'themify'),
+		    'hide_label' => '',
 		    'icon_color_bg' => 'blue',
 		    'icon_arrangement'=>'icon_horizontal',
 		    'icon_position'=>'',
@@ -595,7 +621,11 @@ class TB_Icon_Module extends Themify_Builder_Component_Module {
     protected function _visual_template() {
 	$module_args = self::get_module_args();
 	?>
-	<# var position = ( 'undefined' !== data.icon_position ) ? data.icon_position : '';#>
+	<# var position = data.icon_position? data.icon_position.replace('icon_position_','') : '';
+	    if(position){
+		position='tf_text'+position[0];
+	    }
+	#>
 	<div class="module module-<?php echo $this->slug; ?> {{ data.css_icon }} {{ data.icon_size }} {{ data.icon_style }} {{ data.icon_arrangement }} {{ position }}">
 	    <# if( data.mod_title_icon ) { #>
 	    <?php echo $module_args['before_title']; ?>
@@ -606,19 +636,23 @@ class TB_Icon_Module extends Themify_Builder_Component_Module {
 		<div class="module-<?php echo $this->slug; ?>">
 		    <# _.each( data.content_icon, function( item,i ) {
 		    var link_target = item.link_options === 'newtab' ? 'rel="noopener" target="_blank"' : '',
-		    link_lightbox_class = item.link_options === 'lightbox' ? ' class="lightbox-builder themify_lightbox"' : '',
+		    link_lightbox_class = item.link_options === 'lightbox' ? " class='lightbox-builder themify_lightbox'" : '',
 		    lightbox_data = item.lightbox_width || item.lightbox_height ? (' data-zoom-config="'+item.lightbox_width+item.lightbox_width_unit+'|'+item.lightbox_height+item.lightbox_height_unit+'"'): '';
 		    #>
-		    <div class="module-icon-item">
+		    <div class="module-icon-item {{'icon_horizontal'===data.icon_arrangement ? 'tf_inline_b' : ''}}">
 			<# if(item.link){ #>
-			    <a href="{{ item.link }}"{{ link_target }}{{ link_lightbox_class }}{{ lightbox_data }}>
-			<# } 
-			   if (item.icon){ #>
-                <# item.icon_color_bg = undefined == item.icon_color_bg ? 'tb_default_color' : item.icon_color_bg; #>
-			   <i class="{{ item.icon }} fa ui {{ item.icon_color_bg }}"></i>
-			    <# } 
-			    if (item.label){ #>
-			    <span contenteditable="false" data-name="label" data-index="{{i}}" data-repeat="content_icon">{{{ item.label }}}</span>
+			    <a href="{{ item.link }}"{{ link_target }}{{{ link_lightbox_class }}}{{ lightbox_data }}>
+			<# }
+                item.icon_color_bg = undefined == item.icon_color_bg || item.icon_color_bg=='default' ? 'tb_default_color' : item.icon_color_bg;
+                if (item.icon_type!=='image' && item.icon){ #>
+			   <i class="ui tf_vmiddle tf_textc tf_box {{ item.icon_color_bg }}"><# print(tb_app.Utils.getIcon(item.icon).outerHTML)#></i>
+			    <# }
+                if (item.icon_type==='image' && item.image){ #>
+                <img class="ui {{ item.icon_color_bg }} tf_vmiddle tf_box" src="{{ item.image }}"/>
+                <# }
+                    console.log(item.hide_label);
+			    if (item.label && item.hide_label!=='hide'){ #>
+			    <span class="tf_vmiddle" contenteditable="false" data-name="label" data-index="{{i}}" data-repeat="content_icon">{{{ item.label }}}</span>
 			    <# }  if(item.link){ #>
 			</a>
 			<# } #>

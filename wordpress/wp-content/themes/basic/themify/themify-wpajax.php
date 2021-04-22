@@ -11,13 +11,13 @@
  *
  ***************************************************************************/
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
 
 // Initialize actions
 $themify_ajax_actions = array(
 	'plupload',
 	'delete_preset',
-    'get_404_pages',
+	'get_404_pages',
 	'remove_video',
 	'save',
 	'reset_styling',
@@ -25,11 +25,15 @@ $themify_ajax_actions = array(
 	'pull',
 	'add_link_field',
 	'media_lib_browse',
-	'refresh_webfonts',
 	'import_sample_content',
 	'erase_sample_content',
 	'import_sample_actions',
 	'notice_dismiss',
+	'clear_all_webp',
+	'clear_all_menu',
+	'clear_all_concate',
+	'clear_all_html',
+    'search_autocomplete'
 );
 foreach($themify_ajax_actions as $action){
 	add_action('wp_ajax_themify_' . $action, 'themify_' . $action);
@@ -66,7 +70,7 @@ function themify_get_404_pages(){
 }
 
 //Search only by post title
-function themify_posts_where($search, &$wp_query ){       
+function themify_posts_where($search,$wp_query ){       
     if ( ! empty( $search ) && ! empty( $wp_query->query_vars['search_terms'] ) ) {
         global $wpdb;
 
@@ -217,7 +221,7 @@ function themify_delete_preset(){
 		$file = $_POST['file'];
 		$presets = get_option('themify_background_presets');
 		
-		if(file_exists(THEME_DIR . '/uploads/bg/' . $file)){
+		if(is_file(THEME_DIR . '/uploads/bg/' . $file)){
 			// It's one of the presets budled with the theme
 			unlink(THEME_DIR . '/uploads/bg/' . $file);
 			echo 'Deleted ' . THEME_DIR . '/uploads/bg/' . $file;
@@ -261,19 +265,60 @@ function themify_remove_video() {
  * @package themify
  */
 function themify_save(){
+	$previous_data = themify_get_data();
+
 	check_ajax_referer( 'ajax-nonce', 'nonce' );
-	$data = explode('&', $_POST['data']);
-	$temp = array();
-	foreach($data as $a){
-		$v = explode('=', $a);
-		$temp[$v[0]] = urldecode( str_replace('+',' ',preg_replace_callback('/%([0-9a-f]{2})/i', 'themify_save_replace_cb', urlencode($v[1]))) );
-	}
-	themify_set_data( apply_filters( 'themify_save_data', $temp ) );
+	$temp = apply_filters( 'themify_save_data', themify_normalize_save_data( $_POST['data'] ), $previous_data );
+	unset($temp['tmp_cache_network']);
+	themify_set_data( $temp );
 	_e('Your settings were saved', 'themify');
-	TFCache::removeDirectory(TFCache::get_cache_dir() . 'scripts/');
-	TFCache::removeDirectory(TFCache::get_cache_dir() . 'styles/');
-	Themify_Enqueue_Assets::rewrite_htaccess(empty($temp['setting-cache_gzip']));
+
+	if (
+		Themify_Enqueue_Assets::$mobileMenuActive !== intval( $temp['setting-mobile_menu_trigger_point'] )
+		|| ( isset( $previous_data['skin'] ) && $previous_data['skin'] !== $temp['skin'])
+        || ( isset( $previous_data['setting-header_design'] ) && $previous_data['setting-header_design'] !== $temp['setting-header_design'])
+        || ( isset( $previous_data['setting-exclude_menu_navigation'] ) && $previous_data['setting-exclude_menu_navigation'] !== $temp['setting-exclude_menu_navigation'])
+	) {
+		Themify_Enqueue_Assets::clearConcateCss();
+	}
+
+	if ( class_exists( 'Themify_Builder_Stylesheet' ) ) {
+		$breakpoints=themify_get_breakpoints('all',true);
+		foreach ( $breakpoints as $bp=>$v ) {
+			if ( isset( $previous_data["setting-customizer_responsive_design_{$bp}"] ) && $previous_data["setting-customizer_responsive_design_{$bp}"] !== $temp["setting-customizer_responsive_design_{$bp}"] ) {
+				Themify_Builder_Stylesheet::regenerate_css_files();
+				break;
+			}
+		}
+	}
+	unset($previous_data);
+	if(themify_get_server()==='nginx'){
+		if(empty($temp['setting-webp'])){
+			Themify_Enqueue_Assets::removeWebp();
+		}
+	}
+	else{
+		Themify_Enqueue_Assets::rewrite_htaccess((!empty($temp['setting-dev-mode'])?true:empty($temp['setting-cache_gzip'])),empty($temp['setting-webp']));
+	}
+	TFCache::remove_cache();
+	if(empty($temp['setting-dev-mode'])){
+		TFCache::create_config($temp);
+	}
+	else{
+		TFCache::disable_cache();
+	}
+    TFCache::clear_3rd_plugins_cache();
 	wp_die();
+}
+
+function themify_normalize_save_data($data){
+    $data = explode('&', $data);
+    $temp = array();
+    foreach($data as $a){
+	    $v = explode('=', $a);
+	    $temp[$v[0]] = urldecode( str_replace('+',' ',preg_replace_callback('/%([0-9a-f]{2})/i', 'themify_save_replace_cb', urlencode($v[1]))) );
+    }
+    return $temp;
 }
 
 /**
@@ -297,12 +342,7 @@ function themify_save_replace_cb( $matches ) {
  */
 function themify_reset_styling(){
 	check_ajax_referer( 'ajax-nonce', 'nonce' );
-	$data = explode("&", $_POST['data']);
-	$temp_data = array();
-	foreach($data as $a){
-		$v = explode("=", $a);
-		$temp_data[$v[0]] = str_replace('+',' ', preg_replace_callback('/%([0-9a-f]{2})/i', 'themify_save_replace_cb', $v[1]));
-	}
+	$temp_data = themify_normalize_save_data($_POST['data']);
 	$temp = array();
 	foreach($temp_data as $key => $val){
 		if(strpos($key, 'styling') === false){
@@ -321,13 +361,7 @@ function themify_reset_styling(){
  */
 function themify_reset_settings(){
 	check_ajax_referer( 'ajax-nonce', 'nonce' );
-	$data = explode("&", $_POST['data']);
-	$temp_data = array();
-	foreach($data as $a){
-		$v = explode("=", $a);
-		$temp_data[$v[0]] = str_replace('+',' ', preg_replace_callback('/%([0-9a-f]{2})/i', 'themify_save_replace_cb', $v[1]));
-	
-	}
+	$temp_data = themify_normalize_save_data($_POST['data']);
 	$temp = array();
 	foreach($temp_data as $key => $val){
 		// Don't reset if it's not a setting or the # of social links or a social link or the Hook Contents
@@ -347,7 +381,7 @@ function themify_reset_settings(){
  * @package themify
  */
 function themify_export() {
-	if ( isset( $_GET['export'] ) && 'themify' == $_GET['export'] ) {
+	if ( isset( $_GET['export'] ) && 'themify' === $_GET['export'] ) {
 		check_admin_referer( 'themify_export_nonce' );
 		$theme = wp_get_theme();
 		$theme_name = $theme->display('Name');
@@ -376,13 +410,13 @@ function themify_export() {
 		if(isset($result) && $result){
 			if ( ( isset( $file ) ) && ( $wp_filesystem->exists( $file ) ) ) {
 				ob_start();
-				header('Pragma: public');
-				header('Expires: 0');
-				header("Content-type: application/force-download");
-				header('Content-Disposition: attachment; filename="' . $file . '"');
-				header("Content-Transfer-Encoding: Binary"); 
-				header("Content-length: ".filesize($file));
-				header('Connection: close');
+				header('Pragma:public');
+				header('Expires:0');
+				header('Content-type:application/force-download');
+				header('Content-Disposition:attachment; filename="' . $file . '"');
+				header('Content-Transfer-Encoding:Binary'); 
+				header('Content-length:'.filesize($file));
+				header('Connection:close');
 				ob_clean();
 				flush();
 				echo $wp_filesystem->get_contents( $file );
@@ -468,18 +502,6 @@ function themify_media_lib_browse() {
 
 	exit();
 }
-
-/**
- * Delete WebFonts cache
- * @since 1.3.9
- */
-function themify_refresh_webfonts() {
-	check_ajax_referer( 'ajax-nonce', 'nonce' );
-	delete_transient( 'themify_google_fonts_transient' );
-	echo 'WebFonts refreshed.';
-	die();
-}
-
 /**
  * Get the path to import.php file
  *
@@ -487,12 +509,13 @@ function themify_refresh_webfonts() {
  */
 function themify_get_sample_content_file() {
 	// importing demo content for an skin,regular old demo import
-	$resource_file = isset( $_POST['skin'] )?THEME_DIR . '/skins/' . $_POST['skin'] . '/import':THEME_DIR . '/sample/import';
+	$resource_file = isset( $_POST['skin'] ) ? THEME_DIR . '/skins/' . sanitize_text_field( $_POST['skin'] ) . '/import' : THEME_DIR . '/sample/import';
+
 	/**
 	 * if an extracted import file exists in the theme, use that instead
 	 * this is useful in case some server issue causes problem with the unzip
 	 */
-	if ( file_exists( $resource_file . '.php' ) ) {
+	if ( is_file( $resource_file . '.php' ) ) {
 		return $resource_file . '.php';
 	}
 
@@ -500,10 +523,9 @@ function themify_get_sample_content_file() {
 	$cache_dir = themify_get_cache_dir();
 	$extract_file = $cache_dir['path'] . 'import.php';
 
-	if ( file_exists( $extract_file ) ) {
-		@unlink( $extract_file );
+	if ( is_file( $extract_file ) ) {
+		unlink( $extract_file );
 	}
-
 	if ( ! function_exists( 'WP_Filesystem' ) ) {
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 	}
@@ -513,8 +535,7 @@ function themify_get_sample_content_file() {
 		return $result;
 	}
 
-	$parse_file = file_exists( $extract_file ) ? $extract_file : $resource_file;
-	return $parse_file;
+	return is_file( $extract_file ) ? $extract_file : $resource_file;
 }
 
 /**
@@ -536,19 +557,17 @@ function themify_import_sample_content() {
 	define( 'IMPORT_IMAGES', isset( $_POST['import_images'] ) && sanitize_text_field( $_POST['import_images'] ) === 'yes' );
 
 	do_action( 'themify_before_demo_import' );
-	if( file_exists( $file ) ) {
+
+	include THEMIFY_DIR . '/themify-import-functions.php';
+
+	if ( file_exists( $file ) ) {
 		include_once( $file );
+		themify_do_demo_import();
 	}
 	do_action( 'themify_after_demo_import' );
 
-	/* these variables are set from import.php file, contain information necessary to import images */
-	global $import_actions;
-	if ( ! isset( $import_actions ) ) {
-		$import_actions = array();
-	}
-
 	wp_send_json_success( array(
-		'actions' => $import_actions
+		'actions' => Themify_Import_Helper::get_import_actions(),
 	) );
 }
 
@@ -709,8 +728,12 @@ function themify_erase_sample_content() {
 	define( 'ERASEDEMO', true );
 
 	do_action( 'themify_before_demo_erase' );
-	if( file_exists( $file ) ) {
+
+	include THEMIFY_DIR . '/themify-import-functions.php';
+
+	if ( file_exists( $file ) ) {
 		include_once( $file );
+		themify_do_demo_import();
 	}
 	do_action( 'themify_after_demo_erase' );
 
@@ -725,9 +748,89 @@ function themify_erase_sample_content() {
 function themify_notice_dismiss() {
 	check_ajax_referer( 'ajax-nonce', 'nonce' );
 	if ( !empty( $_POST['notice'] )) {
-	    $_key='themify_' . $_POST['notice'] . '_notice';
+	    $_key='themify_' . sanitize_text_field( $_POST['notice'] ) . '_notice';
 	    delete_option($_key);
 	    add_option($_key,0, '', false );
 	}
-	die();
+	die('1');
+}
+
+function themify_clear_all_webp(){
+	check_ajax_referer('ajax-nonce', 'nonce');
+	wp_send_json_success(Themify_Enqueue_Assets::removeWebp());
+}
+
+function themify_clear_all_concate(){
+	check_ajax_referer('ajax-nonce', 'nonce');
+	Themify_Enqueue_Assets::clearConcateCss();
+    TFCache::clear_3rd_plugins_cache();
+	die('1');
+}
+
+function themify_clear_all_menu(){
+	check_ajax_referer('ajax-nonce', 'nonce');
+	TFCache::remove_cache();
+	themify_clear_menu_cache();
+	die('1');
+}
+
+function themify_clear_all_html(){
+    check_ajax_referer('ajax-nonce', 'nonce');
+	$type='blog';
+	if(is_multisite()){
+		$data = themify_normalize_save_data($_POST['data']);
+		if(!empty($data['tmp_cache_network'])){
+			$type='all';
+		}
+		$data=null;
+	}
+    TFCache::remove_cache($type);
+    die('1');
+}
+add_action('wp_ajax_nopriv_themify_search_autocomplete','themify_search_autocomplete');
+function themify_search_autocomplete(){
+    if(!empty($_POST['term'])){
+        $term  = sanitize_text_field($_POST['term']);
+        if(!empty($term)){
+            global $query,$found_types;
+            if(!empty($_POST['post_type'])){
+                $post_types  = array(sanitize_text_field($_POST['post_type']));
+            }else{
+                if(true===themify_is_woocommerce_active() && 'product' === themify_get( 'setting-search_post_type','all',true )){
+                    $post_types = array('product');
+                }else{
+                    $post_types = Themify_Builder_Model::get_post_types();
+                    unset($post_types['attachment']);
+                    $post_types=array_keys($post_types);
+                }
+            }
+            $query_args = array(
+                'post_type'=>$post_types,
+                'post_status'=>'publish',
+                'posts_per_page'=>22,
+                's'=>$term
+            );
+            $query_args = apply_filters('themify_search_args',$query_args);
+            wp_reset_postdata();
+            $query = new WP_Query( $query_args );
+            $found_types=array();
+            while ( $query->have_posts() ){
+                $query->the_post();
+                $post_type = get_post_type();
+                if (($key = array_search($post_type, $query_args['post_type'])) !== false) {
+                    unset($query_args['post_type'][$key]);
+                    $found_types[]=$post_type;
+                }
+                if(empty($query_args['post_type'])){
+                    break;
+                }
+            }
+            $query->rewind_posts();
+
+            ob_start();
+            include( THEMIFY_DIR.'/includes/search-box-result.php' );
+            ob_end_flush();
+        }
+    }
+    wp_die();
 }

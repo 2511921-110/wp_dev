@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Login
  * Description: Displays login form
@@ -10,11 +11,24 @@ class TB_Login_Module extends Themify_Builder_Component_Module {
 
     function __construct() {
 		parent::__construct(array(
-			'name' => __('Login', 'themify'),
-			'slug' => 'login'
+		    'name' => __('Login', 'themify'),
+		    'slug' => 'login'
 		));
     }
-
+    
+    public function get_icon(){
+	return 'unlock';
+    }
+    
+    public function get_assets() {
+	    $_arr= array(
+		    'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+	    );
+	    if(!Themify_Builder_Model::is_front_builder_activate()){
+		$_arr['js']=themify_enque(THEMIFY_BUILDER_JS_MODULES.$this->slug.'.js');
+	    }
+	    return $_arr;
+    }
     public function get_options() {
 	return array(
 	    array(
@@ -51,8 +65,8 @@ class TB_Login_Module extends Themify_Builder_Component_Module {
 			'class' => 'large',
 			'binding' => array(
 				'r' => array( 'hide' => array( 'redirect_fail', 'msg_fail' ) ),
-				'c' => array( 'show' => array( 'redirect_fail' ), 'hide' => array( 'msg_fail' ) ),
-				'm' => array( 'hide' => array( 'redirect_fail' ), 'show' => array( 'msg_fail' ) ),
+				'c' => array( 'show' => 'redirect_fail', 'hide' =>  'msg_fail' ),
+				'm' => array( 'hide' => 'redirect_fail', 'show' =>  'msg_fail' ),
 			)
 	    ),
 	    array(
@@ -123,7 +137,7 @@ class TB_Login_Module extends Themify_Builder_Component_Module {
 		'label' => __('Remember Me', 'themify'),
 		'options' => array(
 		    'on'=>array('name'=>'show','value' =>'s'),
-		    'off'=>array('name'=>'','value' =>'hi')
+		    'off'=>array('name'=>'hide','value' =>'hi')
 		)
 	    ),
 	    array(
@@ -164,7 +178,7 @@ class TB_Login_Module extends Themify_Builder_Component_Module {
 	);
     }
 
-    public function get_default_settings() {
+    public function get_live_default() {
 	return array(
 	    'label_username' => __('Username or Email', 'themify'),
 	    'label_password' => __('Password', 'themify'),
@@ -340,6 +354,8 @@ class TB_Login_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 
 	$labels = array(
@@ -758,14 +774,14 @@ class TB_Login_Module extends Themify_Builder_Component_Module {
 		    <a href="<?php echo esc_url(network_site_url('wp-login.php?action=lostpassword', 'login_post')); ?>">{{ data.label_forgotten_password }}</a>
 		</div>
 		<# if ( data.remember_me_display === 'show' ) { #>
-		<p class="tb_login_remember">
+		<p class="tb_login_remember tf_left tf_box tf_clear">
 		    <label>
 			<input name="rememberme" type="checkbox" value="forever" /> 
 			<span class="tb_login_remember_text">{{ data.label_remember }}</span>
 		    </label>
 		</p>
 		<# } #>
-		<p class="tb_login_submit">
+		<p class="tb_login_submit tf_right">
 		    <button>{{ data.label_log_in }}</button>
 		    <input type="hidden" name="redirect_to" />
 		</p>
@@ -778,7 +794,7 @@ class TB_Login_Module extends Themify_Builder_Component_Module {
 			<input type="text" name="user_login" class="input" value="" size="20" />
 		    </label>
 		</p>
-		<p class="tb_lostpassword_submit">
+		<p class="tb_lostpassword_submit tf_right">
 		    <button>{{ data.lostpasswordform_label_reset }}</button>
 		    <input type="hidden" name="redirect_to" />
 		</p>

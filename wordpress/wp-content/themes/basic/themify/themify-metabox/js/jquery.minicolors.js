@@ -162,6 +162,7 @@
            .data('minicolors-initialized', false)
             .data('minicolors-settings', settings)
           .prop('size', size)
+          .attr('autocomplete', 'off')
           .wrap(minicolors)
           .after(
             '<div class="minicolors-panel minicolors-slider-' + settings.control + '">' +
@@ -180,7 +181,7 @@
 
         // The swatch
         if(!settings.inline) {
-            input.after('<span class="minicolors-swatch minicolors-sprite minicolors-input-swatch"><span class="minicolors-swatch-color"></span></span>');
+            input.after('<span class="minicolors-swatch minicolors-sprite minicolors-input-swatch"><span class="minicolors-swatch-color tf_abs"></span></span>');
         }
         input.on('focus.minicolors blur.minicolors keydown.minicolors keyup.minicolors paste.minicolors',function(event){
             var type = event.type;
@@ -312,11 +313,11 @@
     // Swatches
     if(settings.swatches && settings.swatches.length !== 0) {
       panel.addClass('minicolors-with-swatches');
-      swatches = $('<ul class="minicolors-swatches"></ul>')
+      swatches = $('<ul class="minicolors-swatches tf_scrollbar"></ul>')
         .appendTo(panel);
       for(i = 0; i < settings.swatches.length; ++i) {
         // allow for custom objects as swatches
-        if($.type(settings.swatches[i]) === 'object') {
+		if( typeof settings.swatches[i] === 'object') {
           name = settings.swatches[i].name;
           swatch = settings.swatches[i].color;
         } else {
@@ -325,7 +326,7 @@
         }
         swatchString = swatch;
         swatch = isRgb(swatch) ? parseRgb(swatch, true) : hex2rgb(parseHex(swatch, true));
-        $('<li class="minicolors-swatch minicolors-sprite"><span class="minicolors-swatch-color" title="' + name + '"></span></li>')
+        $('<li class="minicolors-swatch minicolors-sprite"><span class="minicolors-swatch-color tf_abs" title="' + name + '"></span></li>')
           .appendTo(swatches)
           .data('swatch-color', swatchString)
           .find('.minicolors-swatch-color')
@@ -1101,13 +1102,15 @@
 }(jQuery));
 
 /*Themify Color Manager*/
-(function ( $ ) {
+(function ( $,window, document  ) {
+    'use strict';
     /**
      * Themify Color Saver Manager
      * The resources that manage Global Styles
      *
      * @since 4.5.0
      */
+    const topWindow=window.top.document;
     window.themifyColorManager = {
         colorSwatches:{},
         initilized:false,
@@ -1116,9 +1119,10 @@
             if(this.initilized) {
                 return;
             }
-            var keys = Object.keys(themifyCM.colors),
-                len = keys.length;
-            for(var i = 0;i<len;i++){
+			if ( typeof themifyCM === 'undefined' ) {
+				return;
+			}
+            for(let keys=Object.keys(themifyCM.colors),i = 0,len=keys.length;i<len;i++){
                 this.colorSwatches[keys[i]] = themifyCM.colors[keys[i]];
             }
             this.initilized = true;
@@ -1129,9 +1133,8 @@
         },
         // Convert data to colors array
         toColorsArray:function(){
-            var colors = [],
-                swatches = Object.keys(this.colorSwatches);
-            for(var i=swatches.length-1; i>=0;--i){
+            let colors = [];
+            for(let swatches=Object.keys(this.colorSwatches),i=swatches.length-1; i>=0;--i){
                 colors.push(this.toRgba(this.colorSwatches[swatches[i]]));
             }
             if(!colors.length){
@@ -1141,101 +1144,124 @@
         },
         // Add required HTML to color picker
         initColorPicker : function () {
-            var container = window.top.document.querySelector('.minicolors-focus .minicolors-panel');
-            if(null !== container.querySelector('.tb_swatches_container')){
+            const container = topWindow.querySelector('.minicolors-focus .minicolors-panel');
+            if(container.getElementsByClassName('tf_swatches_container')[0]){
                 return;
             }
-            var newSwatchesContainer = document.createElement('div');
-            newSwatchesContainer.className = 'tb_swatches_container';
+            const newSwatchesContainer = document.createElement('div'),
+                swatches = newSwatchesContainer.getElementsByClassName('minicolors-swatch'),
+                keys=Object.keys(this.colorSwatches).reverse(),
+                addSwatch = document.createElement('a'),
+                sTooltip = document.createElement('span'),
+                ieTooltip = document.createElement('span'),
+                dropdownIcon = document.createElement('div');
+        
+            newSwatchesContainer.className = 'tf_swatches_container';
             newSwatchesContainer.addEventListener('click',this.initClick.bind(this));
-            newSwatchesContainer.appendChild(container.querySelector('.minicolors-swatches'));
-            var swatches = newSwatchesContainer.querySelectorAll('.minicolors-swatch'),
+            newSwatchesContainer.appendChild(container.getElementsByClassName('minicolors-swatches')[0]);
             // Add delete Icon
-                keys = Object.keys(this.colorSwatches);
-            keys = keys.reverse();
-            for(var i = swatches.length-1;i>-1;--i){
+            for(let i = swatches.length-1;i>-1;--i){
                 if(!keys.length){
                     swatches[i].parentNode.removeChild(swatches[i]);
                     break;
                 }
-                var deleteIcon = document.createElement('span');
-                deleteIcon.className = 'tb_delete_swatch ti-close';
+                let deleteIcon = document.createElement('span'),
+                    UID = 'undefined' !== typeof this.colorSwatches[keys[i]]['uid'] ? this.colorSwatches[keys[i]].uid : this.UID() + i ;
+                deleteIcon.className = 'tb_delete_swatch tf_close';
                 swatches[i].appendChild(deleteIcon);
                 // Add ID to swatch
-                var UID = 'undefined' !== typeof this.colorSwatches[keys[i]]['uid'] ? this.colorSwatches[keys[i]].uid : this.UID() + i ;
                 swatches[i].dataset['uid'] = this.colorSwatches[keys[i]]['uid'] = UID;
-                deleteIcon = null;
             }
+            ieTooltip.className=sTooltip.className='tf_cm_tooltip';
             // Add Add Swatch Icon
-            var addSwatch = document.createElement('div'),
-                dropdownIcon = document.createElement('div');
-            addSwatch.className = 'tb_add_swatch ti-plus';
+            sTooltip.innerText=themifyCM.labels.save;
+            addSwatch.appendChild(sTooltip);
+            addSwatch.className = 'tb_add_swatch tf_plus_icon';
             newSwatchesContainer.appendChild(addSwatch);
             // Add Import/Export Drop Down
-            dropdownIcon.className = 'tb_cm_dropdown_icon ti-import';
+            ieTooltip.innerText=themifyCM.labels.ie;
+            dropdownIcon.appendChild(ieTooltip);
+            dropdownIcon.className = 'tb_cm_dropdown_icon';
+            dropdownIcon.appendChild(this.getIcon('ti-import'));
             dropdownIcon.setAttribute('tabIndex','-1');
             dropdownIcon.appendChild(this.makeImportExportDropdown());
             newSwatchesContainer.appendChild(dropdownIcon);
             container.appendChild(newSwatchesContainer);
-            if('undefined' !== typeof SimpleBar){
-                new SimpleBar(container.querySelector('.minicolors-swatches'));
-            }
-            container = newSwatchesContainer = swatches = null;
         },
         // Make import/expot import
         makeImportExportDropdown:function(){
-            var dropdown = document.createElement('div'),
+            const dropdown = document.createElement('div'),
                 menu = document.createElement('ul'),
                 importCM = document.createElement('li'),
                 exportCM = document.createElement('li');
                 dropdown.className = 'tb_cm_dropdown';
             importCM.className = 'tb_cm_import';
-            importCM.innerText = themifyCM.labels.import;
+            importCM.textContent = themifyCM.labels.import;
+            importCM.appendChild(this.getIcon('ti-import'));
             menu.appendChild(importCM);
             exportCM.className = 'tb_cm_export';
-            exportCM.innerText = themifyCM.labels.export;
+            exportCM.textContent = themifyCM.labels.export;
+            exportCM.appendChild(this.getIcon('ti-export'));
             menu.appendChild(exportCM);
             dropdown.appendChild(menu);
             return dropdown;
         },
+        getIcon: function (icon,cl) {
+            icon='tf-'+icon.trim().replace(' ','-');
+            const ns='http://www.w3.org/2000/svg',
+                use=document.createElementNS(ns,'use'),
+                svg=document.createElementNS(ns,'svg');
+            let classes='tf_fa '+icon;
+            if(cl){
+                classes+=' '+cl;
+            }
+            svg.setAttribute('class',classes);
+            use.setAttributeNS(null, 'href','#'+icon);
+            svg.appendChild(use);
+            return svg;
+        },
         // Generate Unique ID
         UID:function(){
-            var uid = Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36);
+            const uid = Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36);
             return uid.substring(0,5);
         },
         // Init Click events
         initClick:function(e){
             e.preventDefault();
-            var target = e.target,
+            const target = e.target,
                 classList = target.classList;
             if(classList.contains('tb_delete_swatch')){
                 this.deleteSwatch(e);
-            }else if(classList.contains('tb_add_swatch')){
+            }
+            else if(classList.contains('tb_add_swatch')){
                 this.addSwatch();
-            }else if(classList.contains('tb_cm_export')){
+            }
+            else if(classList.contains('tb_cm_export')){
                 target.parentNode.parentNode.parentNode.blur();
                 document.location.assign(themifyCM.exportColorsURL);
-            }else if(classList.contains('tb_cm_import')){
+            }
+            else if(classList.contains('tb_cm_import')){
                 target.parentNode.parentNode.parentNode.blur();
                 this.importColors('colors');
             }
         },
         // Import Colors
         importColors:function(type){
-            var input = window.top.document.getElementsByClassName('themify_cm_input');
+            let input = topWindow.getElementsByClassName('themify_cm_input');
             if(!input.length){
-                var input = document.createElement('input');
+                input = document.createElement('input');
                 input.type = 'file';
                 input.dataset.type = type;
                 input.className = 'themify_cm_input';
+                const self = this;
                 input.addEventListener('change',function ( e ) {
-                    var file = e.target.files[0],
+                    const file = e.target.files[0],
                         formData = new FormData(),
                         type = e.target.dataset.type;
-                    formData.append("file", file, file.name);
-                    formData.append("action", 'themify_import_colors');
-                    formData.append("tb_load_nonce", themifyCM.nonce);
-                    formData.append("type", type);
+                    formData.append('file', file, file.name);
+                    formData.append('action', 'themify_import_colors');
+                    formData.append('tb_load_nonce', themifyCM.nonce);
+                    formData.append('type', type);
                     $.ajax({
                         url: themifyCM.ajax_url,
                         type: 'POST',
@@ -1247,27 +1273,21 @@
                         success: function(data) {
                             if(data.status === 'SUCCESS'){
                                 if('colors' === type){
-                                    themifyColorManager.colorSwatches = data.colors;
-                                    swatches = window.top.document.querySelectorAll('.tb_swatches_container .minicolors-swatch');
-                                    for(var i=swatches.length-1; i >=0; --i ){
+                                    self.colorSwatches = data.colors;
+                                    for(let swatches = topWindow.querySelectorAll('.tf_swatches_container .minicolors-swatch'),i=swatches.length-1; i >-1; --i ){
                                         swatches[i].parentNode.removeChild(swatches[i]);
                                     }
-                                    var swatches = Object.keys(themifyColorManager.colorSwatches),
-                                        len = swatches.length;
-                                    for(var i= 0 ;i < len ; i++ ){
-                                        themifyColorManager.addSwatchHtml(themifyColorManager.colorSwatches[swatches[i]].color,themifyColorManager.colorSwatches[swatches[i]].opacity,swatches[i]);
+                                    for(let swatches = Object.keys(self.colorSwatches),len = swatches.length,i= 0 ;i < len ; i++ ){
+                                        self.addSwatchHtml(self.colorSwatches[swatches[i]].color,self.colorSwatches[swatches[i]].opacity,swatches[i]);
                                     }
-                                }else if('gradients' === type){
-                                    var instance = ThemifyBuilderCommon.Lightbox.$lightbox.find('.tb_gradient_container').first().data('themifyGradient'),
-                                        oldSwatches = Object.keys(themifyCM.gradients);
-                                    for(var i=oldSwatches.length-1; i >=0; --i ){
+                                }
+                                else if('gradients' === type){
+                                    const instance = ThemifyBuilderCommon.Lightbox.$lightbox.find('.tb_gradient_container').first().data('themifyGradient');
+                                    for(let oldSwatches = Object.keys(themifyCM.gradients),i=oldSwatches.length-1; i >-1; --i ){
                                         instance.removeSwatch(oldSwatches[i]);
                                     }
-                                    oldSwatches = null;
                                     themifyCM.gradients = data.colors;
-                                    var swatches = Object.keys(themifyCM.gradients),
-                                        len = swatches.length;
-                                    for(var i= 0 ;i < len ; i++ ){
+                                    for(let swatches = Object.keys(themifyCM.gradients),i= 0,len = swatches.length;i < len ; i++ ){
                                         instance.addSwatch(themifyCM.gradients[swatches[i]]);
                                     }
                                 }
@@ -1287,19 +1307,16 @@
         deleteSwatch:function(e){
             e.preventDefault();
             e.stopPropagation();
-            var swatchID = e.target.parentNode.dataset.uid,
-                swatches = window.top.document.querySelectorAll('[data-uid="'+swatchID+'"]');
-            for(var i=swatches.length-1; i >=0; --i ){
+            const swatchID = e.target.parentNode.dataset.uid;
+            for(let swatches = topWindow.querySelectorAll('[data-uid="'+swatchID+'"]'),i=swatches.length-1; i >=0; --i ){
                 swatches[i].parentNode.removeChild(swatches[i]);
             }
-            swatches = null;
             delete this.colorSwatches[swatchID];
             // update the color swatches
             this.updateColorSwatches('colors');
         },
         // Sync all swatches with the server
         updateColorSwatches:function(type){
-            var colors = 'colors' === type ? this.colorSwatches : themifyCM.gradients;
             // Run ajax to sync with server
             $.ajax({
                 type: 'POST',
@@ -1309,29 +1326,28 @@
                     action: 'themify_save_colors',
                     type: type,
                     tb_load_nonce: themifyCM.nonce,
-                    colors: colors
+                    colors: 'colors' === type ? this.colorSwatches : themifyCM.gradients
                 }
             });
         },
         // Add a swatch
         addSwatch:function(){
-            var input = window.top.document.querySelector('.minicolors-focus .minicolors-input'),
+            const input = topWindow.querySelector('.minicolors-focus .minicolors-input'),
                 newColor = this.hex2Rgb(input.value),
-                newOpacity = input.dataset['opacity'],
-                exist = false;
+                newOpacity = input.dataset['opacity'];
             if(null === newColor){
                 return false;
             }
+            let exist = false;
             // Check if color is not exist in swatches
-            var swatches = Object.keys(this.colorSwatches);
-            for(var i=swatches.length-1; i >=0; --i ){
+            for(let swatches = Object.keys(this.colorSwatches),i=swatches.length-1; i >=0; --i ){
                 if(this.colorSwatches[swatches[i]].color.replace(/\s/g,'') === newColor && parseFloat(this.colorSwatches[swatches[i]].opacity) === parseFloat(newOpacity)){
                     exist = true;
                     break;
                 }
             }
             if(!exist){
-                var UID = this.UID();
+                const UID = this.UID();
                 this.addSwatchHtml(newColor,newOpacity,UID);
                 this.colorSwatches[UID] = {color:newColor,opacity:newOpacity,uid:UID};
                 // update the color swatches
@@ -1341,30 +1357,27 @@
         // Add Swatche HTML
         addSwatchHtml:function(color,opacity,UID){
             function createSwatch(UID){
-                var newSwatch = document.createElement('li'),
-                    colorSpan = document.createElement('span');
+                const newSwatch = document.createElement('li'),
+                    colorSpan = document.createElement('span'),
+                    deleteIcon = document.createElement('span');
                 newSwatch.className = 'minicolors-swatch minicolors-sprite';
                 newSwatch.dataset['uid'] = UID;
                 newSwatch.dataset['swatchColor'] = color.replace(')', ', '+opacity+')').replace('rgb', 'rgba');
-                colorSpan.className = 'minicolors-swatch-color';
+                colorSpan.className = 'minicolors-swatch-color tf_abs';
                 colorSpan.style.backgroundColor = color;
                 colorSpan.style.opacity = opacity;
                 newSwatch.appendChild(colorSpan);
-                var deleteIcon = document.createElement('span');
-                deleteIcon.className = 'tb_delete_swatch ti-close';
+                deleteIcon.className = 'tb_delete_swatch tf_close';
                 newSwatch.appendChild(deleteIcon);
                 return newSwatch;
             }
-            var containers = window.top.document.querySelectorAll('.tb_swatches_container .minicolors-swatches .simplebar-content');
-            containers = 0 === containers.length ? window.top.document.querySelectorAll('.tb_swatches_container .minicolors-swatches'):containers;
-            for(var i=containers.length-1; i >=0; --i ){
+            for(let containers=topWindow.querySelectorAll('.tf_swatches_container .minicolors-swatches'),i=containers.length-1; i >=0; --i ){
                 containers[i].insertBefore(createSwatch(UID), containers[i].firstChild);
             }
-            containers = null;
         },
         // convert Hex to Rgb
         hex2Rgb:function(hex){
-            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
             return result ? 'rgb(' + parseInt(result[1], 16) + ',' + parseInt(result[2], 16) + ',' + parseInt(result[3], 16) + ')' : null;
         }
     };

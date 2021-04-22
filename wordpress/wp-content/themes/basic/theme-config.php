@@ -78,10 +78,6 @@ $themify_theme_config['panel']['settings']['tab']['theme_settings'] = array(
 			'function' => 'disable_responsive_design_option'
 		),
 		array(
-			'title' => __('WordPress Gallery Lightbox', 'themify'),
-			'function' => 'gallery_plugins'
-		),
-		array(
 			'title' => __('Page Navigation', 'themify'),
 			'function' => 'entries_navigation'
 			),
@@ -100,6 +96,10 @@ $themify_theme_config['panel']['settings']['tab']['theme_settings'] = array(
 		array(
 			'title' => __( 'Footer Text', 'themify' ),
 			'function' => 'footer_text_settings'
+		),
+		array(
+			'title' => __('WordPress Gallery Lightbox', 'themify'),
+			'function' => 'gallery_plugins'
 		)
 	)
 );

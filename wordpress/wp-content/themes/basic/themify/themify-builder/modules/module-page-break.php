@@ -1,5 +1,7 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Page break
  * Description: Page breaker and pagination
@@ -10,6 +12,10 @@ class TB_Page_Break_Module extends Themify_Builder_Component_Module {
 			'name' => __('Page Break', 'themify'),
 			'slug' => 'page-break'
 		));
+	}
+	
+	public function get_icon(){
+	    return false;
 	}
 
 	protected function _visual_template() { 

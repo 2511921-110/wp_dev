@@ -1,14 +1,13 @@
 <?php
-if ( ! defined( 'ABSPATH' ) )
-	exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Template Newsletter
  * 
  * Access original fields: $mod_settings
  * @author Themify
  */
-
-if ( TFCache::start_cache( $args['mod_name'], self::$post_id, array( 'ID' => $args['module_ID'] ) ) ):
 
 $fields_default = array(
 	'mod_title' => '',
@@ -36,30 +35,32 @@ $fields_default = array(
 );
 $fields_args = wp_parse_args( $args['mod_settings'], $fields_default );
 unset( $args['mod_settings'] );
-
+$fields_default=null;
 $mod_name=$args['mod_name'];
 $builder_id = $args['builder_id'];
-$element_id = isset($args['element_id'])?'tb_'.$args['element_id']:$args['module_ID'];
+$element_id = $args['module_ID'];
 
-$instance = Builder_Optin_Services_Container::get_instance()->get_provider( $fields_args['provider'] );
+$instance = Builder_Optin_Service::get_providers( $fields_args['provider'] );
 $container_class = apply_filters( 'themify_builder_module_classes', array(
 	'module', 
 	'module-' . $mod_name,
 	$element_id, 
 	$fields_args['css'],
-	self::parse_animation_effect( $fields_args['animation_effect'], $fields_args ), 
 	$fields_args['layout']
 	), $mod_name, $element_id, $fields_args
 );
 if(!empty($fields_args['global_styles']) && Themify_Builder::$frontedit_active===false){
     $container_class[] = $fields_args['global_styles'];
 }
-$container_props = apply_filters( 'themify_builder_module_container_props', array(
+$container_props = apply_filters( 'themify_builder_module_container_props', self::parse_animation_effect($fields_args,array(
 	'id' => $element_id,
 	'class' => implode(' ', $container_class ),
-), $fields_args, $mod_name, $element_id );
+)), $fields_args, $mod_name, $element_id );
 $args=null;
-$icon =$fields_args['button_icon']? sprintf( '<i class="%s"></i>', themify_get_icon($fields_args['button_icon'] )):'';
+$icon =$fields_args['button_icon']? sprintf( '<i>%s</i>', themify_get_icon($fields_args['button_icon'] )):'';
+if(Themify_Builder::$frontedit_active===false){
+    $container_props['data-lazy']=1;
+}
 ?>
 <!-- module optin -->
 <div <?php echo self::get_element_attributes(self::sticky_element_props($container_props,$fields_args)); ?>>
@@ -97,8 +98,11 @@ $icon =$fields_args['button_icon']? sprintf( '<i class="%s"></i>', themify_get_i
 			    <input type="hidden" name="tb_optin_fname" value="<?php echo esc_attr( $fields_args['default_fname'] ); ?>" />
 		    <?php else : ?>
 			    <div class="tb_optin_fname">
-				    <label class="tb_optin_fname_text"><?php echo esc_html( $fields_args['label_firstname'] ) ?></label>
-				    <input type="text" name="tb_optin_fname" required="required" class="tb_optin_input"<?php echo !empty($fields_args['fn_placeholder'])?' placeholder="'.$fields_args['fn_placeholder'].'"':''; ?> />
+				    <label class="tb_optin_fname_text">
+                        <?php echo !empty($fields_args['label_firstname'])?esc_html( $fields_args['label_firstname']):'<span class="screen-reader-text">'.__('First name','themify').'</span>'; ?>
+                        <input type="text" name="tb_optin_fname" required="required" class="tb_optin_input"<?php echo !empty($fields_args['fn_placeholder'])?' placeholder="'.$fields_args['fn_placeholder'].'"':''; ?> />
+                    </label>
+
 			    </div>
 		    <?php endif; ?>
 
@@ -106,14 +110,18 @@ $icon =$fields_args['button_icon']? sprintf( '<i class="%s"></i>', themify_get_i
 			    <input type="hidden" name="tb_optin_lname" value="<?php echo esc_attr( $fields_args['default_lname'] ); ?>" />
 		    <?php else : ?>
 			    <div class="tb_optin_lname">
-				    <label class="tb_optin_lname_text"><?php echo esc_html( $fields_args['label_lastname'] ) ?></label>
-				    <input type="text" name="tb_optin_lname" required="required" class="tb_optin_input"<?php echo !empty($fields_args['ln_placeholder'])?' placeholder="'.$fields_args['ln_placeholder'].'"':''; ?>/>
+				    <label class="tb_optin_lname_text">
+                        <?php echo !empty($fields_args['label_lastname'])?esc_html( $fields_args['label_lastname']):'<span class="screen-reader-text">'.__('Last name','themify').'</span>'; ?>
+                        <input type="text" name="tb_optin_lname" required="required" class="tb_optin_input"<?php echo !empty($fields_args['ln_placeholder'])?' placeholder="'.$fields_args['ln_placeholder'].'"':''; ?>/>
+                    </label>
 			    </div>
 		    <?php endif; ?>
 
 		    <div class="tb_optin_email">
-			    <label class="tb_optin_email_text"><?php echo esc_html( $fields_args['label_email'] ) ?></label>
-			    <input type="email" name="tb_optin_email" required="required" class="tb_optin_input"<?php echo !empty($fields_args['email_placeholder'])?' placeholder="'.$fields_args['email_placeholder'].'"':''; ?> />
+			    <label class="tb_optin_email_text">
+                    <?php echo !empty($fields_args['label_email'])?esc_html( $fields_args['label_email']):'<span class="screen-reader-text">'.__('Email','themify').'</span>'; ?>
+                    <input type="email" name="tb_optin_email" required="required" class="tb_optin_input"<?php echo !empty($fields_args['email_placeholder'])?' placeholder="'.$fields_args['email_placeholder'].'"':''; ?> />
+                </label>
 		    </div>
 
 			<?php if ( $fields_args['gdpr'] === 'on' ) : ?>
@@ -140,5 +148,5 @@ $icon =$fields_args['button_icon']? sprintf( '<i class="%s"></i>', themify_get_i
 	<?php endif; ?>
     <?php endif; ?>
 </div><!-- /module optin -->
+<?php unset($instance)?>
 
-<?php endif; TFCache::end_cache(); ?>

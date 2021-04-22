@@ -656,87 +656,88 @@ function woocommerce_support() {
 
 
 function generate_upload_image_tag($name, $value){?>
-  <h3>ロゴ</h3>
-  <p>※ファビコンとローディング画面へ表示されます</p>
-  <div id="<?php echo $name; ?>_thumbnail" class="uploded-thumbnail">
-    <?php if ($value): ?>
-      <img src="<?php echo $value; ?>" alt="選択中の画像" width="250px">
-    <?php endif ?>
-  </div>
-  <input name="<?php echo $name; ?>" type="text" value="<?php echo $value; ?>" />
-  <input type="button" name="<?php echo $name; ?>_slect" value="選択" />
-  <input type="button" name="<?php echo $name; ?>_clear" value="クリア" />
+<h3>ロゴ</h3>
+<p>※ファビコンとローディング画面へ表示されます</p>
+<div id="<?php echo $name; ?>_thumbnail" class="uploded-thumbnail">
+  <?php if ($value): ?>
+  <img src="<?php echo $value; ?>" alt="選択中の画像" width="250px">
+  <?php endif ?>
+</div>
+<input name="<?php echo $name; ?>" type="text" value="<?php echo $value; ?>" />
+<input type="button" name="<?php echo $name; ?>_slect" value="選択" />
+<input type="button" name="<?php echo $name; ?>_clear" value="クリア" />
 
 
-  <script type="text/javascript">
-  (function ($) {
+<script type="text/javascript">
+(function($) {
 
-      var custom_uploader;
+  var custom_uploader;
 
-      $("input:button[name=<?php echo $name; ?>_slect]").click(function(e) {
+  $("input:button[name=<?php echo $name; ?>_slect]").click(function(e) {
 
-          e.preventDefault();
+    e.preventDefault();
 
-          if (custom_uploader) {
+    if (custom_uploader) {
 
-              custom_uploader.open();
-              return;
+      custom_uploader.open();
+      return;
 
-          }
+    }
 
-          custom_uploader = wp.media({
+    custom_uploader = wp.media({
 
-              title: "画像を選択してください",
+      title: "画像を選択してください",
 
-              /* ライブラリの一覧は画像のみにする */
-              library: {
-                  type: "image"
-              },
+      /* ライブラリの一覧は画像のみにする */
+      library: {
+        type: "image"
+      },
 
-              button: {
-                  text: "画像の選択"
-              },
+      button: {
+        text: "画像の選択"
+      },
 
-              /* 選択できる画像は 1 つだけにする */
-              multiple: false
+      /* 選択できる画像は 1 つだけにする */
+      multiple: false
 
-          });
+    });
 
-          custom_uploader.on("select", function() {
+    custom_uploader.on("select", function() {
 
-              var images = custom_uploader.state().get("selection");
+      var images = custom_uploader.state().get("selection");
 
-              /* file の中に選択された画像の各種情報が入っている */
-              images.each(function(file){
+      /* file の中に選択された画像の各種情報が入っている */
+      images.each(function(file) {
 
-                  /* テキストフォームと表示されたサムネイル画像があればクリア */
-                  $("input:text[name=<?php echo $name; ?>]").val("");
-                  $("#<?php echo $name; ?>_thumbnail").empty();
+        /* テキストフォームと表示されたサムネイル画像があればクリア */
+        $("input:text[name=<?php echo $name; ?>]").val("");
+        $("#<?php echo $name; ?>_thumbnail").empty();
 
-                  /* テキストフォームに画像の URL を表示 */
-                  $("input:text[name=<?php echo $name; ?>]").val(file.attributes.sizes.full.url);
+        /* テキストフォームに画像の URL を表示 */
+        $("input:text[name=<?php echo $name; ?>]").val(file.attributes.sizes.full.url);
 
-                  /* プレビュー用に選択されたサムネイル画像を表示 */
-                  $("#<?php echo $name; ?>_thumbnail").append('<img src="'+file.attributes.sizes.thumbnail.url+'" />');
-
-              });
-          });
-
-          custom_uploader.open();
+        /* プレビュー用に選択されたサムネイル画像を表示 */
+        $("#<?php echo $name; ?>_thumbnail").append('<img src="' + file.attributes.sizes.thumbnail.url +
+          '" />');
 
       });
+    });
 
-      /* クリアボタンを押した時の処理 */
-      $("input:button[name=<?php echo $name; ?>_clear]").click(function() {
+    custom_uploader.open();
 
-          $("input:text[name=<?php echo $name; ?>]").val("");
-          $("#<?php echo $name; ?>_thumbnail").empty();
+  });
 
-      });
+  /* クリアボタンを押した時の処理 */
+  $("input:button[name=<?php echo $name; ?>_clear]").click(function() {
 
-  })(jQuery);
-  </script>
-  <?php
+    $("input:text[name=<?php echo $name; ?>]").val("");
+    $("#<?php echo $name; ?>_thumbnail").empty();
+
+  });
+
+})(jQuery);
+</script>
+<?php
 }
 
 
@@ -760,26 +761,26 @@ function site_settings_page() {
 
 <?php //管理画面の表示 ?>
 <div class="wrap">
-<h2>サイトの設定</h2>
-<?php
+  <h2>サイトの設定</h2>
+  <?php
 	if (isset($_POST['siteoption_keyword'])) {
 		echo '<div id="setting-error-settings_updated" class="updated settings-error notice is-dismissible">
 			<p><strong>設定を保存しました。</strong></p></div>';
 	}
 ?>
-<form method="post" action="">
-<?php submit_button(); ?>
-<!-- <table class="form-table setting-table">
+  <form method="post" action="">
+    <?php submit_button(); ?>
+    <!-- <table class="form-table setting-table">
 	<tr>
 		<th><label for="siteoption_keyword">サイトキーワード(keyword)</label></th>
 		<td><input name="siteoption_keyword" type="text" id="siteoption_keyword" value="<?php form_option('siteoption_keyword'); ?>" class="regular-text" /></td>
 	</tr>
 </table> -->
-<?php
+    <?php
   generate_upload_image_tag('home_image_url', get_option('home_image_url'));
 ?>
-<?php submit_button(); ?>
-</form>
+    <?php submit_button(); ?>
+  </form>
 </div>
 
 <?php //関数 ?>
@@ -810,3 +811,21 @@ function change_admin_cpt_text_filter( $translated_text, $untranslated_text, $do
     return $translated_text;
 }
 
+
+//[template arg1="content" arg2="contact"]
+function wrap_get_template_part($atts) {
+  extract(shortcode_atts(
+      array(
+          'arg1' => '',
+          'arg2' => '',
+      ), $atts)
+  );
+
+  ob_start();
+  get_template_part( $arg1, $arg2 );
+  $html = ob_get_contents();
+  ob_end_clean();
+
+  return $html;
+}
+add_shortcode( 'template', 'wrap_get_template_part' );

@@ -1,10 +1,12 @@
 <?php
 
+defined( 'ABSPATH' ) || exit;
+
 if( ! class_exists( 'Themify_Metabox' ) ) :
 class Themify_Metabox {
 
 	private static $instance = null;
-	var $panel_options;
+	private $panel_options;
 
 	public static function get_instance() {
 		return null == self::$instance ? self::$instance = new self : self::$instance;
@@ -76,11 +78,7 @@ class Themify_Metabox {
 	 */
 	public function get_meta_box( $id ) {
 		$meta_boxes = $this->get_meta_boxes();
-		if( isset( $meta_boxes[$id] ) ) {
-			return $meta_boxes[$id];
-		}
-
-		return false;
+		return isset( $meta_boxes[$id] ) ?$meta_boxes[$id]:false;
 	}
 
 	/**
@@ -92,42 +90,35 @@ class Themify_Metabox {
 	 * @since 1.0.2
 	 */
 	function get_meta_box_options( $meta_box, $post_type = null ) {
-		if( ! isset( $this->panel_options[$meta_box] ) ) {
-			if( 'themify-meta-boxes' === $meta_box ) {
-				// backward compatibility
-				global $themify_write_panels;
-				if( ! isset( $themify_write_panels ) )
-					$themify_write_panels = array();
-
-				$themify_write_panels = apply_filters( 'themify_do_metaboxes', $themify_write_panels );
-				$this->panel_options['themify-meta-boxes'] = array_filter( apply_filters( "themify_metabox/fields/{$meta_box}", $themify_write_panels, $post_type ) );
-			} else {
-				$this->panel_options[$meta_box] = array_filter( apply_filters( "themify_metabox/fields/{$meta_box}", array(), $post_type ) );
-			}
+	    if( ! isset( $this->panel_options[$meta_box] ) ) {
+	        $themify_write_panels = apply_filters( 'themify_do_metaboxes', array() );
+	        $this->panel_options[$meta_box] = array_filter( apply_filters( "themify_metabox/fields/{$meta_box}", $themify_write_panels, $post_type ) );
 		}
 
 		$meta_box_result = $this->panel_options[$meta_box];
+		$isShop = themify_metabox_shop_pageId() !== false && themify_metabox_shop_pageId() === get_the_ID();
 
 		// filter the panels by post type
 		if ( $post_type ) {
 			$meta_box_result = array();
 			foreach ( $this->panel_options[ $meta_box ] as $tab ) {
-				if ( !empty( $tab['pages'] )  ) {
-					if ( ! is_array( $tab['pages'] ) ) {
-						$tab['pages'] = array_map( 'trim', explode( ",", $tab['pages'] ) );
-					}
-				} else if ( isset( $def['screen'] ) && ( $def = $this->get_meta_box( $meta_box ) )  ) {
-					$tab['pages'] = $def['screen'];
-					
+				if ( !empty( $tab['pages'] ) && ! is_array( $tab['pages'] )  ) {
+				    $tab['pages'] = array_map( 'trim', explode( ',', $tab['pages'] ) );
 				}
 
 				if ( ! isset( $tab['pages'] ) || in_array( $post_type, $tab['pages'], true ) ) {
-					$meta_box_result[] = $tab;
+				    if(!($isShop===true  && isset($tab['id']) && strpos(trim($tab['id']),'query-')===0)){//disable query posts,portfolio and etc in shop page
+						$meta_box_result[$tab['id']] = $tab;
+				    }
 				}
 			}
 		}
 
 		return apply_filters( 'themify_metabox_panel_options', $meta_box_result );
+	}
+
+	function clear_cache() {
+		$this->panel_options = null;
 	}
 
 	function admin_menu() {
@@ -148,17 +139,9 @@ class Themify_Metabox {
 			wp_cache_delete( $post_id, 'post_meta' );
 		}
 
-		if( ! isset( $_POST['post_type'] ) ) {
+		if ( ! isset( $_POST['post_type'] ) || ('page' === $_POST['post_type'] && ! current_user_can( 'edit_page', $post_id )) || ('page' !== $_POST['post_type'] && ! current_user_can( 'edit_post', $post_id ))) {
 			return $post_id;
-		}
-
-		if ( 'page' === $_POST['post_type'] ) {
-			if ( ! current_user_can( 'edit_page', $post_id ) )
-				return $post_id;
-		} else {
-			if ( ! current_user_can( 'edit_post', $post_id ) )
-				return $post_id;
-		}
+		} 
 
 		if( !empty( $_POST['themify_proper_save'] )) {
 			foreach( $this->get_meta_boxes() as $meta_box ) {
@@ -204,28 +187,34 @@ class Themify_Metabox {
 	 * @since 1.0.2
 	 */
 	function _save_meta( $field, $post_id ) {
-		$new_meta = isset( $field['name'],$_POST[$field['name']] )  ? $_POST[$field['name']] : '';
-		$old_meta = get_post_meta( $post_id, $field['name'], true );
+		$new_meta = isset( $field['name'], $_POST[ $field['name'] ] ) ? $_POST[ $field['name'] ] : '';
 
 		// when a default value is set for the field and it's the same as $new_meta, do not bother with saving the field
-		if( isset( $field['default'] ) && $new_meta == $field['default'] ) {
+		if ($new_meta === 'default'|| ( isset( $field['default'] ) && $new_meta == $field['default'] )) {
 			$new_meta = '';
 		}
 
 		// remove empty meta fields from database
-		if( '' == $new_meta && metadata_exists( 'post', $post_id, $field['name'] ) ) {
-			delete_post_meta( $post_id, $field['name'] );
+		if ( '' === $new_meta ) {
+			if ( metadata_exists( 'post', $post_id, $field['name'] ) ) {
+				delete_post_meta( $post_id, $field['name'] );
+			}
+			return;
 		}
-
-		if( $new_meta !== '' && $new_meta != $old_meta ) {
+		
+		/* sanitization */
+		if (isset( $field['type'] ) && ($field['type'] === 'textbox' || $field['type'] === 'textarea' ) && ! current_user_can( 'unfiltered_html' )) {
+			$new_meta = wp_kses_data( $new_meta );
+		}
+		
+		$old_meta = get_post_meta( $post_id, $field['name'], true );
+		if ( $new_meta !== '' && $new_meta != $old_meta ) {
 			update_post_meta( $post_id, $field['name'], $new_meta );
 		}
 	}
 
 	function render( $post, $metabox ) {
 		global $post, $typenow;
-
-		$post_id = $post->ID;
 		$tabs = $this->get_meta_box_options( $metabox['id'], $typenow );
 		if( empty( $tabs ) ) {
 
@@ -246,7 +235,7 @@ class Themify_Metabox {
 	 */
 	function render_tabs( $tabs, $post, $id ) {
 		$post_id = $post->ID;
-
+		$isShop=themify_metabox_shop_pageId()===$post_id;
 		echo '<div class="themify-meta-box-tabs" id="' . $id . '-meta-box">';
 			echo '<ul class="ilc-htabs themify-tabs-heading">';
 			foreach( $tabs as $tab ) {
@@ -281,9 +270,12 @@ class Themify_Metabox {
 					<!-- alerts -->
 					<div class="tb_alert"></div>
 					<!-- /alerts -->
-
+					
 					<?php
-					foreach( $tab['options'] as $field ) :
+					foreach( $tab['options'] as $field ){
+						if($isShop===true && isset($field['shop']) && $field['shop']===false){
+							continue;
+						}
                         if ( $field['type'] !== 'toggle_group' ) {
 						$toggle_class = '';
 						if( isset( $field['display_callback'] ) && is_callable( $field['display_callback'] ) ) {
@@ -375,7 +367,7 @@ class Themify_Metabox {
 	                        echo $this->after_meta_toggle_field();
                         }
 
-					endforeach; ?>
+			} ?>
 				</div>
 				</div>
 				<?php
@@ -391,7 +383,7 @@ class Themify_Metabox {
 		$ext_attr = isset( $args['ext_attr'] ) ? $args['ext_attr'] : '';
 		$html = '
 		<input type="hidden" name="' . esc_attr( $meta_box_name ) . '_noncename" id="' . esc_attr( $meta_box_name ) . '_noncename" value="' . wp_create_nonce( plugin_basename(__FILE__) ) . '" />
-		<div class="themify_field_row clearfix ' . esc_attr( $toggle_class ) . '" ' . esc_attr( $ext_attr );
+		<div class="themify_field_row ' . esc_attr( $toggle_class ) . '" ' . esc_attr( $ext_attr );
 		if ( isset( $args['data_hide'] ) && ! empty( $args['data_hide'] ) ) {
 			$html .= ' data-hide="' . esc_attr( $args['data_hide'] ) . '"';
 		}
@@ -415,11 +407,11 @@ class Themify_Metabox {
 
 	function before_meta_toggle_field( $title ) {
 		$html = '
-		<div class="themify_field_row themify_field_row_toggle clearfix">
+		<div class="themify_field_row themify_field_row_toggle tf_clearfix">
 		    <div class="themify_toggle_group_wrapper">
                 <div class="themify_toggle_group_label">
                     <span>' . $title . '</span>
-                    <i class="ti-plus"></i>
+                    <i class="tf_plus_icon"></i>
                 </div>
                 <div class="themify_toggle_group_inner">';
 
@@ -432,28 +424,27 @@ class Themify_Metabox {
 
 		return $html;
 	}
+	
 
 	function admin_enqueue_scripts( $page = '' ) {
 		global $typenow, $wp_scripts;
 
-		$min = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-
 		$ui = $wp_scripts->query( 'jquery-ui-core' );
 		$protocol = is_ssl() ? 'https': 'http';
 		$url = "$protocol://ajax.googleapis.com/ajax/libs/jqueryui/{$ui->ver}/themes/smoothness/jquery-ui.css";
+		$ver=defined('THEMIFY_VERSION')?THEMIFY_VERSION:'1.0';
 		wp_register_style( 'jquery-ui-smoothness', $url, false, null );
 
 		wp_register_style( 'themify-datetimepicker', THEMIFY_METABOX_URI . 'css/jquery-ui-timepicker.min.css', array( 'jquery-ui-smoothness' ) );
-		wp_register_style( 'themify-colorpicker', THEMIFY_METABOX_URI . 'css/jquery.minicolors' . $min . '.css', array() );
-		wp_register_style( 'themify-metabox', THEMIFY_METABOX_URI . 'css/styles' . $min . '.css', array( 'themify-colorpicker', 'themify-datetimepicker' ) );
+		wp_register_style( 'themify-colorpicker', themify_metabox_enque(THEMIFY_METABOX_URI . 'css/jquery.minicolors.css'),null, $ver );
+		wp_register_style( 'themify-metabox', themify_metabox_enque(THEMIFY_METABOX_URI . 'css/styles.css'), array( 'themify-colorpicker', 'themify-datetimepicker' ), $ver  );
 
-		wp_register_script( 'meta-box-tabs', THEMIFY_METABOX_URI . 'js/meta-box-tabs' . $min . '.js', array( 'jquery' ), '1.0', true );
-		wp_register_script( 'media-library-browse', THEMIFY_METABOX_URI . 'js/media-lib-browse' . $min . '.js', array( 'jquery'), '1.0', true );
-		wp_register_script( 'themify-colorpicker', THEMIFY_METABOX_URI . 'js/jquery.minicolors.min.js', array( 'jquery' ), null, true );
-		$themify_metabox_scripts = array( 'jquery', 'meta-box-tabs', 'media-library-browse', 'jquery-ui-tabs', 'themify-colorpicker' );
+		wp_register_script( 'meta-box-tabs', themify_metabox_enque(THEMIFY_METABOX_URI . 'js/meta-box-tabs.js'), array( 'jquery' ), '1.0', true );
+		wp_register_script( 'media-library-browse', themify_metabox_enque(THEMIFY_METABOX_URI . 'js/media-lib-browse.js'), array( 'jquery'), '1.0', true );
+		wp_register_script( 'themify-colorpicker', themify_metabox_enque(THEMIFY_METABOX_URI . 'js/jquery.minicolors.js'), array( 'jquery' ), null, true );
 
-		wp_register_script( 'themify-metabox', THEMIFY_METABOX_URI . 'js/scripts' . $min . '.js', $themify_metabox_scripts, '1.0', true );
-		wp_register_script( 'themify-plupload', THEMIFY_METABOX_URI . 'js/plupload' . $min . '.js', array( 'jquery', 'themify-metabox' ), null, true );
+		wp_register_script( 'themify-metabox', themify_metabox_enque(THEMIFY_METABOX_URI . 'js/scripts.js'), array( 'jquery', 'meta-box-tabs', 'media-library-browse', 'jquery-ui-tabs', 'themify-colorpicker' ),$ver, true );
+		wp_register_script( 'themify-plupload', themify_metabox_enque(THEMIFY_METABOX_URI . 'js/plupload.js'), array( 'jquery', 'themify-metabox' ), null, true );
 
 		// Inject variable for Plupload
 		$global_plupload_init = array(
@@ -468,7 +459,7 @@ class Themify_Metabox {
 			'filters' 				=> array(
 				array(
 					'title' => __( 'Allowed Files', 'themify' ),
-					'extensions' => 'jpg,jpeg,gif,png,ico,zip,txt,svg',
+					'extensions' => 'jpg,jpeg,gif,png,ico,zip,txt,svg,webp',
 				),
 			),
 			'multipart' 			=> true,
@@ -520,13 +511,14 @@ class Themify_Metabox {
 	 * @since 1.8.2
 	 */
 	function protected_meta( $protected, $meta_key, $meta_type ) {
-		global $typenow;
 
 		/* ensure this method is not called before $this->panel_options is filled */
 		if ( ! did_action( 'all_admin_notices' ) ) return;
-
-		static $protected_metas = array();
-		if( $protected_metas == null ) {
+		
+		global $typenow;
+		static $protected_metas = null;
+		if( $protected_metas === null ) {
+			$protected_metas=array();
 			foreach( $this->get_meta_boxes() as $meta_box ) {
 				$protected_metas = array_merge( themify_metabox_get_field_names( $this->get_meta_box_options( $meta_box['id'], $typenow ) ), $protected_metas );
 			}
@@ -553,7 +545,7 @@ class Themify_Metabox {
 			if ( $new_data !== null ) {
 				if ( 'colors' === $_POST['type'] ) {
 					$type = 'colors';
-				} else if ( 'gradients' === $_POST['type'] ) {
+				} elseif ( 'gradients' === $_POST['type'] ) {
 					$type = 'gradients';
 				}
 				$end = end( $new_data );
@@ -620,6 +612,7 @@ class Themify_Metabox {
         }else if(!is_array($colors)){
             $colors = $default['colors'];
         }
+		unset($default);
 		// validate gradients value
 		$grads = unserialize( get_option( 'themify_saved_gradients', serialize( array() ) ) );
         if(is_array($grads) && !empty($grads)){
@@ -629,7 +622,7 @@ class Themify_Metabox {
 			$grads = array();
 		}
 	    // Localize required data for color manager
-		$data = array(
+		return array(
 			'nonce' => wp_create_nonce( 'ajax-nonce' ),
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'colors' => $colors,
@@ -638,11 +631,11 @@ class Themify_Metabox {
 			'exportGradientsURL' => add_query_arg( 'themify_export_gradients', 'true', wp_nonce_url( admin_url( 'admin.php?page=themify' ), 'themify_export_colors_nonce' ) ),
 			'labels' => array(
 				'import' => __( 'Import', 'themify' ),
-				'export' => __( 'Export', 'themify' )
+				'export' => __( 'Export', 'themify' ),
+				'save' => __( 'Save', 'themify' ),
+				'ie' => __( 'Import/Export', 'themify' )
 			)
 		);
-		return $data;
-
 	}
 
 	/**
@@ -654,18 +647,14 @@ class Themify_Metabox {
 			if ( ini_get( 'zlib.output_compression' ) ) {
 				ini_set( 'zlib.output_compression', 'Off' );
 			}
-			if ( !empty( $_GET['themify_export_colors'] ) ) {
-				$type = 'colors';
-			} else if ( !empty( $_GET['themify_export_gradients'] ) ) {
-				$type = 'gradients';
-			}
+			$type = !empty( $_GET['themify_export_colors'] )?'colors':'gradients';
 			ob_start();
 			header( 'Content-Type: application/force-download' );
 			header( 'Pragma: public' );
 			header( 'Expires: 0' );
 			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
 			header( 'Cache-Control: private', false );
-			header( 'Content-Disposition: attachment; filename="themify_' . $type . '_export_' . date( "Y_m_d" ) . '.txt"' );
+			header( 'Content-Disposition: attachment; filename="themify_' . $type . '_export_' . date( 'Y_m_d' ) . '.txt"' );
 			header( 'Content-Transfer-Encoding: binary' );
 			ob_clean();
 			flush();
@@ -675,4 +664,4 @@ class Themify_Metabox {
 	}
 }
 endif;
-add_action( 'init', 'Themify_Metabox::get_instance', 10 );
+add_action( 'init', array('Themify_Metabox','get_instance'), 10 );

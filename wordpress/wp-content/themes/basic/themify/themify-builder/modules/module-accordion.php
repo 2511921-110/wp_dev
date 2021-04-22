@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Accordion
  * Description: Display Accordion content
@@ -20,114 +21,123 @@ class TB_Accordion_Module extends Themify_Builder_Component_Module {
     public function get_title($module) {
 	return isset($module['mod_settings']['mod_title_accordion']) ? wp_trim_words($module['mod_settings']['mod_title_accordion'], 100) : '';
     }
-
-    public function get_options() {
+    public function get_assets() {
 	return array(
-	    array(
-		'id' => 'mod_title_accordion',
-		'type' => 'title'
-	    ),
-	    array(
-		'id' => 'content_accordion',
-		'type' => 'builder',
-		'options' => array(
-		    array(
-			'id' => 'title_accordion',
-			'type' => 'text',
-			'label' => self::$texts['title_accordion'],
-			'class' => 'large',
-			'control' => array(
-			    'selector' => '.accordion-title span'
-			)
-		    ),
-		    array(
-			'id' => 'text_accordion',
-			'type' => 'wp_editor',
-			'rows' => 6,
-			'control' => array(
-			    'selector' => '.tb_text_wrap'
-			)
-		    ),
-		    array(
-			'id' => 'default_accordion',
-			'type' => 'radio',
-			'label' => __('Default', 'themify'),
-			'options' => array(
-			    array('value' => 'closed','name' => __('closed', 'themify')),
-			    array('value' => 'open','name' => __('open', 'themify'))
-			)
-		    )
-		)
-	    ),
-	    array(
-		'type' => 'separator'
-	    ),
-	    array(
-		'id' => 'layout_accordion',
-		'type' => 'layout',
-		'mode' => 'sprite',
-		'label' => __('Layout', 'themify'),
-		'options' => array(
-		    array('img' => 'accordion_default', 'value' => 'default', 'label' => __('Continuous Panels', 'themify')),
-		    array('img' => 'accordion_separate', 'value' => 'separate', 'label' => __('Separated Panels', 'themify'))
-		),
-		'control'=>array(
-		    'classSelector'=>'.module-accordion'
-		)
-	    ),
-	    array(
-            'id' => 'expand_collapse_accordion',
-            'type' => 'radio',
-            'label' => __('Toggle Mode', 'themify'),
-            'options' => array(
-                array('value' => 'toggle','name' => __('Toggle', 'themify')),
-                array('value' => 'accordion','name' => __('Accordion', 'themify') )
-            ),
-            'new_line' => true,
-            'help'=>__('Toggle means only clicked is toggled. Accordion will collapse all, but keep clicked item expanded.', 'themify')
-	    ),
-	    array(
-		'id' => 'color_accordion',
-		'type' => 'layout',
-		'mode' => 'sprite',
-		'class' => 'tb_colors',
-		'label' => __('Color', 'themify'),
-		'color' => true,
-		'transparent'=>true
-	    ),
-	    array(
-		'id' => 'accordion_appearance_accordion',
-		'type' => 'checkbox',
-		'label' => __('Appearance', 'themify'),
-		'appearance' => true
-	    ),
-	    array(
-		'type' => 'multi',
-		'label' => __('Icon', 'themify'),
-		'options' => array(
-		    array(
-			'id' => 'icon_accordion',
-			'type' => 'icon',
-			'label' => __('Closed Icon', 'themify'),
-			'class' => 'large'
-		    ),
-		    array(
-			'id' => 'icon_active_accordion',
-			'type' => 'icon',
-			'label' => __('Opened Icon', 'themify'),
-			'class' => 'large'
-		    ),
-		)
-	    ),
-	    array(
-		'id' => 'css_accordion',
-		'type' => 'custom_css'
-	    ),
-	    array('type' => 'custom_css_id')
+		'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
 	);
     }
+    
+    public function get_icon(){
+	return 'layout-accordion-merged';
+    }
 
-    public function get_default_settings() {
+    public function get_options() {
+		return array(
+			array(
+			'id' => 'mod_title_accordion',
+			'type' => 'title'
+			),
+			array(
+			'id' => 'content_accordion',
+			'type' => 'builder',
+			'options' => array(
+				array(
+				'id' => 'title_accordion',
+				'type' => 'text',
+				'label' => self::$texts['title_accordion'],
+				'class' => 'large',
+				'control' => array(
+					'selector' => '.accordion-title span'
+				)
+				),
+				array(
+				'id' => 'text_accordion',
+				'type' => 'wp_editor',
+				'rows' => 6,
+				'control' => array(
+					'selector' => '.tb_text_wrap'
+				)
+				),
+				array(
+				'id' => 'default_accordion',
+				'type' => 'radio',
+				'label' => __('Default', 'themify'),
+				'options' => array(
+					array('value' => 'closed','name' => __('closed', 'themify')),
+					array('value' => 'open','name' => __('open', 'themify'))
+				)
+				)
+			)
+			),
+			array(
+			'type' => 'separator'
+			),
+			array(
+			'id' => 'layout_accordion',
+			'type' => 'layout',
+			'mode' => 'sprite',
+			'label' => __('Layout', 'themify'),
+			'options' => array(
+				array('img' => 'accordion_default', 'value' => 'default', 'label' => __('Continuous Panels', 'themify')),
+				array('img' => 'accordion_separate', 'value' => 'separate', 'label' => __('Separated Panels', 'themify'))
+			),
+			'control'=>array(
+				'classSelector'=>'.module-accordion'
+			)
+			),
+			array(
+				'id' => 'expand_collapse_accordion',
+				'type' => 'radio',
+				'label' => __('Toggle Mode', 'themify'),
+				'options' => array(
+					array('value' => 'toggle','name' => __('Toggle', 'themify')),
+					array('value' => 'accordion','name' => __('Accordion', 'themify') )
+				),
+				'new_line' => true,
+				'help'=>__('Toggle means only clicked is toggled. Accordion will collapse all, but keep clicked item expanded.', 'themify')
+			),
+			array(
+			'id' => 'color_accordion',
+			'type' => 'layout',
+			'mode' => 'sprite',
+			'class' => 'tb_colors',
+			'label' => __('Color', 'themify'),
+			'color' => true,
+			'transparent'=>true
+			),
+			array(
+			'id' => 'accordion_appearance_accordion',
+			'type' => 'checkbox',
+			'label' => __('Appearance', 'themify'),
+			'appearance' => true
+			),
+			array(
+			'type' => 'multi',
+			'label' => __('Icon', 'themify'),
+			'options' => array(
+				array(
+				'id' => 'icon_accordion',
+				'type' => 'icon',
+				'label' => __('Closed Icon', 'themify'),
+				'class' => 'large'
+				),
+				array(
+				'id' => 'icon_active_accordion',
+				'type' => 'icon',
+				'label' => __('Opened Icon', 'themify'),
+				'class' => 'large'
+				),
+			)
+			),
+			array(
+			'id' => 'css_accordion',
+			'type' => 'custom_css'
+			),
+			array('type' => 'custom_css_id')
+		);
+    }
+
+    public function get_live_default() {
 	return array(
 	    'content_accordion' => array(
 		array('title_accordion' => self::$texts['title_accordion'], 'text_accordion' => self::$texts['text_accordion'])
@@ -262,6 +272,21 @@ class TB_Accordion_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+			// Width
+			self::get_expand('w', array(
+				self::get_tab(array(
+					'n' => array(
+						'options' => array(
+							self::get_width('', 'w')
+						)
+					),
+					'h' => array(
+						'options' => array(
+							self::get_width('', 'w', 'h')
+						)
+					)
+				))
+			)),
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -300,7 +325,9 @@ class TB_Accordion_Module extends Themify_Builder_Component_Module {
 					)
 				))
 			)
-		)
+		),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 
 	$accordion_title = array(
@@ -760,26 +787,28 @@ class TB_Accordion_Module extends Themify_Builder_Component_Module {
 	    <# }
 
 	    if ( data.content_accordion ) { #>
-        <# data.color_accordion = undefined === data.color_accordion || 'default' === data.color_accordion ? 'tb_default_color' : data.color_accordion; #>
+        <# data.color_accordion = undefined === data.color_accordion || 'default' === data.color_accordion ? 'tb_default_color' : data.color_accordion;
+	    var tabId=data.cid.replace('tb_','');
+	#>
 	    <ul class="module-<?php echo $this->slug; ?> ui {{ data.layout_accordion }} {{ data.color_accordion }} <# data.accordion_appearance_accordion? print( data.accordion_appearance_accordion.split('|').join(' ') ) : ''; #>">
 		<#
 		_.each( data.content_accordion, function( item,i ) { #>
-		<li class="<# 'open' === item.default_accordion ? print('builder-accordion-active') : ''; #>" >
-
-		    <div class="accordion-title">
-			<a href="#acc-{{ data.cid }}-{{ i }}" aria-controls="acc-{{ data.cid }}-{{ i }}" aria-expanded="{{ ('open' === item.default_accordion) }}">
+		<# var isOpen=item.default_accordion=='open'; #>
+		<li<# if ( isOpen ) { #> class="builder-accordion-active"<# } #>>
+		    <div class="accordion-title tf_rel">
+			<a href="#acc-{{ tabId }}-{{ i }}" aria-controls="acc-{{ data.cid }}-{{ i }}-content" aria-expanded="{{ isOpen }}">
 			    <# if ( data.icon_accordion ) { #>
-			    <i class="accordion-icon fa {{ data.icon_accordion }}"></i>
+			    <i class="accordion-icon<# if ( isOpen ) { #> tf_hide<# } #>"><# print(tb_app.Utils.getIcon(data.icon_accordion).outerHTML)#></i>
 			    <# } 
 
 			    if ( data.icon_active_accordion ) { #>
-			    <i class="accordion-active-icon fa {{ data.icon_active_accordion }}"></i>
+			    <i class="accordion-active-icon<# if ( !isOpen ) { #> tf_hide<# } #>"><# print(tb_app.Utils.getIcon(data.icon_active_accordion).outerHTML)#></i>
 			    <# } #>
 
-			    <span class="tb_title_accordion" data-name="title_accordion" data-repeat="content_accordion" data-index="{{i}}" contenteditable="false">{{{ item.title_accordion }}}</span>
+			    <span class="tb_title_accordion tf_w" data-name="title_accordion" data-repeat="content_accordion" data-index="{{i}}" contenteditable="false">{{{ item.title_accordion }}}</span>
 			</a>
 		    </div>
-		    <div id="acc-{{ data.cid }}-{{ i }}" aria-hidden="{{'open' === item.default_accordion}}" class="accordion-content <# 'open' !== item.default_accordion ? print('default-closed') : ''; #> clearfix">
+		    <div id="acc-{{ tabId }}-{{ i }}-content" data-id="acc-{{ tabId }}-{{ i }}" aria-hidden="{{!isOpen}}" class="accordion-content<# if ( !isOpen ) { #> tf_hide<# } #>">
 			<div contenteditable="false" data-name="text_accordion" data-repeat="content_accordion" data-index="{{i}}" class="tb_editor_enable tb_text_wrap">{{{ item.text_accordion }}}</div>
 		    </div>
 		</li>

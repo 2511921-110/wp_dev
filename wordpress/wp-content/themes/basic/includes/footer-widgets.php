@@ -14,7 +14,7 @@ if($footer_widget_option != 'none') { ?>
 	$x = 0;
 	?>
 
-	<div class="footer-widgets clearfix">
+	<div class="footer-widgets tf_clearfix">
 
 		<?php foreach($columns[$footer_widget_option] as $col): ?>
 			<?php 

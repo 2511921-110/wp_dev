@@ -77,7 +77,7 @@
  * 
 ***************************************************************************/
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Layout Hooks
@@ -200,24 +200,28 @@ function themify_mobile_menu_end() { do_action( 'themify_mobile_menu_end' ); }
  */
 if ( themify_is_woocommerce_active() ) {
 	add_filter( 'woocommerce_product_get_image', 'themify_product_image_hooks' );
-	add_action( 'woocommerce_product_thumbnails', 'themify_disable_product_image_hooks', 1 );
-	add_filter( 'woocommerce_get_price_html', 'themify_product_price_hooks' );
-	add_filter( 'woocommerce_single_product_image_thumbnail_html', 'themify_product_single_image_hooks' );
+    add_action( 'woocommerce_before_single_product_summary', 'themify_product_single_image_start_hook', 1 );
+    add_action( 'woocommerce_before_single_product_summary', 'themify_product_single_image_end_hook', 99 );
+    add_filter( 'woocommerce_get_price_html', 'themify_product_price_hooks' );
 	add_action( 'woocommerce_checkout_billing', 'themify_checkout_start_hook', 1 );
 	add_action( 'woocommerce_checkout_billing', 'themify_checkout_end_hook', 100 );
 	add_action( 'themify_sidebar_before', 'themify_ecommerce_sidebar_before_hook' );
 	add_action( 'themify_sidebar_after', 'themify_ecommerce_sidebar_after_hook' );
 	add_action( 'woocommerce_shop_loop_item_title', 'themify_before_product_title_hook', 1 );
 	add_action( 'woocommerce_shop_loop_item_title', 'themify_after_product_title_hook', 100 );
-	add_action( 'woocommerce_before_single_product', 'themify_enable_product_title_hooks' );
-	add_action( 'woocommerce_after_single_product_summary', 'themify_disable_product_title_hooks', 1 );
+	add_action( 'woocommerce_before_template_part', 'themify_product_title_start_hook' );
+	add_action( 'woocommerce_after_template_part', 'themify_product_title_end_hook' );
 }
 
-function themify_enable_product_title_hooks() {
-	add_filter( 'the_title', 'themify_product_single_title_hooks', 10, 2 );
+function themify_product_title_start_hook( $template_name ) {
+	if ( $template_name === 'single-product/title.php' ) {
+		do_action( 'themify_product_title_start' );
+	}
 }
-function themify_disable_product_title_hooks() {
-	remove_filter( 'the_title', 'themify_product_single_title_hooks', 10, 2 );
+function themify_product_title_end_hook( $template_name ) {
+	if ( $template_name === 'single-product/title.php' ) {
+		do_action( 'themify_product_title_end' );
+	}
 }
 function themify_before_product_title_hook() {
 	if ( ! is_singular( 'product' ) ) {
@@ -228,10 +232,6 @@ function themify_after_product_title_hook() {
 	if ( ! is_singular( 'product' ) ) {
 		do_action( 'themify_product_title_end' );
 	}
-}
-
-function themify_disable_product_image_hooks() {
-	remove_filter( 'woocommerce_single_product_image_thumbnail_html', 'themify_product_single_image_hooks' );
 }
 
 function themify_product_image_hooks( $image ) {
@@ -250,25 +250,12 @@ function themify_product_price_hooks( $price ) {
 	return ob_get_clean();
 }
 
-function themify_product_single_image_hooks( $image ) {
-	ob_start();
-	do_action( 'themify_product_image_start' );
-	echo $image;
-	do_action( 'themify_product_image_end' );
-	return ob_get_clean();
+function themify_product_single_image_start_hook() {
+    do_action( 'themify_product_image_start' );
 }
 
-function themify_product_single_title_hooks( $title, $id ) {
-	$post = get_post( $id );
-	if (is_object($post) && $post->post_type === 'product' && is_product() ) {
-		ob_start();
-		do_action( 'themify_product_title_start' );
-		echo $title;
-		do_action( 'themify_product_title_end' );
-		$title = ob_get_clean();
-	}
-
-	return $title;
+function themify_product_single_image_end_hook() {
+    do_action( 'themify_product_image_end' );
 }
 
 function themify_checkout_start_hook() {

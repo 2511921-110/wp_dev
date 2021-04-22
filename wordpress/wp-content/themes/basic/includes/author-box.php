@@ -11,7 +11,7 @@ global $themify;
 
 if ( themify_check( 'setting-post_author_box' ) ) : ?>
 
-	<div class="clearfix author-box">
+	<div class="tf_clearfix author-box">
 
 		<p class="author-avatar">
 			<?php echo get_avatar( get_the_author_meta('user_email'), $themify->avatar_size, '' ); ?>

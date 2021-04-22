@@ -1,7 +1,7 @@
 <?php
 
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Layout Part
  * Description: Layout Part Module
@@ -15,7 +15,16 @@ class TB_Layout_Part_Module extends Themify_Builder_Component_Module {
             'slug' => 'layout-part'
         ));
     }
-
+    
+    public function get_icon(){
+	return 'layout';
+    }
+    
+    public function get_assets() {
+	return array(
+	    'css'=>THEMIFY_BUILDER_CSS_MODULES.$this->slug.'.css'
+	);
+    }
     public function get_options() {
         return array(
             array(

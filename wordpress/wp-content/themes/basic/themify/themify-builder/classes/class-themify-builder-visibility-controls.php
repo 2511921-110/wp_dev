@@ -7,17 +7,21 @@
  * @package	Themify_Builder
  * @subpackage Themify_Builder/classes
  */
-class Themify_Builder_Visibility_Controls {
+final class Themify_Builder_Visibility_Controls {
 
     /**
      * Constructor.
      * 
      * @param object Themify_Builder $builder 
      */
-    public function __construct() {
-	add_filter('themify_builder_row_classes', array($this, 'row_classes'), 10, 3);
-	add_filter('themify_builder_subrow_classes', array($this, 'subrow_classes'), 10, 4);
-	add_filter('themify_builder_module_classes', array($this, 'module_classes'), 10, 5);
+    private function __construct() {
+    }
+    
+    public static function init(){
+	
+	add_filter('themify_builder_row_classes', array(__CLASS__, 'row_classes'), 10, 3);
+	add_filter('themify_builder_subrow_classes', array(__CLASS__, 'subrow_classes'), 10, 4);
+	add_filter('themify_builder_module_classes', array(__CLASS__, 'module_classes'), 10, 5);
     }
 
     /**
@@ -29,8 +33,8 @@ class Themify_Builder_Visibility_Controls {
     * @access 	public
     * @return 	array
     */
-    public function row_classes($classes, $row, $builder_id) {
-            return !empty($row['styling'])?$this->get_classes($row['styling'], $classes, 'row'):$classes;
+    public static function row_classes($classes, $row, $builder_id) {
+            return !empty($row['styling'])?self::get_classes($row['styling'], $classes, 'row'):$classes;
     }
 
     /**
@@ -42,8 +46,8 @@ class Themify_Builder_Visibility_Controls {
      * @access 	public
      * @return 	array
      */
-    public function subrow_classes($classes, $subrow, $builder_id) {
-            return !empty($subrow['styling'])?$this->get_classes($subrow['styling'], $classes, 'row'):$classes;
+    public static function subrow_classes($classes, $subrow, $builder_id) {
+            return !empty($subrow['styling'])?self::get_classes($subrow['styling'], $classes, 'row'):$classes;
     }
 
     /**
@@ -56,25 +60,30 @@ class Themify_Builder_Visibility_Controls {
      * @access 	public
      * @return 	array
      */
-    public function module_classes($classes, $mod_name = null, $module_ID = null, $args = array()) {
-        return $this->get_classes($args, $classes, 'module');
+    public static function module_classes($classes, $mod_name = null, $module_ID = null, $args = array()) {
+        return self::get_classes($args, $classes, 'module');
     }
 
-    private function get_classes($args, $classes, $type) {
-        $elements = array('desktop', 'tablet', 'tablet_landscape', 'mobile');
+    private static function get_classes($args, $classes, $type) {
+        
         $hide_all = isset($args['visibility_all']) && $args['visibility_all'] === 'hide_all';
-        foreach ($elements as $e) {
-            if ((isset($args['visibility_' . $e]) && $args['visibility_' . $e] === 'hide') || $hide_all) {
-                if (!Themify_Builder::$frontedit_active) {
-                    $classes[] = 'hide-' . $e;
-                } elseif ($type === 'row') {
-                    $classes[] = 'tb_visibility_hidden';
-                    break;
-                }
-            }
-        }
-        if( ( isset( $args['sticky_visibility'] ) && $args['sticky_visibility'] === 'hide') || $hide_all ){
-	        $classes[] = 'hide-on-stick';
+		$is_active=Themify_Builder::$frontedit_active===true || Themify_Builder_Model::is_front_builder_activate();
+		if($is_active===false || $type === 'row'){
+			$elements = array('desktop', 'tablet', 'tablet_landscape', 'mobile');
+			foreach ($elements as $e) {
+				if ( $hide_all===true || (isset($args['visibility_' . $e]) && $args['visibility_' . $e] === 'hide')) {
+					if ($is_active===false) {
+						$classes[] = 'hide-' . $e;
+					} 
+					else {
+						$classes[] = 'tb_visibility_hidden';
+						break;
+					}
+				}
+			}
+		}
+        if( $hide_all===true  || ( isset( $args['sticky_visibility'] ) && $args['sticky_visibility'] === 'hide')){
+			$classes[] = 'hide-on-stick';
         }
         return $classes;
     }

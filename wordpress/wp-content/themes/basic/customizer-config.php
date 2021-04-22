@@ -63,7 +63,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'body_link_hover_font' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Text_Decoration_Control',
 				'label'   => __( 'Body Link Hover', 'themify' ),
@@ -73,7 +72,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'body_link_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 			),
@@ -167,7 +165,7 @@ function themify_theme_customizer_definition( $args ) {
 				'type'  => 'Themify_Width_Control',
 				'label' => __( 'Page Width', 'themify' ),
 			),
-			'selector' => '.pagewidth',
+			'selector' => '.pagewidth,.module_row>.row_inner,.module-layout-part .module_row.fullwidth_row_container>.row_inner',
 			'prop' => 'width',
 		),
 
@@ -477,7 +475,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'form_fields_focus_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Background_Control',
 				'label'   => __( 'Form Fields Focus', 'themify' ),
@@ -487,7 +484,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'form_fields_focus_border' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Border_Control',
 				'label'   => __( 'Form Fields Focus Border', 'themify' ),
@@ -498,7 +494,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'form_fields_focus_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Form Fields Focus Color', 'themify' ),
@@ -509,7 +504,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'form_buttons_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Background_Control',
 				'label'   => __( 'Form Buttons', 'themify' ),
@@ -519,7 +513,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'form_buttons_border' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Border_Control',
 				'label'   => __( 'Form Buttons Border', 'themify' ),
@@ -530,7 +523,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'form_buttons_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Form Buttons Color', 'themify' ),
@@ -541,7 +533,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'form_buttons_hover_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Background_Control',
 				'label'   => __( 'Form Buttons Hover', 'themify' ),
@@ -551,7 +542,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'form_buttons_hover_border' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Border_Control',
 				'label'   => __( 'Form Buttons Hover Border', 'themify' ),
@@ -562,7 +552,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'form_buttons_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Form Buttons Hover Color', 'themify' ),
@@ -703,7 +692,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'header_link_hover_font' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Text_Decoration_Control',
 				'label'   => __( 'Header Link Hover', 'themify' ),
@@ -713,7 +701,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'header_link_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 			),
@@ -736,7 +723,7 @@ function themify_theme_customizer_definition( $args ) {
 				'type'    => 'Themify_Logo_Control',
 				'label'   => __( 'Site Logo', 'themify' ),
 			),
-			'selector' => 'body[class*="themify"] #site-logo a',
+			'selector' => 'body #site-logo a',
 			'prop' => 'logo',
 		),
 
@@ -923,7 +910,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'main_nav_link_hover_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Transparent_Control',
 				'label'   => __( 'Menu Link Hover', 'themify' ),
@@ -934,7 +920,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'main_nav_link_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Menu Link Hover Color', 'themify' ),
@@ -945,7 +930,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'main_nav_link_active_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Transparent_Control',
 				'label'   => __( 'Menu Active Link', 'themify' ),
@@ -966,7 +950,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'main_nav_link_active_hover_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Transparent_Control',
 				'label'   => __( 'Menu Active Link Hover', 'themify' ),
@@ -977,7 +960,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'main_nav_link_active_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Menu Active Link Hover Color', 'themify' ),
@@ -1087,7 +1069,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'main_nav_dropdown_link_hover_color' => array(
-		  'setting' => array( 'transport' => 'refresh' ),
 		  'control' => array(
 		    'type'    => 'Themify_Color_Transparent_Control',
 		    'label'   => __( 'Dropdown Link Hover', 'themify' ),
@@ -1097,7 +1078,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'main_nav_dropdown_link_hover_background' => array(
-		  'setting' => array( 'transport' => 'refresh' ),
 		  'control' => array(
 		    'type'    => 'Themify_Color_Transparent_Control',
 		    'label'   => __( 'Dropdown Link Hover Background', 'themify' ),
@@ -1109,7 +1089,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'main_nav_link_dropdown_active_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Transparent_Control',
 				'label'   => __( 'Dropdown Active Link', 'themify' ),
@@ -1175,7 +1154,7 @@ function themify_theme_customizer_definition( $args ) {
 				'type'    => 'Themify_Font_Control',
 				'label'   => __( 'Post Title', 'themify' ),
 			),
-			'selector' => '.post-title',
+			'selector' => '.post-title, .post-title a',
 			'prop' => 'font',
 		),
 
@@ -1221,7 +1200,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_title_hover_font' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Text_Decoration_Control',
 				'label'   => __( 'Post Title Hover', 'themify' ),
@@ -1231,7 +1209,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_title_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 			),
@@ -1240,7 +1217,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_title_hover_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Transparent_Control',
 				'color_label' => __( 'Background Color', 'themify' ),
@@ -1250,7 +1226,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_title_hover_border' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'  => 'Themify_Border_Control',
 			),
@@ -1259,7 +1234,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_title_hover_margin' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'  => 'Themify_Margin_Control',
 			),
@@ -1268,7 +1242,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_title_hover_padding' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'  => 'Themify_Padding_Control',
 			),
@@ -1527,7 +1500,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_meta_link_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Post Meta Link Hover', 'themify' ),
@@ -1537,7 +1509,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_meta_link_hover_font' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Font_Control',
 			),
@@ -1546,7 +1517,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_meta_link_hover_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Transparent_Control',
 				'color_label' => __( 'Background Color', 'themify' ),
@@ -1556,7 +1526,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'post_meta_link_hover_border' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Border_Control',
 			),
@@ -1685,7 +1654,6 @@ function themify_theme_customizer_definition( $args ) {
 		// More Link Hover .more-link:hover
 
 		'more_link_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'More Link Hover', 'themify' ),
@@ -1695,7 +1663,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'more_link_hover_font' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Text_Decoration_Control',
 			),
@@ -1704,7 +1671,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'more_link_hover_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Background_Control',
 			),
@@ -1713,7 +1679,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'more_link_hover_border' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Border_Control',
 			),
@@ -1775,6 +1740,22 @@ function themify_theme_customizer_definition( $args ) {
 			'prop' => 'font',
 		),
 
+		'post_nav_hover_font' => array(
+			'control' => array(
+				'type'    => 'Themify_Font_Control',
+				'label'   => __( 'Post Nav Link Hover', 'themify' ),
+			),
+			'selector' => '.post-nav a:hover',
+			'prop' => 'font',
+		),
+		'post_nav_link_hover_color' => array(
+			'control' => array(
+				'type'    => 'Themify_Color_Control',
+			),
+			'selector' => '.post-nav a:hover',
+			'prop' => 'color',
+		),
+
 		// Next/Prev Link Icon .post-nav .arrow
 
 		'post_nav_link_icon_color' => array(
@@ -1792,6 +1773,24 @@ function themify_theme_customizer_definition( $args ) {
 				'color_label' => __( 'Background Color', 'themify' ),
 			),
 			'selector' => '.post-nav .arrow',
+			'prop' => 'background',
+		),
+
+		'post_nav_link_icon_hover_color' => array(
+			'control' => array(
+				'type'    => 'Themify_Color_Control',
+				'label'   => __( 'Post Nav Link Icon Hover', 'themify' ),
+			),
+			'selector' => '.post-nav a:hover span',
+			'prop' => 'color',
+		),
+
+		'post_nav_link_icon_hover_background' => array(
+			'control' => array(
+				'type'    => 'Themify_Color_Transparent_Control',
+				'color_label' => __( 'Background Color', 'themify' ),
+			),
+			'selector' => '.post-nav a:hover span',
 			'prop' => 'background',
 		),
 
@@ -1956,7 +1955,6 @@ function themify_theme_customizer_definition( $args ) {
 		// Sidebar Link Hover #sidebar a:hover
 
 		'sidebar_link_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Sidebar Link Hover', 'themify' ),
@@ -1966,7 +1964,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'sidebar_link_hover_font' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Font_Control',
 			),
@@ -2222,7 +2219,6 @@ function themify_theme_customizer_definition( $args ) {
 		// Footer Link #footer a:hover
 
 		'footer_link_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Footer Link Hover', 'themify' ),
@@ -2232,7 +2228,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'footer_link_hover_font' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Font_Control',
 			),
@@ -2372,7 +2367,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'footer_nav_link_hover_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Transparent_Control',
 				'label'   => __( 'Footer Menu Link Hover', 'themify' ),
@@ -2383,7 +2377,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'footer_nav_link_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Menu Link Hover Color', 'themify' ),
@@ -2394,7 +2387,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'footer_nav_link_active_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Transparent_Control',
 				'label'   => __( 'Footer Menu Active Link', 'themify' ),
@@ -2415,7 +2407,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'footer_nav_link_active_hover_background' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Transparent_Control',
 				'label'   => __( 'Footer Menu Active Link Hover', 'themify' ),
@@ -2425,7 +2416,6 @@ function themify_theme_customizer_definition( $args ) {
 		),
 
 		'footer_nav_link_active_hover_color' => array(
-			'setting' => array( 'transport' => 'refresh' ),
 			'control' => array(
 				'type'    => 'Themify_Color_Control',
 				'label'   => __( 'Menu Active Link Hover Color', 'themify' ),

@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Module Name: Widget
  * Description: Display any available widgets
@@ -16,7 +17,6 @@ class TB_Widget_Module extends Themify_Builder_Component_Module {
 	add_action('wp_ajax_tb_get_widget_items', array(__CLASS__, 'get_items'));
 	add_action('wp_ajax_module_widget_get_form', array(__CLASS__, 'widget_get_form'), 10);
 	add_action('themify_builder_data_before_construct', array($this, 'themify_builder_data_before_construct'), 10, 2);
-		add_action( 'themify_builder_frontend_data', array($this, 'enqueue_media_element'), 10);
     }
 
     public function get_options() {
@@ -168,6 +168,21 @@ class TB_Widget_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Width
+		self::get_expand('w', array(
+			self::get_tab(array(
+				'n' => array(
+					'options' => array(
+						self::get_width('', 'w')
+					)
+				),
+				'h' => array(
+					'options' => array(
+						self::get_width('', 'w', 'h')
+					)
+				)
+			))
+		)),
 				// Height & Min Height
 				self::get_expand('ht', array(
 						self::get_height(),
@@ -207,6 +222,8 @@ class TB_Widget_Module extends Themify_Builder_Component_Module {
 				))
 			)
 		),
+		// Display
+		self::get_expand('disp', self::get_display())
 	);
 	$widget_title = array(
 	    // Background
@@ -327,7 +344,8 @@ class TB_Widget_Module extends Themify_Builder_Component_Module {
 	$result = array();
 	global $wp_widget_factory;
 	if (!empty($wp_widget_factory->widgets)) {
-	    foreach ($wp_widget_factory->widgets as $class => $widget) {
+	    foreach ($wp_widget_factory->widgets as $widget) {
+			$class = get_class( $widget );
 		$result[$class] = array('n'=>$widget->name,'b'=>$widget->id_base);
 		if (!empty($widget->widget_options['description'])) {
 		    $result[$class]['d'] = $widget->widget_options['description'];
@@ -337,22 +355,50 @@ class TB_Widget_Module extends Themify_Builder_Component_Module {
 	die(json_encode($result));
     }
 
+	/**
+	 * Get a widget's registered key in $wp_widget_factory from its classname.
+	 * register_widget() works with WP_Widget instances too, in such cases the
+	 * widget's key is a hashed string.
+	 *
+	 * @return string|null
+	 */
+	public static function get_widget_factory_name( $classname ) {
+		global $wp_widget_factory;
+
+		if ( empty( $classname ) || ! class_exists( $classname ) ) {
+			return;
+		}
+		if ( isset( $wp_widget_factory->widgets[ $classname ] ) ) {
+			return $classname;
+		}
+		foreach ( $wp_widget_factory->widgets as $key => $widget ) {
+			if ( get_class( $widget ) === $classname && $widget instanceof WP_Widget ) {
+				return $key;
+			}
+		}
+	}
+
     public static function widget_get_form() {
-	if (!wp_verify_nonce($_POST['tb_load_nonce'], 'tb_load_nonce'))
+	if (!wp_verify_nonce($_POST['tb_load_nonce'], 'tb_load_nonce')){
 	    die(-1);
+	}
 
 	global $wp_widget_factory;
 	require_once ABSPATH . 'wp-admin/includes/widgets.php';
 	$widget_class = $_POST['load_class'];
-	if ($widget_class == '')
+	if ($widget_class == ''){
 	    die(-1);
-	    
-    	$widget_class = str_replace('\\\\', '\\', $widget_class);
+	}
+	$widget_class = str_replace('\\\\', '\\', $widget_class);
 
 	$instance = !empty($_POST['widget_instance']) && $_POST['widget_instance'] !== 'false' ? $_POST['widget_instance'] : array();
 	$instance = TB_Widget_Module::sanitize_widget_instance($instance);
 
-	$widget = new $widget_class();
+	$widget_key = self::get_widget_factory_name( $widget_class );
+	if ( ! $widget_key ) {
+		die( -1 );
+	}
+	$widget = $wp_widget_factory->widgets[ $widget_key ];
 
 	$widget->number = next_widget_id_number($_POST['id_base']);
 	ob_start();
@@ -389,9 +435,9 @@ class TB_Widget_Module extends Themify_Builder_Component_Module {
 	    }
 	}
 	$widget->form($instance);
-
+    do_action('in_widget_form',$widget,null,$instance);
 	$form = ob_get_clean();
-	$base_name = 'widget-' . $wp_widget_factory->widgets[$widget_class]->id_base . '\[' . $widget->number . '\]';
+	$base_name = 'widget-' . $widget->id_base . '\[' . $widget->number . '\]';
 	$form = preg_replace("/{$base_name}/", '', $form); // remove extra names
 	$form = str_replace(array(
 	    '[',
@@ -410,7 +456,7 @@ class TB_Widget_Module extends Themify_Builder_Component_Module {
 		. $form .
 		'</div>
 					<input type="hidden" class="id_base" name="id_base" value="' . esc_attr($widget->id_base) . '" />
-					<input type="hidden" class="widget-id" name="widget-id" value="' . time() . '" />
+					<input type="hidden" class="widget-id" name="widget-id" value="w_' . time() . '" />
 					<input type="hidden" class="widget-class" name="widget-class" value="' . $widget_class . '" />
 				</div>
 			</div>
@@ -473,6 +519,9 @@ class TB_Widget_Module extends Themify_Builder_Component_Module {
      * @return string
      */
     public function get_plain_content($module) {
+	if(!isset($module['mod_settings'])){
+	    return '';
+	}
 	$mod_settings = wp_parse_args($module['mod_settings'], array(
 	    'mod_title_widget' => '',
 	    'class_widget' => '',
@@ -580,24 +629,27 @@ class TB_Widget_Module extends Themify_Builder_Component_Module {
      * @return array
      */
     private function call_widget_update($module) {
-	if(!empty($module['mod_settings']['instance_widget'])){
-	    global $wp_widget_factory;
-	    $widget_class = $module['mod_settings']['class_widget'];
-	    if (isset($wp_widget_factory->widgets[$widget_class])) {
-		$instance= $wp_widget_factory->widgets[$widget_class]->update($module['mod_settings']['instance_widget'], array());
-		if(!isset($instance['widget-id']) && isset($module['mod_settings']['instance_widget']['widget-id'])){
-		$instance['widget-id'] = $module['mod_settings']['instance_widget']['widget-id'];
-		}
-		$module['mod_settings']['instance_widget']=$instance;
-	    }
-	}
-	return $module;
+        if(!empty($module['mod_settings']['instance_widget'])){
+            global $wp_widget_factory;
+            $widget_class = $module['mod_settings']['class_widget'];
+            if (isset($wp_widget_factory->widgets[$widget_class])) {
+                $instance= $wp_widget_factory->widgets[$widget_class]->update($module['mod_settings']['instance_widget'], array());
+                if(!isset($instance['widget-id']) && isset($module['mod_settings']['instance_widget']['widget-id'])){
+                    $instance['widget-id'] = $module['mod_settings']['instance_widget']['widget-id'];
+                }
+                // Search Widget
+                $key='tf_search_ajax';
+                if(isset($module['mod_settings']['instance_widget'][$key])){
+                    $instance[$key] = $module['mod_settings']['instance_widget'][$key];
+                }
+                $module['mod_settings']['instance_widget']=$instance;
+            }
+        }
+        return $module;
     }
 
-	/*Enqueue Media element style and script for Video widget*/
-    public function enqueue_media_element(){
-		wp_enqueue_style( 'wp-mediaelement' );
-		wp_enqueue_script('wp-mediaelement');
+	public static function widget_gallery_lightbox($markup) {
+		return str_replace('<a','<a class="themify_lightbox"',$markup);
 	}
 
 }

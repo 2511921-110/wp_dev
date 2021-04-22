@@ -1,6 +1,6 @@
 <?php
-if (!defined('ABSPATH'))
-	exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class to create a control to accept CSS rules and preview them instantly.
@@ -39,9 +39,9 @@ class Themify_CustomCSS_Control extends Themify_Control {
 		<?php endif; ?>
 
 		<div class="themify-customizer-brick">
-			<a class="themify-expand ti ti-new-window"></a>
-			<a class="ti ti-close close-custom-css-expanded "></a>
-			<textarea <?php $this->link(); ?> data-value="<?php echo esc_attr(base64_encode($css)) ?>" class="customcss <?php echo esc_attr($this->type); ?>_control themify-customizer-value-field" rows="20"></textarea>
+			<a class="themify-expand ti-new-window"></a>
+			<a class="close-custom-css-expanded tf_close"></a>
+			<textarea <?php $this->link(); ?> data-value="<?php echo esc_attr(base64_encode($css)) ?>" class="customcss <?php echo esc_attr($this->type); ?>_control themify-customizer-value-field tf_scrollbar" rows="20"></textarea>
 		</div>
 		<?php
 	}

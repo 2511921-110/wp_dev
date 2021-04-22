@@ -1,5 +1,6 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class to create a control and specify the border width, style and color of an element.
@@ -69,7 +70,7 @@ class Themify_Border_Control extends Themify_Control {
 						<?php foreach ( $styles as $style => $label ) : ?>
 							<?php
 							// Check style
-							if ( 'same' == $same ) {
+							if ( 'same' === $same ) {
 								$current_style = isset( $values->style ) ? $values->style : '';
 							} else {
 								$current_style = isset( $values->{$side} ) && isset( $values->{$side}->style ) ? $values->{$side}->style : '';
@@ -84,7 +85,7 @@ class Themify_Border_Control extends Themify_Control {
 				<div class="color-picker">
 					<?php
 					// Check color
-					if ( 'same' == $same ) {
+					if ( 'same' === $same ) {
 						$color = isset( $values->color ) ? $values->color : '';
 						$opacity = isset( $values->opacity ) ? $values->opacity : '';
 					} else {
@@ -93,7 +94,7 @@ class Themify_Border_Control extends Themify_Control {
 					}
 					?>
 					<input type="text" class="color-select" data-side="<?php echo esc_attr( $side ); ?>" value="<?php echo esc_attr( $color ); ?>" data-opacity="<?php echo esc_attr( $opacity ); ?>"/>
-					<a class="remove-color ti-close" href="#" <?php echo ( '' != $color || '' != $opacity ) ? 'style="display:inline"' : ''; ?> data-side="<?php echo esc_attr( $side ); ?>"></a>
+					<a class="remove-color tf_close" href="#" <?php echo ( '' != $color || '' != $opacity ) ? 'style="display:inline"' : ''; ?> data-side="<?php echo esc_attr( $side ); ?>"></a>
 				</div>
 
 				<!-- Border Width -->
@@ -117,7 +118,7 @@ class Themify_Border_Control extends Themify_Control {
 			<?php $same_id = $this->id . '_same'; ?>
 			<input id="<?php echo esc_attr( $same_id ); ?>" type="checkbox" class="same" <?php checked( $same, 'same' ); ?> value="same"/>
 			<label for="<?php echo esc_attr( $same_id ); ?>">
-				<?php _e( 'Apply to all borders.', 'themify' ); ?>
+				<?php _e( 'Apply to all borders', 'themify' ); ?>
 			</label>
 		</div>
 

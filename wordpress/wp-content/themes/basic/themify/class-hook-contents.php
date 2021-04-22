@@ -26,7 +26,7 @@ class Themify_Hooks {
 		} else {
 			add_action( 'template_redirect', array( $this, 'hook_locations_view_setup' ), 9 );
 			add_action( 'template_redirect', array( $this, 'hooks_setup' ) );
-			add_filter( 'themify_hooks_item_content', 'themify_do_shortcode_wp_422' );
+			add_filter( 'themify_hooks_item_content', array($this,'themify_do_shortcode_wp') );
 		}
 		add_action( 'init', array( $this, 'register_default_hook_locations' ) );
 	}
@@ -40,7 +40,7 @@ class Themify_Hooks {
 						$location = $this->data["{$this->pre}-{$id}-location"];
 						/* cache the ID of the item we have to display, so we don't have to re-run the conditional tags */
 						$this->action_map[$location][] = $id;
-						add_action( $location, array( &$this, 'output_item' ) );
+						add_action( $location, array( $this, 'output_item' ) );
 					}
 				endforeach;
 			endif;
@@ -165,20 +165,20 @@ class Themify_Hooks {
 										)
 									) )
 									|| ( ! is_front_page() && is_home() && in_array( get_post_field( 'post_name', get_option( 'page_for_posts' ) ), $posts,true ) ) // check for Posts page
-									|| ( class_exists( 'WooCommerce' ) && function_exists( 'is_shop' ) && is_shop() && in_array( get_post_field( 'post_name', wc_get_page_id( 'shop' ) ), $posts )  ) // check for WC Shop page
+									|| ( themify_is_shop() && in_array( get_post_field( 'post_name', themify_shop_pageId() ), $posts,true )  ) // check for WC Shop page
 								) )
 							// Custom Post Types single view check
 							|| ( is_singular( $post_type ) && in_array( $query_object->post_name, $posts,true ) && $query_object->post_parent <= 0 )
 							|| ( is_singular( $post_type ) && isset( $query_object->post_parent ) && $query_object->post_parent > 0 && in_array( '/'.$this->child_post_name($query_object).'/', $posts,true ) )
 							// for all posts of a post type.
-							|| ( is_singular( $post_type ) && get_post_type() === $post_type && in_array( 'E_ALL', $posts ) )
+							|| ( is_singular( $post_type ) && in_array( 'E_ALL', $posts,true ) )
 						) {
 							$visible = true;
 							break;
 						}
 					}
 				}
-				if($visible===false &&  themify_is_shop() && ( $shop_page_slug = get_post_field( 'post_name', get_option( 'woocommerce_shop_page_id' ) ) ) && isset( $logic['post_type']['page'][ $shop_page_slug ] ) ) {
+				if($visible===false &&  themify_is_shop() && ( $shop_page_slug = get_post_field( 'post_name', themify_shop_pageId() ) ) && isset( $logic['post_type']['page'][ $shop_page_slug ] ) ) {
 					$visible = true;
 				}
 			}
@@ -362,7 +362,7 @@ class Themify_Hooks {
 			$field_ids = array();
 		}
 
-		$out = '<div class="themify-info-link">' . sprintf( __( 'Use <a href="%s">Hook Content</a> to add content to the theme without editing any template file.', 'themify' ), 'https://themify.me/docs/hook-content' ) . '</div>';
+		$out = '<div class="themify-info-link">' . sprintf( __( 'Use <a href="%s" target="_blank">Hook Content</a> to add content to the theme without editing any template file.', 'themify' ), 'https://themify.me/docs/hook-content' ) . '</div>';
 
 		$out .= '<ul id="hook-content-list">';
 		if ( ! empty( $field_ids ) ) : foreach ( $field_ids as $value ) :
@@ -394,11 +394,12 @@ class Themify_Hooks {
 		$output .= '<div class="social-drag">' . esc_html__( 'Drag to Sort', 'themify' ) . '<i class="ti-arrows-vertical"></i></div>';
 		$output .= '<div class="row"><select name="' .  $this->pre . '-' . $id . '-location" class="width6">';
 		$locations = $this->get_locations();
+		$current=themify_get( "{$this->pre}-{$id}-location",false,true );
 		foreach ( $this->get_location_groups() as $group => $label ) {
 			if ( ! empty( $locations[$group] ) ) {
 				$output .= '<optgroup label="' . esc_attr( $label ) . '">';
 				foreach ( $locations[$group] as $key => $value ) {
-					$output .= '<option value="' . $key . '" ' . selected( themify_get( "{$this->pre}-{$id}-location" ), $key, false ) . '>' . esc_html( $value ) . '</option>';
+					$output .= '<option value="' . $key . '" ' . selected( $current, $key, false ) . '>' . esc_html( $value ) . '</option>';
 				}
 				$output .= '</optgroup>';
 			}
@@ -406,7 +407,7 @@ class Themify_Hooks {
 		$output .= '</select>';
 		//Backward compatibility
 		$selected = array();
-		$value = themify_get( $this->pre . '-' . $id . '-visibility' );
+		$value = themify_get( $this->pre . '-' . $id . '-visibility',false,true );
 		parse_str( $value, $selected );
 		if(!empty($selected['tax']) && !empty($selected['tax']['category_single'])){
 			reset($selected['tax']['category_single']);
@@ -425,20 +426,20 @@ class Themify_Hooks {
 			}
 		}
 		$output .= '&nbsp; <a class="button button-secondary themify-visibility-toggle" href="#" data-target="#' . $this->pre . '-' . $id . '-visibility" data-item="' . $id . '" data-text="' . __( '+ Conditions', 'themify' ) . '"> ' . __( '+ Conditions', 'themify' ) . ' </a> <input type="hidden" id="' . $this->pre . '-' . $id . '-visibility" name="' . $this->pre . '-' . $id . '-visibility" value="' . esc_attr( $value ) . '" /></div>';
-		$output .= '<div class="row"><textarea class="widthfull" name="' . $this->pre . '-' . $id . '-code" rows="6" cols="73">' . esc_html( themify_get( "{$this->pre}-{$id}-code" ) ) . '</textarea>';
-		$output .= '<a href="#" class="remove-item"><i class="ti-close"></i></a>';
+		$output .= '<div class="row"><textarea class="widthfull" name="' . $this->pre . '-' . $id . '-code" rows="6" cols="73">' . esc_html( themify_get( "{$this->pre}-{$id}-code",false,true ) ) . '</textarea>';
+		$output .= '<a href="#" class="remove-item"><i class="tf_close"></i></a>';
 		$output .= '</li>';
 		return $output;
 	}
 
 	public function get_visibility_dialog() {
 		$output = '
-			<div class="themify_lightbox_visibility themify-admin-lightbox themify-admin-lightbox-1 clearfix" style="display: none;" data-item="1">
+			<div class="themify_lightbox_visibility themify-admin-lightbox themify-admin-lightbox-1 tf_clearfix" style="display: none;" data-item="1">
 				<h3 class="themify_lightbox_title">' . __( 'Condition', 'themify' ) . '</h3>
-				<a href="#" class="close_lightbox"><i class="ti-close"></i></a>
+				<a href="#" class="close_lightbox"><i class="tf_close"></i></a>
 				<div class="lightbox_container">
 				</div>
-				<p class="themify_lightbox_uncheck_container"><a href="#" class="button uncheck-all" data-unchecked-text="' . __( 'Uncheck All', 'themify' ) . '" data-checked-text="' . __( 'Show checked', 'themify' ) . '">' . __( 'Uncheck All', 'themify' ) . '</a></p>
+				<p class="themify_lightbox_uncheck_container"><a href="#" class="uncheck-all" data-unchecked-text="' . __( 'Uncheck All', 'themify' ) . '" data-checked-text="' . __( 'Show checked', 'themify' ) . '">' . __( 'Uncheck All', 'themify' ) . '</a></p>
 				<a href="#" class="button button-primary visibility-save alignright">' . __( 'Save', 'themify' ) . '</a>
 			</div>
 			<div id="themify_lightbox_overlay"></div>
@@ -773,7 +774,7 @@ class Themify_Hooks {
 		$taxonomies = apply_filters( 'themofy_hooks_visibility_taxonomies', get_taxonomies( array( 'public' => true ) ) );
 		$taxonomies = array_map( 'get_taxonomy', $taxonomies );
 
-		$output = '<form id="visibility-tabs" class="ui-tabs"><ul class="clearfix">';
+		$output = '<form id="visibility-tabs" class="ui-tabs"><ul class="tf_clearfix">';
 
 		/* build the tab links */
 		$output .= '<li><a href="#visibility-tab-general">' . __( 'General', 'themify' ) . '</a></li>';
@@ -786,7 +787,7 @@ class Themify_Hooks {
 		$output .= '</ul>';
 
 		/* build the tab items */
-		$output .= '<div id="visibility-tab-general" class="themify-visibility-options clearfix">';
+		$output .= '<div id="visibility-tab-general" class="themify-visibility-options tf_clearfix">';
 		$checked = isset($selected['general']['home']) ? checked($selected['general']['home'], 'on', false) : '';
 		$output .= '<label><input type="checkbox" name="general[home]" ' . $checked . ' /><span data-tooltip="'.get_home_url().'">' . __( 'Home page', 'themify' ) . '</span></label>';
 		$checked = isset($selected['general']['page']) ? checked($selected['general']['page'], 'on', false) : '';
@@ -836,43 +837,43 @@ class Themify_Hooks {
 		$output .= '</div>'; // tab-general
 		// Pages tab
 		wp_reset_postdata();
-		$output .= '<div id="visibility-tab-pages" class="themify-visibility-options themify-visibility-type-options clearfix" data-type="page">';
+		$output .= '<div id="visibility-tab-pages" class="themify-visibility-options themify-visibility-type-options tf_clearfix tf_scrollbar" data-type="page">';
 		$output .= '</div>'; // tab-pages
 		// Category Singles tab
-		$output .= '<div id="visibility-tab-categories-singles" class="themify-visibility-options clearfix" data-type="category_single">';
-		$output .= '<div id="themify-visibility-category-single-inner-tabs" class="themify-visibility-inner-tabs">';
-		$output .= '<ul class="inline-tabs clearfix">';
+		$output .= '<div id="visibility-tab-categories-singles" class="themify-visibility-options tf_clearfix" data-type="category_single">';
+		$output .= '<div id="themify-visibility-category-single-inner-tabs" class="themify-visibility-inner-tabs tf_scrollbar">';
+		$output .= '<ul class="inline-tabs tf_clearfix">';
 		foreach( $taxonomies as $key => $tax ) {
 			$output .= '<li><a href="#visibility-tab-' . $key . '">' . $tax->label . '</a></li>';
 		}
 		$output .= '</ul>';
-		$output .= '<div class="themify-visibility-type-options clearfix" data-type="category_single"></div>';
+		$output .= '<div class="themify-visibility-type-options tf_clearfix" data-type="category_single"></div>';
 		$output .= '</div>';
 		$output .= '</div>';
 		// Categories tab
-		$output .= '<div id="visibility-tab-categories" class="themify-visibility-options themify-visibility-type-options clearfix" data-type="category">';
+		$output .= '<div id="visibility-tab-categories" class="themify-visibility-options themify-visibility-type-options tf_clearfix" data-type="category">';
 		$output .= '</div>'; // tab-categories
 		// Post types tab
-		$output .= '<div id="visibility-tab-post-types" class="themify-visibility-options clearfix" data-type="post">';
-		$output .= '<div id="themify-visibility-post-types-inner-tabs" class="themify-visibility-inner-tabs">';
-		$output .= '<ul class="inline-tabs clearfix">';
+		$output .= '<div id="visibility-tab-post-types" class="themify-visibility-options tf_clearfix" data-type="post">';
+		$output .= '<div id="themify-visibility-post-types-inner-tabs" class="themify-visibility-inner-tabs tf_scrollbar">';
+		$output .= '<ul class="inline-tabs tf_clearfix">';
 		foreach ( $post_types as $key => $post_type ) {
 			$output .= '<li><a href="#visibility-tab-' . $key . '">' . esc_html( $post_type->label ) . '</a></li>';
 		}
 		$output .= '</ul>';
-		$output .= '<div class="themify-visibility-type-options clearfix" data-type="post"></div>';
+		$output .= '<div class="themify-visibility-type-options tf_clearfix" data-type="post"></div>';
 		$output .= '</div>';
 		$output .= '</div>'; // tab-post-types
 		// Taxonomies tab
-		$output .= '<div id="visibility-tab-taxonomies" class="themify-visibility-options clearfix">';
+		$output .= '<div id="visibility-tab-taxonomies" class="themify-visibility-options tf_clearfix">';
 		$output .= '<div id="themify-visibility-taxonomies-inner-tabs" class="themify-visibility-inner-tabs">';
-		$output .= '<ul class="inline-tabs clearfix">';
+		$output .= '<ul class="inline-tabs tf_clearfix">';
 		foreach ( $taxonomies as $key => $tax ) {
 			$output .= '<li><a href="#visibility-tab-' . $key . '">' . esc_html($tax->label) . '</a></li>';
 		}
 		$output .= '</ul>';
 		foreach ( $taxonomies as $key => $tax ) {
-			$output .= '<div id="visibility-tab-' . $key . '" class="clearfix">';
+			$output .= '<div id="visibility-tab-' . $key . '" class="tf_clearfix">';
 			$terms = get_terms( $key, array( 'hide_empty' => true ) );
 			if ( ! empty( $terms ) ) : foreach ( $terms as $term ) :
 					$checked = isset( $selected['tax'][$key][$term->slug] ) ? checked( $selected['tax'][$key][$term->slug], 'on', false ) : '';
@@ -887,7 +888,7 @@ class Themify_Hooks {
 		$output .= '</div>';
 		$output .= '</div>'; // tab-taxonomies
 		// User Roles tab
-		$output .= '<div id="visibility-tab-userroles" class="themify-visibility-options clearfix">';
+		$output .= '<div id="visibility-tab-userroles" class="themify-visibility-options tf_clearfix">';
 		foreach ( $GLOBALS['wp_roles']->roles as $key => $role ) {
 			$checked = isset( $selected['roles'][$key] ) ? checked( $selected['roles'][$key], 'on', false ) : '';
 			$output .= '<label><input type="checkbox" name="' . esc_attr( 'roles[' . $key . ']' ) . '" ' . $checked . ' />' . esc_html( $role['name'] ) . '</label>';
@@ -916,7 +917,7 @@ class Themify_Hooks {
 			show_admin_bar( false );
 
 			/* enqueue url fix script */
-			wp_enqueue_script('hook-locations-urlfix', themify_enque(THEMIFY_URI . '/js/hook-locations-urlfix.js'), array( 'jquery' ), THEMIFY_VERSION, false);
+			wp_enqueue_script('hook-locations-urlfix', themify_enque(THEMIFY_URI . '/js/admin/hook-locations-urlfix.js'), array( 'jquery' ), THEMIFY_VERSION, false);
 
 			foreach ( $this->get_locations( true ) as $location => $label ) {
 				add_action( $location, array( $this, 'print_hook_label' ) );
@@ -941,5 +942,37 @@ class Themify_Hooks {
 
 		return $str;
 	}
+	
+	
+
+	/**
+	 * Run shortcode with same functionality as WP prior to 4.2.3 update and
+	 * this ticket: https://core.trac.wordpress.org/ticket/15694
+	 * Similar to do_shortcode, however will not encode html entities
+	 *
+	 * @return string
+	 */
+	function themify_do_shortcode_wp( $content ) {
+		global $shortcode_tags;
+
+		if ( false === strpos( $content, '[' ) || empty($shortcode_tags) || !is_array($shortcode_tags)) {
+			return $content;
+		}
+		// Find all registered tag names in $content.
+		preg_match_all( '@\[([^<>&/\[\]\x00-\x20=]++)@', $content, $matches );
+		$tagnames = array_intersect( array_keys( $shortcode_tags ), $matches[1] );
+
+		if ( empty( $tagnames ) ) {
+			return $content;
+		}
+
+		$pattern = get_shortcode_regex( $tagnames );
+		$content = preg_replace_callback( "/$pattern/", 'do_shortcode_tag', $content );
+
+		// Always restore square braces so we don't break things like <!--[if IE ]>
+		$content = unescape_invalid_shortcodes( $content );
+
+		return $content;
+	}
+
 }
-$GLOBALS['themify_hooks'] = new Themify_Hooks();

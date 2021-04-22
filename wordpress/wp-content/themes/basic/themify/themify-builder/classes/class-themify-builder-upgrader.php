@@ -1,5 +1,6 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
 
 class Themify_Builder_Upgrader extends WP_Upgrader {
 
@@ -23,8 +24,8 @@ class Themify_Builder_Upgrader extends WP_Upgrader {
 		$this->init();
 		$this->upgrade_strings();
 
-		add_filter('upgrader_pre_install', array(&$this, 'deactivate_plugin_before_upgrade'), 10, 2);
-		add_filter('upgrader_clear_destination', array(&$this, 'delete_old_plugin'), 10, 4);
+		add_filter('upgrader_pre_install', array($this, 'deactivate_plugin_before_upgrade'), 10, 2);
+		add_filter('upgrader_clear_destination', array($this, 'delete_old_plugin'), 10, 4);
 
 		$this->run(array(
 					'package' => $url,
@@ -37,8 +38,8 @@ class Themify_Builder_Upgrader extends WP_Upgrader {
 				));
 
 		// Cleanup our hooks, in case something else does a upgrade on this connection.
-		remove_filter('upgrader_pre_install', array(&$this, 'deactivate_plugin_before_upgrade'));
-		remove_filter('upgrader_clear_destination', array(&$this, 'delete_old_plugin'));
+		remove_filter('upgrader_pre_install', array($this, 'deactivate_plugin_before_upgrade'));
+		remove_filter('upgrader_clear_destination', array($this, 'delete_old_plugin'));
 
 		if ( ! $this->result || is_wp_error($this->result) )
 			return $this->result;
@@ -46,7 +47,7 @@ class Themify_Builder_Upgrader extends WP_Upgrader {
 
 	function download_package($package) {
 
-		if ( ! preg_match('!^(http|https|ftp)://!i', $package) && file_exists($package) ) //Local file or remote?
+		if ( ! preg_match('!^(http|https|ftp)://!i', $package) && is_file($package) ) //Local file or remote?
 			return $package; //must be a local file..
 
 		if ( empty($package) )

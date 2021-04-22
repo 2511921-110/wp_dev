@@ -196,19 +196,21 @@ class Themify_Microdata {
 		$publisher_logo = get_the_author_meta('user_meta_org_logo');
 		$logo_width = $logo_height = 0;
 		if ( $publisher_logo ) {
-			$upload_dir = wp_upload_dir();
-			$base_url = $upload_dir['baseurl'];
-			$publisher_logo_id = themify_get_attachment_id_from_url( $publisher_logo, $base_url );
+			$publisher_logo_id = themify_get_attachment_id_from_url( $publisher_logo);
 			if( $publisher_logo_id ) {
 				$publisher_logo_meta = wp_get_attachment_metadata( $publisher_logo_id );
-				$logo_width = $publisher_logo_meta['width'];
-				$logo_height = $publisher_logo_meta['height'];
+				if ( ! empty( $publisher_logo_meta['width'] ) ) {
+					$logo_width = $publisher_logo_meta['width'];
+				}
+				if ( ! empty( $publisher_logo_meta['height'] ) ) {
+					$logo_height = $publisher_logo_meta['height'];
+				}
 			}
 		}
 		$comments       = get_approved_comments($post->ID, array('type'=>'comment','no_found_rows'=>false) );
 		$comment_count  = 0;
 		$post_types     = array( 'post', 'press' );
-		$creative_types   = apply_filters( 'tb_creative_works_items', array( 'audio', 'highlight', 'quote', 'portfolio', 'testimonial', 'video' ) );
+		$creative_types = apply_filters( 'tb_creative_works_items', array( 'audio', 'highlight', 'quote', 'portfolio', 'testimonial', 'video' ) );
 		$post_image     = wp_get_attachment_image_src( get_post_thumbnail_id( $post->ID ), 'large' );
 		// Cases
 		if ( is_singular('post') ) {
@@ -254,7 +256,7 @@ class Themify_Microdata {
 				),
 				'description' => $excerpt
 			);
-			if ( has_post_thumbnail() ) {
+			if ( has_post_thumbnail() && ! empty( $post_image ) ) {
 				$microdata['image'] = array(
 					'@type' => 'ImageObject',
 					'url' => $post_image[0],
@@ -302,7 +304,7 @@ class Themify_Microdata {
 					'url' => themify_get( 'buy_tickets' )
 				);
 			}
-			if( has_post_thumbnail() ) {
+			if( has_post_thumbnail() && ! empty( $post_image ) ) {
 				$microdata['image'] = array(
 					'@type' => 'ImageObject',
 					'url' => $post_image[0],
@@ -338,7 +340,7 @@ class Themify_Microdata {
 				),
 				'description' => $excerpt
 			);
-			if ( has_post_thumbnail() ) {
+			if ( has_post_thumbnail() && ! empty( $post_image ) ) {
 				$microdata['image'] = array(
 					'@type' => 'ImageObject',
 					'url' => $post_image[0],
@@ -374,7 +376,7 @@ class Themify_Microdata {
 				'dateModified' => $date_modified,
 				'description' => $excerpt
 			);
-			if( has_post_thumbnail() ) {
+			if( has_post_thumbnail() && ! empty( $post_image ) ) {
 				$microdata['image'] = array(
 					'@type' => 'ImageObject',
 					'url' => $post_image[0],
@@ -425,7 +427,7 @@ class Themify_Microdata {
 				'name' => $post_title,
 				'description' => $excerpt
 			);
-			if( has_post_thumbnail() ) {
+			if ( has_post_thumbnail() && ! empty( $post_image ) ) {
 				$microdata['image'] = array(
 					'@type' => 'ImageObject',
 					'url' => $post_image[0],
@@ -481,12 +483,14 @@ class Themify_Microdata {
 			}
 			if ( has_post_thumbnail() ) {
 				$post_image = wp_get_attachment_image_src( get_post_thumbnail_id( $post->ID ),  'large' );
-				$microdata['image'] = array(
-					'@type' => 'ImageObject',
-					'url' => $post_image[0],
-					'width' => $post_image[1],
-					'height' => $post_image[2]
-				);
+				if ( ! empty( $post_image ) ) {
+					$microdata['image'] = array(
+						'@type' => 'ImageObject',
+						'url' => $post_image[0],
+						'width' => $post_image[1],
+						'height' => $post_image[2]
+					);
+				}
 			}
 			$this->output[] = $microdata;
 		}
@@ -538,33 +542,37 @@ class Themify_Microdata {
 	}
 
 	function fetch_video_meta( $video_url ) {
-
-		if ( preg_match( '%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $video_url, $match ) ) {
-			$request = wp_remote_get( "https://www.youtube.com/oembed?url=". urlencode( $video_url ) ."&format=json" );
-		} elseif ( false !== stripos( $video_url, 'vimeo' ) ) {
-			$request = wp_remote_get( 'https://vimeo.com/api/oembed.json?url='.urlencode( $video_url ) );
-		} elseif( false !== stripos( $video_url, 'funnyordie' ) ) {
-			$request = wp_remote_get( 'https://www.funnyordie.com/oembed.json?url='.urlencode( $video_url ) );
-		} elseif( false !== stripos( $video_url, 'dailymotion' ) ) {
-			$video_id = parse_url( $video_url, PHP_URL_PATH );
-			$request = wp_remote_get( 'https://api.dailymotion.com/' . str_replace( '/embed/', '', $video_id ) . '?fields=thumbnail_large_url', array( 'sslverify' => false ) );
-		} elseif( false !== stripos( $video_url, 'blip' ) ) {
-			$request = wp_remote_get( 'https://blip.tv/oembed?url=' . $video_url, array( 'sslverify' => false ) );
-		}
-
-		if ( isset( $request ) && ! is_wp_error( $request ) ) {
-			$response_body = wp_remote_retrieve_body( $request );
-			if ( '' != $response_body ) {
-				$video = json_decode( $response_body );
-				return $video;
+		$cache_key = 'themify_video_meta_' . md5( $video_url );
+		if ( false === ( $meta = get_transient( $cache_key ) ) ) {
+			if ( preg_match( '%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $video_url, $match ) ) {
+				$request = wp_remote_get( "https://www.youtube.com/oembed?url=". urlencode( $video_url ) ."&format=json" );
+			} elseif ( false !== stripos( $video_url, 'vimeo' ) ) {
+				$request = wp_remote_get( 'https://vimeo.com/api/oembed.json?url='.urlencode( $video_url ) );
+			} elseif( false !== stripos( $video_url, 'funnyordie' ) ) {
+				$request = wp_remote_get( 'https://www.funnyordie.com/oembed.json?url='.urlencode( $video_url ) );
+			} elseif( false !== stripos( $video_url, 'dailymotion' ) ) {
+				$video_id = parse_url( $video_url, PHP_URL_PATH );
+				$request = wp_remote_get( 'https://api.dailymotion.com/' . str_replace( '/embed/', '', $video_id ) . '?fields=thumbnail_large_url', array( 'sslverify' => false ) );
+			} elseif( false !== stripos( $video_url, 'blip' ) ) {
+				$request = wp_remote_get( 'https://blip.tv/oembed?url=' . $video_url, array( 'sslverify' => false ) );
 			}
+
+			if ( isset( $request ) && ! is_wp_error( $request ) ) {
+				$response_body = wp_remote_retrieve_body( $request );
+				if ( '' != $response_body ) {
+					$meta = json_decode( $response_body );
+					set_transient( $cache_key, $meta, YEAR_IN_SECONDS );
+					return $meta;
+				}
+			}
+		} else {
+			return $meta;
 		}
 
 		return false;
 	}
 }
 endif;
-$GLOBALS['themify_microdata'] = new Themify_Microdata;
 
 /**
  * Deprecated functions

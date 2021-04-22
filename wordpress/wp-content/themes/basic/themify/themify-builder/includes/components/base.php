@@ -13,13 +13,6 @@ class Themify_Builder_Component_Base {
     public static $layout_part_id = false;
 
     /**
-     * Array of classnames to add to post objects
-     */
-    private static $_post_classes = array();
-
-    public static $draggableModules = array();
-
-    /**
      * The names of settings for tooltip.
      * 
      * @access public
@@ -194,10 +187,10 @@ class Themify_Builder_Component_Base {
 				'selector' => '',
 				'binding' => array(
 				    'empty' => array(
-					'hide' => array('tb_image_options')
+					'hide' => array('tb_image_options','resp_no_bg')
 				    ),
 				    'not_empty' => array(
-					'show' => array('tb_image_options')
+					'show' => array('tb_image_options','resp_no_bg')
 				    )
 				)
 			    ),
@@ -210,101 +203,117 @@ class Themify_Builder_Component_Base {
 				'prop' => 'background-image',
 				'selector' => ''
 			    ),
+                // No Background Image
+                array(
+                    'id' => 'resp_no_bg',
+                    'label' => '',
+                    'origId'=>'background_image',
+                    'type' => 'checkbox',
+                    'prop' => 'background-image',
+                    'options' => array(
+                        array('value' => __('No background image', 'themify'), 'name' => 'none')
+                    ),
+                    'binding' => array(
+                        'checked'     => array( 'hide' =>  array('tb_image_options','background_image') ),
+                        'not_checked' => array( 'show' =>array('tb_image_options','background_image')),
+                    ),
+                    'wrap_class' => 'tf_hide'
+                ),
 			    array(
 				    'type'=>'group',
 				    'wrap_class' => 'tb_group_element_image tb_image_options',
 				    'options'=>array(
-					// Background repeat
-					array(
-					    'id' => 'background_repeat',
-					    'label' => '',
-					    'type' => 'select',
-					    'after' => __('Background Mode', 'themify'),
-					    'prop' => 'background-mode',
-					    'origId'=>'background_image',
-					    'selector' => '',
-					    'options' => array(
-						'repeat' => __('Repeat All', 'themify'),
-						'repeat-x' => __('Repeat Horizontally', 'themify'),
-						'repeat-y' => __('Repeat Vertically', 'themify'),
-						'repeat-none' => __('Do not repeat', 'themify'),
-						'fullcover' => __('Fullcover', 'themify'),
-						'best-fit-image' => __('Best Fit', 'themify'),
-						'builder-parallax-scrolling' => __('Parallax Scrolling', 'themify'),
-						'builder-zoom-scrolling' => __('Zoom Scrolling', 'themify'),
-						'builder-zooming' => __('Zooming', 'themify')
-					    ),
+                        // Background repeat
+                        array(
+                            'id' => 'background_repeat',
+                            'label' => '',
+                            'type' => 'select',
+                            'after' => __('Background Mode', 'themify'),
+                            'prop' => 'background-mode',
+                            'origId'=>'background_image',
+                            'selector' => '',
+                            'options' => array(
+                            'repeat' => __('Repeat All', 'themify'),
+                            'repeat-x' => __('Repeat Horizontally', 'themify'),
+                            'repeat-y' => __('Repeat Vertically', 'themify'),
+                            'repeat-none' => __('Do not repeat', 'themify'),
+                            'fullcover' => __('Fullcover', 'themify'),
+                            'best-fit-image' => __('Best Fit', 'themify'),
+                            'builder-parallax-scrolling' => __('Parallax Scrolling', 'themify'),
+                            'builder-zoom-scrolling' => __('Zoom Scrolling', 'themify'),
+                            'builder-zooming' => __('Zooming', 'themify')
+                            ),
 
-					    'binding' => array(
-						'repeat-none' => array(
-						    'show' => array('background_zoom','background_position')
-						),
-						'builder-parallax-scrolling' => array(
-						    'hide' => array('background_attachment','background_position','background_zoom'),
-						    'responsive' => array(
-							'disabled' => array('background_repeat')
-						    )
-						),
-						'builder-zoom-scrolling' => array(
-						    'hide' => array('background_attachment','background_zoom'),
-						    'show' => array('background_position'),
-						    'responsive' => array(
-							'disabled' => array('background_repeat')
-						    )
-						),
-						'builder-zooming' => array(
-						    'hide' => array('background_attachment','background_zoom'),
-						    'show' => array('background_position'),
-						    'responsive' => array(
-							'disabled' => array('background_repeat')
-						    )
-						),
-						'select' => array(
-						    'value' => 'repeat-none',
-						    'hide' => array('background_zoom'),
-						    'show' => array('background_attachment','background_position')
-						),
-						'responsive' => array(
-						    'disabled' => array('builder-parallax-scrolling', 'builder-zoom-scrolling', 'builder-zooming')
-						)
-					    )
-					),
-					// Background attachment
-					array(
-					    'id' => 'background_attachment',
-					    'label' => '',
-					    'type' => 'select',
-					    'origId'=>'background_image',
-					    'after' => __('Background Attachment', 'themify'),
-					    'options' => array(
-						'scroll' => __('Scroll', 'themify'),
-						'fixed' => __('Fixed', 'themify')
-					    ),
-					    'prop' => 'background-attachment',
-					    'selector' => ''
-					),
-					// Background Zoom
-					array(
-					    'id' => 'background_zoom',
-					    'label' => '',
-					    'origId'=>'background_image',
-					    'type' => 'checkbox',
-					    'options' => array(
-						array('value' => __('Zoom on hover', 'themify'), 'name' => 'zoom')
-					    ),
-					    'is_responsive' => false
-					),
-					// Background position
-					array(
-					    'id' => 'background_position',
-					    'label' => '',
-					    'origId'=>'background_image',
-					    'type' => 'position_box',
-					    'position' => true,
-					    'prop' => 'background-position',
-					    'selector' => ''
-					),
-				    )
+                            'binding' => array(
+                                'repeat-none' => array(
+                                    'show' => array('background_zoom','background_position')
+                                ),
+                                'builder-parallax-scrolling' => array(
+                                    'hide' => array('background_attachment','background_zoom'),
+                                    'responsive' => array(
+                                        'disabled' => 'background_repeat'
+                                    )
+                                ),
+                                'builder-zoom-scrolling' => array(
+                                    'hide' => array('background_attachment','background_zoom'),
+                                    'show' => 'background_position',
+                                    'responsive' => array(
+                                        'disabled' => 'background_repeat'
+                                    )
+                                ),
+                                'builder-zooming' => array(
+                                    'hide' => array('background_attachment','background_zoom'),
+                                    'show' => 'background_position',
+                                    'responsive' => array(
+                                        'disabled' => 'background_repeat'
+                                    )
+                                ),
+                                'select' => array(
+                                    'value' => 'repeat-none',
+                                    'hide' => 'background_zoom',
+                                    'show' => array('background_attachment','background_position')
+                                ),
+                                'responsive' => array(
+                                    'disabled' => array('builder-parallax-scrolling', 'builder-zoom-scrolling', 'builder-zooming')
+                                )
+                            )
+                        ),
+                        // Background attachment
+                        array(
+                            'id' => 'background_attachment',
+                            'label' => '',
+                            'type' => 'select',
+                            'origId'=>'background_image',
+                            'after' => __('Background Attachment', 'themify'),
+                            'options' => array(
+                            'scroll' => __('Scroll', 'themify'),
+                            'fixed' => __('Fixed', 'themify')
+                            ),
+                            'prop' => 'background-attachment',
+                            'selector' => ''
+                        ),
+                        // Background Zoom
+                        array(
+                            'id' => 'background_zoom',
+                            'label' => '',
+                            'origId'=>'background_image',
+                            'type' => 'checkbox',
+                            'options' => array(
+                            array('value' => __('Zoom on hover', 'themify'), 'name' => 'zoom')
+                            ),
+                            'is_responsive' => false
+                        ),
+                        // Background position
+                        array(
+                            'id' => 'background_position',
+                            'label' => '',
+                            'origId'=>'background_image',
+                            'type' => 'position_box',
+                            'position' => true,
+                            'prop' => 'background-position',
+                            'selector' => ''
+                        ),
+                        )
     				),
 			    
 			    // Background Color
@@ -345,10 +354,10 @@ class Themify_Builder_Component_Base {
 				'selector' => ':hover',
 				'binding' => array(
 				    'empty' => array(
-					'hide' => array('tb_image_options')
+					'hide' => 'tb_image_options'
 				    ),
 				    'not_empty' => array(
-					'show' => array('tb_image_options')
+					'show' => 'tb_image_options'
 				    )
 				)
 			    ),
@@ -509,10 +518,10 @@ class Themify_Builder_Component_Base {
 				'selector' => $inner_selector,
 				'binding' => array(
 				    'empty' => array(
-					'hide' => array('tb_image_inner_options')
+					'hide' => 'tb_image_inner_options'
 				    ),
 				    'not_empty' => array(
-					'show' => array('tb_image_inner_options')
+					'show' => 'tb_image_inner_options'
 				    )
 				)
 			    ),
@@ -586,10 +595,10 @@ class Themify_Builder_Component_Base {
 				'selector' => $inner_selector_hover,
 				'binding' => array(
 				    'empty' => array(
-					'hide' => array('tb_image_inner_options')
+					'hide' => 'tb_image_inner_options'
 				    ),
 				    'not_empty' => array(
-					'show' => array('tb_image_inner_options')
+					'show' => 'tb_image_inner_options'
 				    )
 				)
 			    ),
@@ -888,7 +897,6 @@ class Themify_Builder_Component_Base {
     }
 
     public static function get_frame_tabs($selector = '', $id = 'frame_tabs') {
-;
 
 	return self::get_tab(
 			array(
@@ -962,15 +970,12 @@ class Themify_Builder_Component_Base {
 			'select_class' => 'tb_frame_unit',
 			'units' => array(
 			    '%' => array(
-				'min' => 0,
 				'max' => 1000
 			    ),
 			    'px' => array(
-				'min' => 0,
 				'max' => 10000
 			    ),
 			    'em' => array(
-				'min' => 0,
 				'max' => 30
 			    )
 			)
@@ -983,15 +988,12 @@ class Themify_Builder_Component_Base {
 			'select_class' => 'tb_frame_unit',
 			'units' => array(
 			    '%' => array(
-				'min' => 0,
 				'max' => 1000
 			    ),
 			    'px' => array(
-				'min' => 0,
 				'max' => 10000
 			    ),
 			    'em' => array(
-				'min' => 0,
 				'max' => 30
 			    )
 			)
@@ -1022,25 +1024,54 @@ class Themify_Builder_Component_Base {
      * @param string $effect 
      * @return string
      */
-    public static function parse_animation_effect($effect, $mod_settings = null) {
-
-	$class = '';
-	if (Themify_Builder_Model::is_animation_active()) {
-	    if (!empty($mod_settings['hover_animation_effect'])) {
-		$class = ' hover-wow hover-animation-' . $mod_settings['hover_animation_effect'];
+    public static function parse_animation_effect( $settings, array $attr = array() ) {
+		/* backward compatibility for addons */
+		if ( ! is_array( $settings ) ) {
+			return '';
+		}
+	static $has=null;
+	if($has===null){
+	    $has=Themify_Builder_Model::is_animation_active();
+	}
+	if ($has!==false) {
+	    if (!empty($settings['hover_animation_effect'])) {
+		$attr['data-tf-animation_hover']=$settings['hover_animation_effect'];
+		if(isset($attr['class'])){
+		    $attr['class'].=' hover-wow';
+		}
+		else{
+		    $attr['class']='hover-wow';
+		}
+		if($has!=='done'){
+		    $has='load';
+		}
 	    }
-	    if ($effect === '') {
-		return $class;
+	    if(!empty($settings['animation_effect'])){
+		    $attr['data-tf-animation']=$settings['animation_effect'];
+		    if(!in_array($settings['animation_effect'], array('fade-in', 'fly-in', 'slide-up'), true)){
+				    if(isset($attr['class'])){
+				    $attr['class'].=' wow';
+			}
+			else{
+			    $attr['class']='wow';
+			}
+		    }
+		    if (!empty($settings['animation_effect_delay'])) {
+			    $attr['data-tf-animation_delay']=$settings['animation_effect_delay'];
+		    }
+		    if (!empty($settings['animation_effect_repeat'])) {
+			    $attr['data-tf-animation_repeat']=$settings['animation_effect_repeat'];
+		    }
+		    if($has!=='done'){
+			$has='load';
+		    }
 	    }
-	    $class .= '' !== $effect && !in_array($effect, array('fade-in', 'fly-in', 'slide-up'), true) ? ' wow ' . $effect : $effect;
-	    if (!empty($mod_settings['animation_effect_delay'])) {
-		$class .= ' animation_effect_delay_' . $mod_settings['animation_effect_delay'];
-	    }
-	    if (!empty($mod_settings['animation_effect_repeat'])) {
-		$class .= ' animation_effect_repeat_' . $mod_settings['animation_effect_repeat'];
+	    if($has==='load'){
+		$has='done';
+		Themify_Enqueue_Assets::preFetchAnimtion();
 	    }
 	}
-	return $class;
+	return $attr;
     }
 
     /**
@@ -1078,10 +1109,6 @@ class Themify_Builder_Component_Base {
 	}
 	if (isset($paths[$key])) {
 	    global $ThemifyBuilder;
-	    //backward compatibility 02.26.19
-	    if (!empty($args)) {
-		extract($args);
-	    }
 	    include($paths[$key]);
 	}
     }
@@ -1138,40 +1165,7 @@ class Themify_Builder_Component_Base {
      * @return string
      */
     public static function get_element_attributes($props) {
-	$out = '';
-	foreach ($props as $atts => $val) {
-	    $out .= ' ' . $atts . '="' . esc_attr($val) . '"';
-	}
-	return $out;
-    }
-
-    /**
-     * Filter post_class to add the classnames to posts
-     *
-     * @return array
-     */
-    public static function filter_post_class($classes) {
-	return !empty(self::$_post_classes) ? array_merge($classes, self::$_post_classes) : $classes;
-    }
-
-    /**
-     * Add classes to post_class
-     * @param string|array $classes
-     */
-    public static function add_post_class($classes) {
-	foreach ((array) $classes as $class) {
-	    self::$_post_classes[$class] = $class;
-	}
-    }
-
-    /**
-     * Remove sepecified classnames from post_class
-     * @param string|array $classes
-     */
-    public static function remove_post_class($classes) {
-	foreach ((array) $classes as $class) {
-	    unset(self::$_post_classes[$class]);
-	}
+	return themify_get_element_attributes($props);
     }
 
     /**
@@ -1200,72 +1194,33 @@ class Themify_Builder_Component_Base {
      * @param original_offset number of posts configured to skip over
      * @return string
      */
-    public static function get_pagenav($before = '', $after = '', $query = false, $original_offset = 0) {
-	global $wp_query;
-
-	if (false == $query) {
-	    $query = $wp_query;
-	}
-
-	$paged = (int) self::get_paged_query();
-	$numposts = $query->found_posts;
-
-	// $query->found_posts does not take offset into account, we need to manually adjust that
-	if ((int) $original_offset) {
-	    $numposts = $numposts - (int) $original_offset;
-	}
-
-	$max_page = ceil($numposts / $query->query_vars['posts_per_page']);
-	$out = '';
-
-	if (empty($paged)) {
-	    $paged = 1;
-	}
-	$pages_to_show = apply_filters('themify_filter_pages_to_show', 5);
-	$pages_to_show_minus_1 = $pages_to_show - 1;
-	$half_page_start = floor($pages_to_show_minus_1 / 2);
-	$half_page_end = ceil($pages_to_show_minus_1 / 2);
-	$start_page = $paged - $half_page_start;
-	if ($start_page <= 0) {
-	    $start_page = 1;
-	}
-	$end_page = $paged + $half_page_end;
-	if (($end_page - $start_page) != $pages_to_show_minus_1) {
-	    $end_page = $start_page + $pages_to_show_minus_1;
-	}
-	if ($end_page > $max_page) {
-	    $start_page = $max_page - $pages_to_show_minus_1;
-	    $end_page = $max_page;
-	}
-	if ($start_page <= 0) {
-	    $start_page = 1;
-	}
-
-	if ($max_page > 1) {
-	    $out .= $before . '<div class="pagenav clearfix">';
-	    if ($start_page >= 2 && $pages_to_show < $max_page) {
-		$first_page_text = "&laquo;";
-		$out .= '<a href="' . esc_url(get_pagenum_link()) . '" title="' . esc_attr($first_page_text) . '" class="number">' . $first_page_text . '</a>';
-	    }
-	    if ($pages_to_show < $max_page)
-		$out .= get_previous_posts_link('&lt;');
-	    for ($i = $start_page; $i <= $end_page; $i++) {
-		if ($i == $paged) {
-		    $out .= ' <span class="number current">' . $i . '</span> ';
-		} else {
-		    $out .= ' <a href="' . esc_url(get_pagenum_link($i)) . '" class="number">' . $i . '</a> ';
+    public static function get_pagination($before = '', $after = '', $query = false, $original_offset = 0,$max_page=0,$paged=0) {
+		if (false == $query) {
+			global $wp_query;
+			$query = $wp_query;
 		}
-	    }
-	    if ($pages_to_show < $max_page)
-		$out .= get_next_posts_link('&gt;');
-	    if ($end_page < $max_page) {
-		$last_page_text = "&raquo;";
-		$out .= '<a href="' . esc_url(get_pagenum_link($max_page)) . '" title="' . esc_attr($last_page_text) . '" class="number">' . $last_page_text . '</a>';
-	    }
-	    $out .= '</div>' . $after;
-	}
-	return $out;
+		if($paged===0){
+			$paged = (int) self::get_paged_query();
+		}
+		if($max_page===0){
+			$numposts = $query->found_posts;
+			$original_offset=(int)$original_offset;
+			// $query->found_posts does not take offset into account, we need to manually adjust that
+			if ($original_offset>0) {
+			$numposts-=$original_offset;
+			}
+			$max_page = ceil($numposts / $query->query_vars['posts_per_page']);
+		}
+		if($max_page>1){
+			Themify_Builder_Model::loadCssModules('tb_pagenav',THEMIFY_BUILDER_CSS_MODULES.'pagenav.css',THEMIFY_VERSION);
+		}
+		return themify_get_pagenav($before,$after,$query,$max_page,$paged);
     }
+	
+	public static function get_pagenav($before = '', $after = '', $query = false, $original_offset = 0) {//backward compatibility for addons,deprecated use get_pagination
+		
+		return self::get_pagination($before, $after, $query, $original_offset);
+	}
 
     public static function get_seperator($label = false) {
 	$opt = array(
@@ -1324,7 +1279,7 @@ class Themify_Builder_Component_Base {
 		    'max' => 900
 		),
 		'em' => array(
-		    'min' => 0.5,
+		    'min' => .5,
 		    'max' => 50
 		),
 		'%' => array(
@@ -1536,10 +1491,10 @@ class Themify_Builder_Component_Base {
 	    'posId'=>$posId,
 	    'binding' => array(
 		'empty' => array(
-		    'hide' => array('tb_image_options')
+		    'hide' => 'tb_image_options'
 		),
 		'not_empty' => array(
-		    'show' => array('tb_image_options')
+		    'show' => 'tb_image_options'
 		)
 	    )
 	);
@@ -1634,10 +1589,6 @@ class Themify_Builder_Component_Base {
 	if ($state === 'h' || $state === 'hover') {
 	    $res['ishover'] = true;
 	}
-	elseif(($isDragable===true && ($selector!=='' || $id!=='padding')) ||($isDragable===null && $selector==='' && $id!=='padding')){
-	  
-	    self::setDraggables(get_called_class(), $res['type'], $res['id'], $res['selector']);
-	}
 	return $res;
     }
 
@@ -1657,9 +1608,6 @@ class Themify_Builder_Component_Base {
 	);
 	if ($state === 'h' || $state === 'hover') {
 	    $res['ishover'] = true;
-	}
-	elseif(($isDragable===true && ($selector!=='' || $id!=='margin')) ||($isDragable===null && $selector==='' && $id!=='margin')){
-	    self::setDraggables(get_called_class(), $res['type'], $res['id'], $res['selector']);
 	}
 	return $res;
     }
@@ -1685,8 +1633,7 @@ class Themify_Builder_Component_Base {
 		    'max' => 20
 		),
 		'%' => array(
-		    'min' => -100,
-		    'max' => 100
+		    'min' => -100
 		)
 	    )
 	);
@@ -1717,8 +1664,7 @@ class Themify_Builder_Component_Base {
 		    'max' => 20
 		),
 		'%' => array(
-		    'min' => -100,
-		    'max' => 100
+		    'min' => -100
 		)
 	    )
 	);
@@ -1751,8 +1697,7 @@ class Themify_Builder_Component_Base {
 		    'max' => 20
 		),
 		'%' => array(
-		    'min' => -100,
-		    'max' => 100
+		    'min' => -100
 		)
 	    )
 	);
@@ -1809,10 +1754,10 @@ class Themify_Builder_Component_Base {
 	    'prop' => 'column-count',
 	    'binding' => array(
 		'empty' => array(
-		    'hide' => array('tb_multi_columns_wrap')
+		    'hide' => 'tb_multi_columns_wrap'
 		),
 		'not_empty' => array(
-		    'show' => array('tb_multi_columns_wrap')
+		    'show' => 'tb_multi_columns_wrap'
 		)
 	    ),
 	    'selector' => $selector
@@ -1861,11 +1806,7 @@ class Themify_Builder_Component_Base {
 		    'min' => -20,
 		    'max' => 20
 		),
-		'%' => array(
-		    'min' => 0,
-		    'max' => 100,
-		    'increment' => 1
-		)
+		'%' =>''
 	    )
 	);
 	if ($state === 'h' || $state === 'hover') {
@@ -1916,8 +1857,6 @@ class Themify_Builder_Component_Base {
 	}
 	return $res;
     }
-    
-    
 
     /**
      * Computes and returns data for Builder row or column video background.
@@ -1958,184 +1897,214 @@ class Themify_Builder_Component_Base {
      * @param string $module_ID 
      * @return array
      */
-    public static function sticky_element_props($props, $fields_args) {
+	public static function sticky_element_props($props,$fields_args){
+		if(!empty( $fields_args['stick_at_check'] ) || !empty($fields_args['stick_at_check_t']) || !empty($fields_args['stick_at_check_tl']) || !empty($fields_args['stick_at_check_m'])){
+			static $is_sticky=null;
+			if($is_sticky===null){
+				$is_sticky=Themify_Builder_Model::is_sticky_scroll_active();
+			}
+			if($is_sticky!==false){
+				$_arr=array('d','tl','t','m');
+				$settings=array();
+				foreach($_arr as $v){
+					$key=$v==='d'?'':'_'.$v;
+					if(($key==='' && !empty( $fields_args['stick_at_check'] )) || ($key!=='' && isset($fields_args['stick_at_check'.$key]) && $fields_args['stick_at_check'.$key]!=='')){
+						$settings[$v]=array();
+						if($key!=='' && $fields_args['stick_at_check'.$key]!=='1'){
+							$settings[$v]=0;
+						}
+						else{
+							if(isset( $fields_args['stick_at_position'.$key] ) && $fields_args['stick_at_position'.$key]==='bottom'){
+								$settings[$v]['stick']=array();
+								$settings[$v]['stick']['p']=$fields_args['stick_at_position'.$key];
+							}
+							if(!empty( $fields_args['stick_at_pos_val'.$key] )){
+								if(!isset($settings[$v]['stick'])){
+									$settings[$v]=array('stick'=>array());
+								}
+								$settings[$v]['stick']['v']=$fields_args['stick_at_pos_val'.$key];
+								if(isset( $fields_args['stick_at_pos_val_unit'.$key] ) && $fields_args['stick_at_pos_val_unit'.$key]!=='px'){
+									$settings[$v]['stick']['u']=$fields_args['stick_at_pos_val_unit'.$key];
+								}
+							}
 
-	if (isset($fields_args['stick_at_check']) && '' !== $fields_args['stick_at_check']) {
-	    $settings = array();
+							if(!empty( $fields_args['unstick_when_check'.$key] )){
+								$unstick=array();
+								if(isset( $fields_args['unstick_when_element'.$key] ) && $fields_args['unstick_when_element'.$key]!=='builder_end'){
+									if(isset( $fields_args['unstick_when_condition'.$key] ) && $fields_args['unstick_when_condition'.$key]!=='hits'){
+										$unstick['r']=$fields_args['unstick_when_condition'.$key];
+									}
+									$unstick['type']=$fields_args['unstick_when_element'.$key];
+									if($unstick['type']==='row' && isset($fields_args['unstick_when_el_row_id'.$key]) && $fields_args['unstick_when_el_row_id'.$key]!=='row'){
+										$unstick['el']=$fields_args['unstick_when_el_row_id'.$key];
+									}
+									elseif($unstick['type']==='module' && !empty( $fields_args['unstick_when_el_mod_id'.$key] )){
+										$unstick['el']=$fields_args['unstick_when_el_mod_id'.$key];
+									}
+									else{
+										continue;
+									}
+									
+									if(isset( $fields_args['unstick_when_pos'.$key] ) && $fields_args['unstick_when_pos'.$key]!=='this'){
+										$unstick['cur']=$fields_args['unstick_when_pos'.$key];
+										if(!empty( $fields_args['unstick_when_pos_val'.$key] )){
+											$unstick['v']=$fields_args['unstick_when_pos_val'.$key];
+											if(isset( $fields_args['unstick_when_pos_val_unit'.$key] ) && $fields_args['unstick_when_pos_val_unit'.$key]!=='px'){
+												$unstick['u']=$fields_args['unstick_when_pos_val_unit'.$key];
+											}
+										}
+									}
+								}
+								else{
+									$unstick['type']='builder';
+								}
+								if(!empty( $unstick )){
+									$settings[$v]['unstick']=$unstick;
+								}
+							}
+						}
+					}
+				}
+				if(!empty($settings)){
+					unset($_arr);
+					$props['data-sticky-active']=json_encode( $settings );
+					if($is_sticky!=='done'){
+						$is_sticky='done';
+						Themify_Enqueue_Assets::addPrefetchJs( THEMIFY_BUILDER_JS_MODULES.'sticky.js',THEMIFY_VERSION );
+					}
+				}
+			}
+		}//Add custom attributes html5 data to module container div to show parallax options.
+        elseif(Themify_Builder::$frontedit_active===false && ( !empty( $fields_args['motion_effects'] ) || !empty( $fields_args['custom_parallax_scroll_speed'] ) )){
+			static $is_lax=null;
+			if($is_lax===null){
+				$is_lax=Themify_Builder_Model::is_scroll_effect_active();
+			}
+			if($is_lax!==false){
+				$props['data-lax']='true';
+				$props['data-lax-anchor']='self';
+				// Check settings from Floating tab to apply them to Lax library
+				if(!empty( $fields_args['custom_parallax_scroll_speed'] )){
+					$props['data-parallax-element-speed']=$fields_args['custom_parallax_scroll_speed'];
 
-	    if (!isset($fields_args['stick_at_pos_val']))
-		$fields_args['stick_at_pos_val'] = '';
+					$speed=self::map_animation_speed( $fields_args['custom_parallax_scroll_speed'] );
 
-	    if (!isset($fields_args['stick_at_pos_val_unit']))
-		$fields_args['stick_at_pos_val_unit'] = 'px';
-
-	    if (!isset($fields_args['unstick_when_pos_val']))
-		$fields_args['unstick_when_pos_val'] = '';
-
-	    if (!isset($fields_args['unstick_when_pos_val_unit']))
-		$fields_args['unstick_when_pos_val_unit'] = 'px';
-	    
-	    if(!isset($fields_args['unstick_when_element'])){
-		$fields_args['unstick_when_element'] = 'builder_end';
-	    }
-	    if(!isset($fields_args['unstick_when_el_row_id'])){
-		$fields_args['unstick_when_el_row_id'] = 'row';
-	    }
-	    if(!isset($fields_args['unstick_when_condition'])){
-		$fields_args['unstick_when_condition'] = 'hits';
-	    }
-	    if(!isset($fields_args['unstick_when_pos'])){
-		$fields_args['unstick_when_pos'] = 'this';
-	    }
-	    $settings['stick'] = array(
-		'position' => isset($fields_args['stick_at_position'])?$fields_args['stick_at_position']:'',
-		'value' => $fields_args['stick_at_pos_val'],
-		'val_unit' => $fields_args['stick_at_pos_val_unit']
-	    );
-
-	    if (isset($fields_args['unstick_when_check']) && '' !== $fields_args['unstick_when_check']) {
-			$settings['unstick'] = array(
-				'el_type' =>$fields_args['unstick_when_element'],
-				'el_row_target' => $fields_args['unstick_when_el_row_id'],
-				'el_mod_target' =>isset( $fields_args['unstick_when_el_mod_id'])? $fields_args['unstick_when_el_mod_id']:'',
-				'rule' => $fields_args['unstick_when_condition'],
-				'current' => $fields_args['unstick_when_pos'],
-				'value' => $fields_args['unstick_when_pos_val'],
-				'val_unit' => $fields_args['unstick_when_pos_val_unit']
-			);
-	    }
-	    $props['data-sticky-active'] = wp_json_encode($settings);
-	    
-	    
-	}
-	//Add custom attributes html5 data to module container div to show parallax options.
-	elseif (Themify_Builder::$frontedit_active===false && ( !empty( $fields_args['motion_effects']  ) || !empty( $fields_args['custom_parallax_scroll_speed'] ) ) && Themify_Builder_Model::is_parallax_active()) {
-		$props['data-lax'] = 'true';
-		$props['data-lax-anchor'] = 'self';
-		// Check settings from Floating tab to apply them to Lax library
-		if ( !empty( $fields_args['custom_parallax_scroll_speed'] ) ) {
-	    $props['data-parallax-element-speed'] = $fields_args['custom_parallax_scroll_speed'];
-
-		$speed = self::map_animation_speed($fields_args['custom_parallax_scroll_speed']);
-
-	    if (!empty($fields_args['custom_parallax_scroll_reverse']) && $fields_args['custom_parallax_scroll_reverse'] !== '|') {
-				$props['data-lax-translate-y'] = 'vh 1,0 ' . $speed;
-			} else {
-				$props['data-lax-translate-y'] = 'vh 1,0 -' . $speed;
-	    }
-	    if (!empty($fields_args['custom_parallax_scroll_fade']) && $fields_args['custom_parallax_scroll_fade'] !== '|') {
-				$props['data-lax-opacity'] = 'vh 1,0 0';
-	    }
-	}
-		if ( ! isset( $fields_args['motion_effects']['t'] ) ) {
-		$props['data-lax-optimize'] = 'true';
+					if(!empty( $fields_args['custom_parallax_scroll_reverse'] ) && $fields_args['custom_parallax_scroll_reverse']!=='|'){
+						$props['data-lax-translate-y']='vh 1,0 '.$speed;
+					}else{
+						$props['data-lax-translate-y']='vh 1,0 -'.$speed;
+					}
+					if(!empty( $fields_args['custom_parallax_scroll_fade'] ) && $fields_args['custom_parallax_scroll_fade']!=='|'){
+						$props['data-lax-opacity']='vh 1,0 0';
+					}
+				}
+				if(!isset( $fields_args['motion_effects']['t'] )){
+					$props['data-lax-optimize']='true';
+				}
+				// Add motion effects from Motion tab
+				// Vertical
+				if(isset( $fields_args['motion_effects']['v'],$fields_args['motion_effects']['v']['val']['v_dir'] )
+					&& $fields_args['motion_effects']['v']['val']['v_dir']!==''){
+					if(isset( $fields_args['motion_effects']['v']['val']['v_speed'] )){
+						$v_speed=self::map_animation_speed( $fields_args['motion_effects']['v']['val']['v_speed'] );
+					}else{
+                        $v_speed=self::map_animation_speed(1);
+                    }
+					$viewport=isset( $fields_args['motion_effects']['v']['val']['v_vp'] ) ? explode( ',',$fields_args['motion_effects']['v']['val']['v_vp'] ) : array(0,100);
+					$bottom=1 - ( (int)$viewport[0] / 100 );
+					$top=1 - ( (int)$viewport[1] / 100 );
+					$props['data-lax-translate-y']=$fields_args['motion_effects']['v']['val']['v_dir']==='up' ? '(vh*'.$bottom.') 0,(vh*'.$top.') -'.$v_speed : '(vh*'.$bottom.') 0,(vh*'.$top.') '.$v_speed;
+					if(isset( $fields_args['motion_effects']['v']['val']['v_speed'] ) && $fields_args['motion_effects']['v']['val']['v_speed']!=='0'){
+						$props['data-lax-v-speed']=$fields_args['motion_effects']['v']['val']['v_speed'];
+					}
+				}
+				// Horizontal
+				if(isset( $fields_args['motion_effects']['h'],$fields_args['motion_effects']['h']['val']['h_dir'] )
+					&& $fields_args['motion_effects']['h']['val']['h_dir']!==''){
+					$h_speed=600;
+					if(isset( $fields_args['motion_effects']['h']['val']['h_speed'] )){
+						$h_speed=self::map_animation_speed( $fields_args['motion_effects']['h']['val']['h_speed'] );
+					}
+					$viewport=isset( $fields_args['motion_effects']['h']['val']['h_vp'] ) ? explode( ',',$fields_args['motion_effects']['h']['val']['h_vp'] ) : array(0,100);
+					$bottom=1 - ( (int)$viewport[0] / 100 );
+					$top=1 - ( (int)$viewport[1] / 100 );
+					$props['data-lax-translate-x']=$fields_args['motion_effects']['h']['val']['h_dir']==='toleft' ? '(vh*'.$bottom.') 0,(vh*'.$top.') -'.$h_speed : '(vh*'.$bottom.') 0,(vh*'.$top.') '.$h_speed;
+					if(isset( $fields_args['motion_effects']['h']['val']['h_speed'] ) && $fields_args['motion_effects']['h']['val']['h_speed']!=='0'){
+						$props['data-lax-h-speed']=$fields_args['motion_effects']['h']['val']['h_speed'];
+					}
+				}
+				// Opacity
+				if(isset( $fields_args['motion_effects']['t'],$fields_args['motion_effects']['t']['val']['t_dir'] )
+					&& $fields_args['motion_effects']['t']['val']['t_dir']!==''){
+					$viewport=isset( $fields_args['motion_effects']['t']['val']['t_vp'] ) ? explode( ',',$fields_args['motion_effects']['t']['val']['t_vp'] ) : array(0,100);
+					$bottom=1 - ( (int)$viewport[0] / 100 );
+					$top=1 - ( (int)$viewport[1] / 100 );
+					$center=( $bottom - ( ( $bottom - $top ) / 2 ) );
+					if($fields_args['motion_effects']['t']['val']['t_dir']==='fadein'){
+						$props['data-lax-opacity']='(vh*'.$bottom.') 0,(vh*'.$top.') 1';
+					}else if($fields_args['motion_effects']['t']['val']['t_dir']==='fadeout'){
+						$props['data-lax-opacity']='(vh*'.$bottom.') 1,(vh*'.$top.') 0';
+					}else if($fields_args['motion_effects']['t']['val']['t_dir']==='fadeoutin'){
+						$props['data-lax-opacity']='(vh*'.$bottom.') 1,(vh*'.$center.') 0,(vh*'.$top.') 1';
+					}else if($fields_args['motion_effects']['t']['val']['t_dir']==='fadeinout'){
+						$props['data-lax-opacity']='(vh*'.$bottom.') 0,(vh*'.$center.') 1,(vh*'.$top.') 0';
+					}
+				}elseif(!isset( $fields_args['animation_effect_delay'] )){
+					$props['data-lax-no-op']='true';
+				}
+				// Blur
+				if(isset( $fields_args['motion_effects']['b'],$fields_args['motion_effects']['b']['val']['b_dir'] )
+					&& $fields_args['motion_effects']['b']['val']['b_dir']!==''){
+					$b_level=10;
+					if(isset( $fields_args['motion_effects']['b']['val']['b_level'] )){
+						$b_level=self::map_animation_speed( $fields_args['motion_effects']['b']['val']['b_level'],'blur' );
+					}
+					if($fields_args['motion_effects']['b']['val']['b_dir']==='fadein'){
+						$props['data-lax-b']=$b_level;
+					}
+					$viewport=isset( $fields_args['motion_effects']['b']['val']['b_vp'] ) ? explode( ',',$fields_args['motion_effects']['b']['val']['b_vp'] ) : array(0,100);
+					$bottom=1 - ( (int)$viewport[0] / 100 );
+					$top=1 - ( (int)$viewport[1] / 100 );
+					$props['data-lax-blur']=$fields_args['motion_effects']['b']['val']['b_dir']==='fadein' ? '(vh*'.$bottom.') '.$b_level.',(vh*'.$top.') 0' : '(vh*'.$bottom.') 0,(vh*'.$top.') '.$b_level;
+					if(isset( $fields_args['motion_effects']['b']['val']['b_level'] )){
+						$props['data-lax-b-speed']=$fields_args['motion_effects']['b']['val']['b_level'];
+					}
+				}
+				// Rotate
+				if(isset( $fields_args['motion_effects']['r'],$fields_args['motion_effects']['r']['val']['r_dir'] )
+					&& $fields_args['motion_effects']['r']['val']['r_dir']!==''){
+					$viewport=isset( $fields_args['motion_effects']['r']['val']['r_vp'] ) ? explode( ',',$fields_args['motion_effects']['r']['val']['r_vp'] ) : array(0,100);
+					$rotates=isset( $fields_args['motion_effects']['r']['val']['r_num'] ) ? (float)$fields_args['motion_effects']['r']['val']['r_num'] * 360 : 360;
+					$bottom=1 - ( (int)$viewport[0] / 100 );
+					$top=1 - ( (int)$viewport[1] / 100 );
+					$props['data-lax-rotate']=$fields_args['motion_effects']['r']['val']['r_dir']==='toleft' ? '(vh*'.$bottom.') 0,(vh*'.$top.') -'.$rotates : '(vh*'.$bottom.') 0,(vh*'.$top.') '.$rotates;
+					if(isset( $fields_args['motion_effects']['r']['val']['r_origin'] )){
+						$props['data-box-position']=self::map_transform_origin( $fields_args['motion_effects']['r']['val']['r_origin'] );
+					}
+				}
+				// Scale
+				if(isset( $fields_args['motion_effects']['s'],$fields_args['motion_effects']['s']['val']['s_dir'] )
+					&& $fields_args['motion_effects']['s']['val']['s_dir']!==''){
+					$viewport=isset( $fields_args['motion_effects']['s']['val']['s_vp'] ) ? explode( ',',$fields_args['motion_effects']['s']['val']['s_vp'] ) : array(0,100);
+					$ratio=isset( $fields_args['motion_effects']['s']['val']['s_ratio'] ) ? (float)$fields_args['motion_effects']['s']['val']['s_ratio'] : 3;
+					$bottom=1 - ( (int)$viewport[0] / 100 );
+					$top=1 - ( (int)$viewport[1] / 100 );
+					$props['data-lax-scale']=$fields_args['motion_effects']['s']['val']['s_dir']==='up' ? '(vh*'.$bottom.') 1,(vh*'.$top.') '.$ratio : '(vh*'.$bottom.') 1,(vh*'.$top.') '.number_format( 1 / $ratio,3 );
+					if(isset( $fields_args['motion_effects']['s']['val']['s_origin'] )){
+						$props['data-box-position']=self::map_transform_origin( $fields_args['motion_effects']['s']['val']['s_origin'] );
+					}
+				}
+				if($is_lax!=='done'){
+					$is_lax='done';
+					Themify_Enqueue_Assets::addPrefetchJs( THEMIFY_URI.'/js/modules/lax.js',THEMIFY_VERSION );
+				}
+			}
 		}
-        // Add motion effects from Motion tab
-        // Vertical
-	if ( isset( $fields_args['motion_effects']['v'],$fields_args['motion_effects']['v']['val']['v_dir'] )
-            && $fields_args['motion_effects']['v']['val']['v_dir'] !== '' ) {
-		    $v_speed = 600;
-			if ( isset( $fields_args['motion_effects']['v']['val']['v_speed'] ) ) {
-				$v_speed = self::map_animation_speed($fields_args['motion_effects']['v']['val']['v_speed']);
-			}
-		    $viewport = isset($fields_args['motion_effects']['v']['val']['v_vp']) ? explode(',', $fields_args['motion_effects']['v']['val']['v_vp']) : array(0,100);
-			$bottom = 1 - ((int) $viewport[0] / 100);
-			$top = 1 - ((int) $viewport[1] / 100);
-			$props['data-lax-translate-y'] = $fields_args['motion_effects']['v']['val']['v_dir'] === 'up' ? '(vh*' . $bottom . ') 0,(vh*' . $top . ') -' . $v_speed : '(vh*' . $bottom . ') 0,(vh*' . $top . ') ' . $v_speed;
-			if ( isset( $fields_args['motion_effects']['v']['val']['v_speed'] ) && $fields_args['motion_effects']['v']['val']['v_speed'] !== '0' ) {
-				$props['data-lax-v-speed'] = $fields_args['motion_effects']['v']['val']['v_speed'];
-			}
+		if(isset( $fields_args['custom_css_id'] )){
+			$props['id']=$fields_args['custom_css_id'];
 		}
-		// Horizontal
-		if ( isset( $fields_args['motion_effects']['h'],$fields_args['motion_effects']['h']['val']['h_dir']  )
-		            && $fields_args['motion_effects']['h']['val']['h_dir'] !== '' ) {
-		    $h_speed = 600;
-			if ( isset( $fields_args['motion_effects']['h']['val']['h_speed'] ) ) {
-				$h_speed = self::map_animation_speed($fields_args['motion_effects']['h']['val']['h_speed']);
-			}
-			$viewport = isset($fields_args['motion_effects']['h']['val']['h_vp']) ? explode(',', $fields_args['motion_effects']['h']['val']['h_vp']) : array(0,100);
-			$bottom = 1 - ((int) $viewport[0] / 100);
-			$top = 1 - ((int) $viewport[1] / 100);
-			$props['data-lax-translate-x'] = $fields_args['motion_effects']['h']['val']['h_dir'] === 'toleft' ? '(vh*' . $bottom . ') 0,(vh*' . $top . ') -' . $h_speed : '(vh*' . $bottom . ') 0,(vh*' . $top . ') ' . $h_speed;
-			if ( isset( $fields_args['motion_effects']['h']['val']['h_speed'] ) && $fields_args['motion_effects']['h']['val']['h_speed'] !== '0' ) {
-				$props['data-lax-h-speed'] = $fields_args['motion_effects']['h']['val']['h_speed'];
-			}
-		}
-		// Opacity
-		if ( isset( $fields_args['motion_effects']['t'],$fields_args['motion_effects']['t']['val']['t_dir'] )
-		     && $fields_args['motion_effects']['t']['val']['t_dir'] !== '' ) {
-			$viewport = isset($fields_args['motion_effects']['t']['val']['t_vp']) ? explode(',', $fields_args['motion_effects']['t']['val']['t_vp']) : array(0,100);
-			$bottom = 1 - ((int) $viewport[0] / 100);
-			$top = 1 - ((int) $viewport[1] / 100);
-			$center = ( $bottom - (($bottom - $top) / 2) );
-			if ( $fields_args['motion_effects']['t']['val']['t_dir'] === 'fadein' ) {
-				$props['data-lax-opacity'] = '(vh*' . $bottom . ') 0,(vh*' . $top . ') 1';
-			} else if ( $fields_args['motion_effects']['t']['val']['t_dir'] === 'fadeout' ) {
-				$props['data-lax-opacity'] = '(vh*' . $bottom . ') 1,(vh*' . $top . ') 0';
-			} else if ( $fields_args['motion_effects']['t']['val']['t_dir'] === 'fadeoutin' ) {
-				$props['data-lax-opacity'] = '(vh*' . $bottom . ') 1,(vh*' . $center . ') 0,(vh*' . $top . ') 1';
-			} else if ( $fields_args['motion_effects']['t']['val']['t_dir'] === 'fadeinout' ) {
-				$props['data-lax-opacity'] = '(vh*' . $bottom . ') 0,(vh*' . $center . ') 1,(vh*' . $top . ') 0';
-			}
-        } elseif ( ! isset($fields_args['animation_effect_delay'])) {
-			$props['data-lax-no-op'] = 'true';
-			}
-		// Blur
-		if ( isset( $fields_args['motion_effects']['b'],$fields_args['motion_effects']['b']['val']['b_dir'] )
-		     && $fields_args['motion_effects']['b']['val']['b_dir'] !== '' ) {
-		    $b_level = 10;
-			if ( isset( $fields_args['motion_effects']['b']['val']['b_level'] ) ) {
-				$b_level = self::map_animation_speed($fields_args['motion_effects']['b']['val']['b_level'], 'blur');
-			}
-			if ( $fields_args['motion_effects']['b']['val']['b_dir'] === 'fadein' ) {
-				$props['data-lax-b'] = $b_level;
-			}
-			$viewport = isset($fields_args['motion_effects']['b']['val']['b_vp']) ? explode(',', $fields_args['motion_effects']['b']['val']['b_vp']) : array(0,100);
-			$bottom = 1 - ((int) $viewport[0] / 100);
-			$top = 1 - ((int) $viewport[1] / 100);
-			$props['data-lax-blur'] = $fields_args['motion_effects']['b']['val']['b_dir'] === 'fadein' ? '(vh*' . $bottom . ') ' . $b_level . ',(vh*' . $top . ') 0' : '(vh*' . $bottom . ') 0,(vh*' . $top . ') ' . $b_level;
-			if ( isset( $fields_args['motion_effects']['b']['val']['b_level'] ) ) {
-				$props['data-lax-b-speed'] = $fields_args['motion_effects']['b']['val']['b_level'];
-			}
-			}
-		// Rotate
-		if ( isset( $fields_args['motion_effects']['r'],$fields_args['motion_effects']['r']['val']['r_dir'] )
-		     && $fields_args['motion_effects']['r']['val']['r_dir'] !== '' ) {
-			$viewport = isset($fields_args['motion_effects']['r']['val']['r_vp']) ? explode(',', $fields_args['motion_effects']['r']['val']['r_vp']) : array(0,100);
-			$rotates = isset($fields_args['motion_effects']['r']['val']['r_num']) ? (float) $fields_args['motion_effects']['r']['val']['r_num'] * 360 : 360;
-			$bottom = 1 - ((int) $viewport[0] / 100);
-			$top = 1 - ((int) $viewport[1] / 100);
-			$props['data-lax-rotate'] = $fields_args['motion_effects']['r']['val']['r_dir'] === 'toleft' ? '(vh*' . $bottom . ') 0,(vh*' . $top . ') -' . $rotates : '(vh*' . $bottom . ') 0,(vh*' . $top . ') ' . $rotates;
-			if ( isset( $fields_args['motion_effects']['r']['val']['r_origin'] ) ) {
-				$props['data-box-position'] = self::map_transform_origin($fields_args['motion_effects']['r']['val']['r_origin']);
-			}
-		}
-        // Scale
-		if ( isset( $fields_args['motion_effects']['s'],$fields_args['motion_effects']['s']['val']['s_dir']  )
-		     && $fields_args['motion_effects']['s']['val']['s_dir'] !== '' ) {
-			$viewport = isset($fields_args['motion_effects']['s']['val']['s_vp']) ? explode(',', $fields_args['motion_effects']['s']['val']['s_vp']) : array(0,100);
-			$ratio = isset($fields_args['motion_effects']['s']['val']['s_ratio']) ? (float) $fields_args['motion_effects']['s']['val']['s_ratio'] : 3;
-			$bottom = 1 - ((int) $viewport[0] / 100);
-			$top = 1 - ((int) $viewport[1] / 100);
-			$props['data-lax-scale'] = $fields_args['motion_effects']['s']['val']['s_dir'] === 'up' ? '(vh*' . $bottom . ') 1,(vh*' . $top . ') ' . $ratio : '(vh*' . $bottom . ') 1,(vh*' . $top . ') ' . number_format(1/$ratio, 3);
-			if ( isset( $fields_args['motion_effects']['s']['val']['s_origin'] ) ) {
-				$props['data-box-position'] = self::map_transform_origin($fields_args['motion_effects']['s']['val']['s_origin']);
-			}
-	    }
+		return $props;
 	}
-	if (isset($fields_args['custom_parallax_scroll_zindex']) && $fields_args['custom_parallax_scroll_zindex'] !== '') {
-	    $zIndex = 'z-index:' . (int) $fields_args['custom_parallax_scroll_zindex'] . ';';
-	    if (isset($props['style'])) {
-		$props['style'].=$zIndex;
-	    } else {
-		$props['style'] = $zIndex;
-	    }
-	}
-	if (isset($fields_args['custom_css_id'])){
-	    $props['id'] = $fields_args['custom_css_id'];
-	}
-	return $props;
-    }
     
 	/**
      * Map animation speed parameter and returns new speed
@@ -2263,7 +2232,7 @@ class Themify_Builder_Component_Base {
 			$is_empty_hover = $hover_type === 'color' ? empty( $styling['cover_color_hover'] ) : empty( $styling['cover_gradient_hover-gradient'] );
 		}
 		if ( $is_empty === false || $is_empty_hover === false) {
-			echo '<div class="builder_row_cover"></div>';
+			echo '<div class="tf_abs builder_row_cover"></div>';
 			return true;
 		}
 		return false;
@@ -2280,7 +2249,7 @@ class Themify_Builder_Component_Base {
 					if ( !empty( $settings ) && Themify_Builder_Model::get_frame( $settings, $side ) ) {
 						$printed[$side] = true;
 						?>
-						<div class="tb_row_frame tb_row_frame_<?php echo $side; ?> <?php if ( isset( $settings["{$side}-frame_location"] ) && $settings["{$side}-frame_location"] === 'in_front' ) {
+						<div class="tf_abs tf_hide tb_row_frame tb_row_frame_<?php echo $side; ?> <?php if ( isset( $settings["{$side}-frame_location"] ) && $settings["{$side}-frame_location"] === 'in_front' ) {
 							echo $settings["{$side}-frame_location"];
 						} ?>"></div>
 						<?php
@@ -2306,20 +2275,20 @@ class Themify_Builder_Component_Base {
 	if (!isset($row_or_col['styling']['background_type']) || 'slider' !== $row_or_col['styling']['background_type'] || empty($row_or_col['styling']['background_slider'])) {
 	    return false;
 	}
-	$images = Themify_Builder_Model::get_images_from_gallery_shortcode($row_or_col['styling']['background_slider']);
+	$images = themify_get_gallery_shortcode($row_or_col['styling']['background_slider']);
 	if (!empty($images)) :
 	    
 	    $size = isset($row_or_col['styling']['background_slider_size']) ? $row_or_col['styling']['background_slider_size'] : false;
 	    if (!$size) {
-		$size = Themify_Builder_Model::get_gallery_param_option($row_or_col['styling']['background_slider'], 'size');
+		$size = themify_get_gallery_shortcode_params($row_or_col['styling']['background_slider'], 'size');
 		if (!$size)
 		    $size = 'large';
 	    }
 	    $bgmode = !empty($row_or_col['styling']['background_slider_mode']) ? $row_or_col['styling']['background_slider_mode'] : 'fullcover';
 	    $slider_speed = !empty($row_or_col['styling']['background_slider_speed']) ?$row_or_col['styling']['background_slider_speed'] : '2000';
 	    ?>
-	    <div class="<?php echo $type; ?>-slider tb_slider" data-bgmode="<?php echo $bgmode; ?>" data-sliderspeed="<?php echo $slider_speed ?>">
-	        <ul class="row-slider-slides clearfix">
+	    <div class="tf_hide <?php echo $type; ?>-slider tb_slider" data-bgmode="<?php echo $bgmode; ?>" data-sliderspeed="<?php echo $slider_speed ?>">
+	        <ul class="tf_abs row-slider-slides tf_clearfix">
 		    <?php
 		    foreach($images as $i=>$img) {
 			$img_data = wp_get_attachment_image_src($img->ID, $size);
@@ -2332,8 +2301,8 @@ class Themify_Builder_Component_Base {
 		    ?>
 	        </ul>
 	        <div class="row-slider-nav">
-	    	<a class="row-slider-arrow row-slider-prev">&lsaquo;</a>
-	    	<a class="row-slider-arrow row-slider-next">&rsaquo;</a>
+	    	<a class="tf_abs row-slider-arrow row-slider-prev">&lsaquo;</a>
+	    	<a class="tf_abs row-slider-arrow row-slider-next">&rsaquo;</a>
 	        </div>
 	    </div>
 	    <!-- /.row-bgs -->
@@ -2395,6 +2364,9 @@ class Themify_Builder_Component_Base {
 			if($framesCount!==4){
 				self::show_frame($row['styling'],$frames);
 			}
+			if($hasOverlay===true){
+				Themify_Builder_Model::loadCssModules('tb_cover',THEMIFY_BUILDER_CSS_MODULES.'cover.css',THEMIFY_VERSION);
+			}
 		}
     }
     
@@ -2418,19 +2390,11 @@ class Themify_Builder_Component_Base {
 			'selector' => $selector,
 			'units' => array(
 				'px' => array(
-					'min' => 0,
-					'max' => 2000
+					'max' => 3500
 				),
-				'vh' => array(
-					'min' => 0,
-					'max' => 100
-				),
-				'%' => array(
-					'min' => 0,
-					'max' => 100
-				),
+				'vh' => '',
+				'%' => '',
 				'em' => array(
-					'min' => 0,
 					'max' => 200
 				)
 			)
@@ -2447,19 +2411,11 @@ class Themify_Builder_Component_Base {
 			'selector' => $selector,
 			'units' => array(
 				'px' => array(
-					'min' => 0,
-					'max' => 2000
+					'max' => 3500
 				),
-				'vh' => array(
-					'min' => 0,
-					'max' => 100
-				),
-				'%' => array(
-					'min' => 0,
-					'max' => 100
-				),
+				'vh' => '',
+				'%' => '',
 				'em' => array(
-					'min' => 0,
 					'max' => 200
 				)
 			)
@@ -2522,29 +2478,6 @@ class Themify_Builder_Component_Base {
 		return $res;
 	}
 	
-	private static function setDraggables($cl,$type,$id,$selector){
-	    $slug = '';
-	    $isModule = strpos($cl,'Themify_Builder_Component_')!==0;
-	    $slug = $isModule===true?str_replace(array('TB_','_Module'), array('',''), $cl):str_replace('Themify_Builder_Component_', '', $cl);
-	    $slug = strtolower($slug);
-	    if(!isset(self::$draggableModules[$slug])){
-		if($isModule===true && !isset(Themify_Builder_Model::$modules[$slug])){
-		    foreach(Themify_Builder_Model::$modules as $k=>$m){	
-			if($cl===get_class($m)){
-			    $slug=$k;
-			    break;
-			}
-		    }
-		}
-		if(!isset(self::$draggableModules[$slug])){
-		    self::$draggableModules[$slug] = array();
-		}
-	    }
-	    if(!isset(self::$draggableModules[$slug][$type])){
-		self::$draggableModules[$slug][$type] = array();
-	    }
-	    self::$draggableModules[$slug][$type][$id] = $selector;
-	}
 
 	// Get z-index
 	protected static function get_zindex($selector = '', $id = 'zi') {
@@ -2567,15 +2500,10 @@ class Themify_Builder_Component_Base {
 			'selector' => $selector,
 			'units' => array(
 				'px' => array(
-					'min' => 0,
-					'max' => 2000
+					'max' => 3500
 				),
-				'%' => array(
-					'min' => 0,
-					'max' => 100
-				),
+				'%' => '',
 				'em' => array(
-					'min' => 0,
 					'max' => 200
 				)
 			)
@@ -2591,15 +2519,10 @@ class Themify_Builder_Component_Base {
 			'selector' => $selector,
 			'units' => array(
 				'px' => array(
-					'min' => 0,
-					'max' => 2000
+					'max' => 3500
 				),
-				'%' => array(
-					'min' => 0,
-					'max' => 100
-				),
+				'%' => '',
 				'em' => array(
-					'min' => 0,
 					'max' => 200
 				)
 			)
@@ -2634,20 +2557,54 @@ class Themify_Builder_Component_Base {
 			'prop' => 'display',
 			'selector' => $selector,
 			'binding' => array(
-				'empty' => array('hide' => array($va_id)),
-				'block' => array('hide' => array($va_id)),
-				'none' => array('hide' => array($va_id)),
-				'inline-block' => array('show' => array($va_id))
+				'empty' => array('hide' => $va_id),
+				'block' => array('hide' => $va_id),
+				'none' => array('hide' => $va_id),
+				'inline-block' => array('show' => $va_id)
 			),
 			'display'=>true
 		);
-		$res[] = array( 'id' => $va_id,
+		$res[] = array( 
+			'id' => $va_id,
 			'label' => __('Vertical Align','themify'),
 			'type' => 'select',
 			'prop' => 'vertical-align',
 			'selector' => $selector,
 			'origID' => $id,
 			'va_display' => true
+		);
+		return $res;
+	}
+
+	// Grid Gap
+	protected static function get_grid_gap($selector = '', $id = 'gr_ga') {
+		$res=array();
+		$res[] = array(
+			'id' => $id.'_c',
+			'type' => 'range',
+			'prop' => 'column-gap',
+			'label' => __('Horizontal Gap','themify'),
+			'selector' => $selector,
+			'units' => array(
+				'px' => array(
+					'min' => 0,
+					'max' => 10000
+				)
+			),
+            'grid_gap'=>true
+		);
+		$res[] = array(
+			'id' => $id.'_r',
+			'type' => 'range',
+			'prop' => 'row-gap',
+			'label' => __('Vertical Gap','themify'),
+			'selector' => $selector,
+			'units' => array(
+				'px' => array(
+					'min' => 0,
+					'max' => 10000
+				)
+			)
 		);
 		return $res;
 	}

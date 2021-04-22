@@ -1,6 +1,7 @@
 <?php
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Template Slider Text
  * 
@@ -9,7 +10,7 @@ if (!defined('ABSPATH'))
  */
 if (!empty($args['settings']['text_content_slider'])):?>
     <?php foreach ($args['settings']['text_content_slider'] as $content): ?>
-        <li>
+         <div class="swiper-slide">
             <div class="slide-inner-wrap"<?php if ($args['settings']['margin'] !== ''): ?> style="<?php echo $args['settings']['margin']; ?>"<?php endif; ?>>
                 <div class="slide-content tb_text_wrap">
                     <?php
@@ -19,6 +20,6 @@ if (!empty($args['settings']['text_content_slider'])):?>
                     ?>
                 </div><!-- /slide-content -->
             </div>
-        </li>
+        </div>
     <?php endforeach; ?>
-<?php endif; ?>
+<?php endif; 

@@ -13,11 +13,13 @@
  * @category Core
  * @author Themify
  */
-if (!defined('ABSPATH'))
-    exit; // Exit if accessed directly
+
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Define builder constant
  */
+define('THEMIFY_BUILDER_REGENERATE_CSS', false);
 define('THEMIFY_BUILDER_DIR', dirname(__FILE__));
 define('THEMIFY_BUILDER_MODULES_DIR', THEMIFY_BUILDER_DIR . '/modules');
 define('THEMIFY_BUILDER_TEMPLATES_DIR', THEMIFY_BUILDER_DIR . '/templates');
@@ -28,7 +30,8 @@ define('THEMIFY_BUILDER_LIBRARIES_DIR', THEMIFY_BUILDER_INCLUDES_DIR . '/librari
 
 // URI Constant
 define('THEMIFY_BUILDER_URI', THEMIFY_URI . '/themify-builder');
-
+define('THEMIFY_BUILDER_CSS_MODULES', THEMIFY_BUILDER_URI . '/css/modules/');
+define('THEMIFY_BUILDER_JS_MODULES', THEMIFY_BUILDER_URI . '/js/modules/');
 /**
  * Include builder class
  */
@@ -42,9 +45,13 @@ require_once( THEMIFY_BUILDER_CLASSES_DIR . '/class-themify-builder.php' );
 ///////////////////////////////////////////
 if (!function_exists('themify_builder_get')) {
 
-    function themify_builder_get($theme_var, $builder_var = false) {
-        if (themify_is_themify_theme()===true) {
-            return themify_get($theme_var);
+    function themify_builder_get($theme_var, $builder_var = false,$data_only=true) {
+	static $is=null;
+	if($is===null){
+	    $is=themify_is_themify_theme();
+	}
+        if ($is===true) {
+            return themify_get($theme_var,null,$data_only);
         }
         if ($builder_var === false) {
             return false;
@@ -57,6 +64,15 @@ if (!function_exists('themify_builder_get')) {
             return $val;
         }
         return null;
+    }
+
+}
+if ( ! function_exists( 'themify_builder_check' ) ) {
+
+    function themify_builder_check( $theme_var, $builder_var = false, $data_only = true ) {
+		$val = themify_builder_get( $theme_var, $builder_var, $data_only );
+
+		return $val !== null && $val !== '' && $val !== 'off';
     }
 
 }
@@ -123,9 +139,7 @@ if (!function_exists('themify_regenerate_css_files')) {
      */
     function themify_regenerate_css_files($data = array()) {
         $output = '<hr><h4>'.__('Regenerate CSS Files','themify').'</h4>';
-        $output .= '<p><label class="label" for="builder-regenerate-css-files">' . __('Regenerate Files', 'themify'). '</label><input id="builder-regenerate-css-files" type="button" value="'.__('Regenerate CSS Files','themify').'" class="themify_button"/></p>';
-        $output .= sprintf('<span class="pushlabel regenerate-css-file-pushlabel"><small>%s</small></span>', esc_html__('Builder styling are output to the generated CSS files stored in \'wp-content/uploads\' folder. Regenerate files will update all data in the generated files (eg. correct background image paths, etc.).', 'themify')
-        );
+        $output .= '<p><label class="label" for="builder-regenerate-css-files">' . __('Regenerate Files', 'themify').themify_help(__('Builder styling are output to the generated CSS files stored in \'wp-content/uploads\' folder. Regenerate files will update all data in the generated files (eg. correct background image paths, etc.).', 'themify')) . '</label><input id="builder-regenerate-css-files" type="button" value="'.__('Regenerate CSS Files','themify').'" class="themify_button"/></p>';
         return $output;
     }
 
@@ -145,51 +159,11 @@ if (!function_exists('tb_find_and_replace')) {
         $value = $in_progress ? __('Replacing ...','themify') : __('Replace','themify');
         $output = '<h4>'.__('Find & Replace','themify').'</h4>';
         $output .= '<p><span class="label">' . __( 'Search for', 'themify' ) . '</span> <input type="text" class="width10" id="original_string" name="original_string" /></p>';
-        $output .= '<p><span class="label">' . __( 'Replace to', 'themify' ) . '</span> <input type="text" class="width10" id="replace_string" name="replace_string" /></p>';
+        $output .= '<p><span class="label">' . __( 'Replace to', 'themify' ) .themify_help(__('Use this tool to replace the strings in the Builder data. Warning: Please backup your database before replacing strings, this can not be undone.', 'themify')) . '</span> <input type="text" class="width10" id="replace_string" name="replace_string" /></p>';
         $output .= '<p><span class="pushlabel"><input id="builder-find-and-replace-btn" type="button" name="builder-find-and-replace-btn" '.$disabled.' value="'.$value.'" class="themify_button"/> </span></p>';
-        $output .= sprintf('<span class="pushlabel replace-strings-pushlabel"><small>%s</small></span>', esc_html__('Use this tool to replace the strings in the Builder data. Warning: Please backup your database before replacing strings, this can not be undone.', 'themify')
-        );
         return $output;
     }
 
-}
-
-if(!function_exists('themify_manage_builder_cache')) {
-	/**
-	 * Builder Cache Settings
-	 * @param array Themify data
-	 * @return string Module markup
-	 * @since 1.3.9
-	 */
-	function themify_manage_builder_cache($data = array()){
-                $output = '<span class="label">' . __( 'Minify &amp; Compile Scripts', 'themify' ) . '</span>';
-                 $key = 'setting-script_minification';
-                if(TFCache::check_version()){
-                    $value = themify_get( $key );
-                    if(!$value){
-                        $value = 'disable';
-                    }
-                    $expire =  themify_get( 'setting-page_builder_expiry' );
-                    $expire = $expire>0?intval($expire):2;
-
-                    $output .= '<label><input ' . checked( $value, 'enable', false ). ' type="radio" name="'.$key.'" value="enable" /> ';
-                    $output .= __('Enable minification (all Javascript &amp; CSS files will be minified/compiled)', 'themify').'</label>';
-                    $output .= '<div class="pushlabel indented-field" data-show-if-element="[name='.$key.']:checked" data-show-if-value=' . '["enable"]' . '>';
-                    $output .= '<label for="setting-page_builder_cache"><input  type="checkbox" id="setting-page_builder_cache" name="setting-page_builder_cache" '.checked( themify_check( 'setting-page_builder_cache' ), true, false ).'/> ' . __('Enable Builder Caching (will cache the Builder content)', 'themify').'</label>';
-                    $output .='<div data-show-if-element="[name='.$key.']:checked" data-show-if-value=' . '["enable"]' . '>';
-                    $output .=sprintf('<input type="text" class="width2" value="%s" name="%s" />  &nbsp;&nbsp;<span>%s</span>',$expire,'setting-page_builder_expiry',__( 'Expire Cache (days)', 'themify' ));
-                    $output .='<br/><a href="#" data-confim="'.__( 'This will clear all caches. click ok to continue.', 'themify' ).'" data-action="themify_clear_all_caches" data-clearing-text="'.__('Clearing cache...','themify').'" data-done-text="'.__('Done','themify').'" data-default-text="'.__('Clear cache','themify').'" data-default-icon="ti-eraser" class="button button-outline js-clear-minify-cache js-clear-builder-cache"> <i class="ti-eraser"></i> <span>'.__('Clear minified cache','themify').'</span></a><br/>';
-                    $output .='</div></div>';
-                    $output .= '<span class="pushlabel"><label><input ' . checked( $value, 'disable', false ). ' type="radio" name="'.$key.'" value="disable" />';
-                    $output .= __('Disable minification if you experience frontend issues/conflicts', 'themify') . '</label></span>';
-
-                }
-                else{
-                    $output.=__('Minification and caching requires 5.4 or abov. Your server does not support it.Please contact your host provider to upgrade php version.','themify');
-                }
-		
-		return $output;
-	}
 }
 
 if (!function_exists('themify_manage_builder_active')) {
@@ -226,9 +200,8 @@ if (!function_exists('themify_manage_builder_active')) {
 		 */
 		$output .=
             '<p>'.
-                '<span class="label">' . __('ScrollTo Offset', 'themify') . '</span>'.
+                '<span class="label">' . __('ScrollTo Position', 'themify') .themify_help(__('Enter the top position where row anchor should scrollTo', 'themify')) . '</span>'.
                 '<input type="number" class="width4" min="0" max=5000" step="1" name="setting-scrollto_offset" value="' . themify_get( 'setting-scrollto_offset' ) . '" /> ' .
-                ' <small>px</small><br /><span class="pushlabel" style="display: block"><small>' . __('Enter the top position where it should scrollTo', 'themify') . '</small></span>'.
             '</p>';
 
         return $output;
@@ -252,7 +225,7 @@ if (!function_exists('themify_manage_builder_animation')) {
             array('name' => esc_html__('Disable on all devices', 'themify'), 'value' => 'all')
         );
 
-        $output = sprintf('<p><label for="%s" class="label">%s</label><select id="%s" name="%s">%s</select></p>', $pre . 'appearance', esc_html__('Appearance Animation', 'themify'), $pre . 'appearance', $pre . 'appearance', themify_options_module($options, $pre . 'appearance')
+        $output = sprintf('<p><label for="%s" class="label">%s</label><select id="%s" name="%s">%s</select></p>', $pre . 'appearance', esc_html__('Entrance Animation', 'themify'), $pre . 'appearance', $pre . 'appearance', themify_options_module($options, $pre . 'appearance')
         );
         $output .= sprintf('<p><label for="%s" class="label">%s</label><select id="%s" name="%s">%s</select></p>', $pre . 'parallax_bg', esc_html__('Parallax Background', 'themify'), $pre . 'parallax_bg', $pre . 'parallax_bg', themify_options_module($options, $pre . 'parallax_bg')
         );
@@ -292,7 +265,7 @@ function themify_framework_theme_config_add_builder($themify_theme_config) {
 			);
 		}
 
-	if ('disable' !== apply_filters('themify_enable_builder', themify_get('setting-page_builder_is_active'))) {
+	if ('disable' !== apply_filters('themify_enable_builder', themify_get('setting-page_builder_is_active',false,true))) {
 	    $themify_theme_config['panel']['settings']['tab']['page_builder']['custom-module'][] = array(
 		'title' => __('Animation Effects', 'themify'),
 		'function' => 'themify_manage_builder_animation'
@@ -302,13 +275,6 @@ function themify_framework_theme_config_add_builder($themify_theme_config) {
 		'title' => __('Builder Modules', 'themify'),
 		'function' => 'themify_manage_builder'
 	    );
-
-	    
-	    $themify_theme_config['panel']['settings']['tab']['page_builder']['custom-module'][] = array(
-		    'title' => __('Builder Cache', 'themify'),
-		    'function' => 'themify_manage_builder_cache'
-	    );
-	    
 	    
 	    $themify_theme_config['panel']['settings']['tab']['page_builder']['custom-module'][] = array(
 		    'title' => __('Tools', 'themify'),
@@ -322,22 +288,20 @@ function themify_framework_theme_config_add_builder($themify_theme_config) {
 add_filter( 'themify_theme_config_setup', 'themify_framework_theme_config_add_builder', 11 );
 
 function themify_setting_optin() {
-	if ( isset( $_GET['tb_option_flush_cache'] ) ) {
-		$services = Builder_Optin_Services_Container::get_instance()->get_providers();
-		foreach ( $services as $id => $instance ) {
+	
+	$providers = Builder_Optin_Service::get_providers();
+	$clear=isset( $_GET['tb_option_flush_cache'] );
+	ob_start();
+	foreach ( $providers as $id => $instance ) {
+		if ( $clear===true ) {
 			$instance->clear_cache();
 		}
-	}
-
-	ob_start();
-	$providers = Builder_Optin_Services_Container::get_instance()->get_providers();
-	foreach ( $providers as $id => $instance ) {
 		if ( $options = $instance->get_global_options() ) {
 			?>
 			<fieldset id="themify_setting_<?php echo $id; ?>">
 				<legend>
 					<span><?php echo $instance->get_label(); ?></span>
-					<i class="ti-plus"></i>
+					<i class="tf_plus_icon"></i>
 				</legend>
 				<div class="themify_panel_fieldset_wrap" style="display: block !important;">
 					<?php foreach ( $options as $field ) : ?>
@@ -356,7 +320,7 @@ function themify_setting_optin() {
 
 	<br>
 	<p>
-		<a href="<?php echo add_query_arg( 'tb_option_flush_cache', 1 ); ?>" class="tb_option_flush_cache themify_button"><span><?php _e( 'Clear Cache', 'themify' ); ?></span> </a>
+		<a href="<?php echo add_query_arg( 'tb_option_flush_cache', 1 ); ?>" class="tb_option_flush_cache themify_button"><span><?php _e( 'Clear API Cache', 'themify' ); ?></span> </a>
 	</p>
 
 	<?php
