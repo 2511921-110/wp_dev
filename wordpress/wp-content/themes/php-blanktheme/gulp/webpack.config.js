@@ -19,22 +19,22 @@ module.exports = {
         'babel-loader',
         // 'vue-loader'
       ],
-      options: {
-        presets: [
-          [
-            "@babel/preset-env", {
-              modules: false,
-              "targets": {
-                "browsers": "> 1%",
-                "ie": 10,
-                // "forceAllTransforms": true
-              },
-              useBuiltIns: "entry",
-              corejs: 3,
-            }
-          ]
-        ],
-      },
+      // options: {
+      //   presets: [
+      //     [
+      //       "@babel/preset-env", {
+      //         modules: false,
+      //         "targets": {
+      //           "browsers": "> 1%",
+      //           "ie": 10,
+      //           // "forceAllTransforms": true
+      //         },
+      //         useBuiltIns: "entry",
+      //         corejs: 3,
+      //       }
+      //     ]
+      //   ],
+      // },
     },
     {
       test: /\.vue$/,
