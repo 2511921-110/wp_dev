@@ -66,10 +66,10 @@ img {
 
 html {
   font-size: 16px;
-  @media screen and (min-width: 769px) and (max-width: 1024px) {
+  @media screen and (min-width: 811px) and (max-width: 1080px) {
     font-size: 11px;
   }
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 810px) {
     font-size: 13px;
   }
 }
@@ -142,7 +142,7 @@ table {
         }
       }
       th {
-        @media screen and (min-width: 769px) {
+        @media screen and (min-width: 811px) {
           white-space: nowrap;
           padding-right: 2em;
         }
@@ -208,7 +208,7 @@ a {
   z-index: 10;
   img {
     max-width: 30vw;
-    @media screen and (min-width: 769px) {
+    @media screen and (min-width: 811px) {
       max-width: 10vw;
     }
   }
@@ -224,17 +224,22 @@ a {
   }
 }
 
+.section {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
 @media screen and (min-width: 429px) {
   // iphone 12 Proよりも大きい場合
 }
-@media screen and (min-width: 769px) {
+@media screen and (min-width: 811px) {
   // ipadの縦表示よりも大きい場合
 }
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 810px) {
   // ipadの縦表示以下の場合
 }
 
-@media screen and (min-width: 769px) and (max-width: 1024px) {
+@media screen and (min-width: 811px) and (max-width: 1080px) {
   //iPadの縦と横までの間のサイズ
 }
 
@@ -243,7 +248,7 @@ a {
 *******************************/
 .menu__btnwrap {
   display: none;
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 810px) {
     display: block;
     position: fixed;
     right: 10px;
@@ -258,7 +263,7 @@ a {
 }
 .spmenu_btn {
   display: none;
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 810px) {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -321,7 +326,7 @@ a {
 }
 
 .globalNav {
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 810px) {
     display: flex;
     position: fixed;
     height: 100vh;
@@ -599,13 +604,13 @@ a {
     vertical-align: top;
     white-space: inherit;
     position: relative;
-    @media screen and (max-width: 768px) {
+    @media screen and (max-width: 810px) {
       display: block;
       width: 100%;
     }
   }
   th {
-    @media screen and (min-width: 769px) {
+    @media screen and (min-width: 811px) {
       white-space: nowrap;
       width: 320px;
     }
@@ -627,7 +632,7 @@ a {
       font-size: 16px;
       padding: 0.4rem 0.6rem;
       margin-bottom: 0.3rem;
-      @media screen and (max-width: 768px) {
+      @media screen and (max-width: 810px) {
         width: 100%;
       }
     }
@@ -640,7 +645,7 @@ a {
     padding: 0.4rem 0.6rem;
     display: inline-block;
     border-radius: 0;
-    @media screen and (min-width: 769px) {
+    @media screen and (min-width: 811px) {
       -moz-appearance: none;
       -webkit-appearance: none;
       appearance: none;
@@ -785,9 +790,9 @@ a {
 @media screen and (min-width: 429px) {
   // iphone 12 Proよりも大きい場合
 }
-@media screen and (min-width: 769px) {
+@media screen and (min-width: 811px) {
   // ipadの縦表示よりも大きい場合
 }
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 810px) {
   // ipadの縦表示以下の場合
 }
