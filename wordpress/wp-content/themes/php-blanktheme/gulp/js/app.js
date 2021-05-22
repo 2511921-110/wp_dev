@@ -1,12 +1,12 @@
 import Vue from 'vue'
 import axios from 'axios'
 // import Inview from 'in-view'
-// import objectFitImages from 'object-fit-images';
+import objectFitImages from 'object-fit-images';
 
 /*******************
   object fit
 *******************/
-// objectFitImages('.module__img img', {watchMQ: true});
+objectFitImages('.cover img', {watchMQ: true});
 
 
 /*******************
@@ -315,3 +315,21 @@ if (document.getElementById('estimate')) {
   //   e =
   // }
 }
+
+/*******************
+  外部リンク別窓
+*******************/
+var external_link__add_blank = function(){
+  var a_tags = document.querySelectorAll('a:not([target="_blank"])'),
+  res = [];
+  if(!a_tags.length) return; // a_tagsがマッチなし = end
+  for(var i = 0; i < a_tags.length; i++ ){
+    if( a_tags[i].href.indexOf(window.location.host) !== -1 ) continue;
+    if( a_tags[i].href.indexOf('#') === 1 ) continue;
+    a_tags[i].setAttribute('target','_blank');
+    res.push(a_tags[i])
+  }
+  return res;
+}
+// var a__add_blanks = external_link__add_blank(); console.log(a__add_blanks);
+document.addEventListener('DOMContentLoaded',external_link__add_blank,false);
