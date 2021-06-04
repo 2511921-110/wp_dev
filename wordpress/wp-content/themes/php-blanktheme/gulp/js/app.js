@@ -6,22 +6,22 @@ import objectFitImages from 'object-fit-images';
 /*******************
   object fit
 *******************/
-objectFitImages('.cover img', {watchMQ: true});
+objectFitImages('.cover img', { watchMQ: true });
 
 
 /*******************
   loading 画面
 *******************/
-if(document.getElementById('js-loader')){
+if (document.getElementById('js-loader')) {
   const loader = document.getElementById('js-loader');
   window.addEventListener('load', () => {
     const ms = 400;
     loader.style.transition = 'opacity ' + ms + 'ms';
 
-    const loaderOpacity = function(){
+    const loaderOpacity = function () {
       loader.style.opacity = 0;
     }
-    const loaderDisplay = function(){
+    const loaderDisplay = function () {
       loader.style.display = 'none';
     }
     // setTimeout(loaderOpacity, 1);
@@ -35,22 +35,22 @@ if(document.getElementById('js-loader')){
 /*******************
   sticky header
 *******************/
-function　scrollFunction() {
+function scrollFunction() {
   var this_y = window.pageYOffset;
   // console.log(this_y)
   if (this_y > 130) {
-      document.getElementById("header").classList.add("active");
-      setTimeout(() => {
-        document.getElementById("header").classList.add("in-view");
-      }, 1000)
+    document.getElementById("header").classList.add("active");
+    setTimeout(() => {
+      document.getElementById("header").classList.add("in-view");
+    }, 1000)
   } else {
-      document.getElementById("header").classList.remove("active", "in-view");
+    document.getElementById("header").classList.remove("active", "in-view");
   }
 }
-window.onload = function() {
+window.onload = function () {
   scrollFunction();
 }
-window.onscroll = function() {
+window.onscroll = function () {
   scrollFunction();
 }
 
@@ -58,7 +58,7 @@ window.onscroll = function() {
   Nav
 *******************/
 
-if(document.getElementsByClassName('globalNav')[0]){
+if (document.getElementsByClassName('globalNav')[0]) {
   const wrap = document.querySelector('.menu__btnwrap')
   const nav_el = document.querySelector('.spmenu_btn')
   const nav_state_class = 'globalNav_state'
@@ -66,20 +66,20 @@ if(document.getElementsByClassName('globalNav')[0]){
   const nav_close_class = 'spmenu_btnClose'
   const nav_wrap = document.querySelector('.menu')
 
-  wrap.addEventListener('click',()=>{
-    if(document.querySelector('.'+ nav_state_class) === null){
+  wrap.addEventListener('click', () => {
+    if (document.querySelector('.' + nav_state_class) === null) {
       document.querySelector(nav_target_class).classList.add(nav_state_class)
       nav_el.classList.add(nav_close_class)
-    }else{
+    } else {
       document.querySelector(nav_target_class).classList.remove(nav_state_class)
       nav_el.classList.remove(nav_close_class)
     }
-  },false)
+  }, false)
 
-  nav_wrap.addEventListener('click',()=>{
+  nav_wrap.addEventListener('click', () => {
     document.querySelector(nav_target_class).classList.remove(nav_state_class)
     nav_el.classList.remove(nav_close_class)
-  },false)
+  }, false)
 }
 
 
@@ -95,21 +95,21 @@ if (document.getElementById('Map')) {
         lng: 135.5013464,
         zoom: 16,
         icon: THEME_URL + "/assets/mappin.png",
-        geometry:{
-          hue:'#111',       // 色
-          gamma:0.1,        // ガンマ 0.01 ~ 10
-          lightness:-70,    // 明度  -100 ~ 100
-          saturation:-100,   // 彩度 -100 ~ 100
+        geometry: {
+          hue: '#111',       // 色
+          gamma: 0.1,        // ガンマ 0.01 ~ 10
+          lightness: -70,    // 明度  -100 ~ 100
+          saturation: -100,   // 彩度 -100 ~ 100
         },
-        labels:{
-          hue:'#ae9e74',       // 色
-          gamma:1,        // ガンマ
-          lightness:0,    // 明度
+        labels: {
+          hue: '#ae9e74',       // 色
+          gamma: 1,        // ガンマ
+          lightness: 0,    // 明度
           saturation: -50, // 彩度
         }
       }
     },
-    mounted(){
+    mounted() {
       let map
       let marker
       let center = {
@@ -159,7 +159,7 @@ if (document.getElementById('Map')) {
 
 var trigger = document.querySelectorAll('.accordion__title');
 for (var i = 0; i < trigger.length; i++) {
-  trigger[i].addEventListener('click', function() {
+  trigger[i].addEventListener('click', function () {
     var body = this.nextElementSibling;
     if (this.classList.contains('is-active')) {
       this.classList.remove('is-active');
@@ -188,22 +188,22 @@ if (document.getElementById('Posts')) {
         eventObject: '',
       }
     },
-    mounted(){
-      axios(BASEURL+'posts')
-      .then( (res) =>{
-        this.posts = res.data
-      })
-      axios(BASEURL+'categories')
-      .then( (res) =>{
-        this.cats = res.data.filter(item => item.slug != 'uncategorized')
-      })
-    },
-    methods:  {
-      btnClicked(e) {
-        axios(BASEURL+'posts')
-        .then( (res) =>{
-          this.posts = res.data.filter(item => item.categories.includes(e))
+    mounted() {
+      axios(BASEURL + 'posts')
+        .then((res) => {
+          this.posts = res.data
         })
+      axios(BASEURL + 'categories')
+        .then((res) => {
+          this.cats = res.data.filter(item => item.slug != 'uncategorized')
+        })
+    },
+    methods: {
+      btnClicked(e) {
+        axios(BASEURL + 'posts')
+          .then((res) => {
+            this.posts = res.data.filter(item => item.categories.includes(e))
+          })
       }
     },
   })
@@ -231,7 +231,7 @@ if (document.getElementById('Posts')) {
 // }
 
 /*******************
-  tab
+  tab機能1
 *******************/
 if (document.getElementById('tab')) {
   //-- タブ切り替え --------------------------------------------------------------------
@@ -274,6 +274,35 @@ if (document.getElementById('tab')) {
 
 
 /*******************
+  tab機能2
+*******************/
+window.addEventListener("load", function () {
+  // store tabs variable
+  var myTabs = document.querySelectorAll(".nav-tabs");
+  function myTabClicks(tabClickEvent) {
+    for (var i = 0; i < myTabs.length; i++) {
+      myTabs[i].classList.remove("active");
+    }
+    var clickedTab = tabClickEvent.currentTarget;
+    clickedTab.classList.add("active");
+    tabClickEvent.preventDefault();
+    var myContentPanes = document.querySelectorAll(".tab-content");
+    for (i = 0; i < myContentPanes.length; i++) {
+      myContentPanes[i].classList.remove("active");
+    }
+    var anchorReference = tabClickEvent.target;
+    var activePaneId = anchorReference.getAttribute("href");
+    var activePane = document.querySelector(activePaneId);
+    activePane.classList.add("active");
+  }
+
+  for (i = 0; i < myTabs.length; i++) {
+    myTabs[i].addEventListener("click", myTabClicks)
+  }
+});
+
+
+/*******************
   見積もり機能
 *******************/
 if (document.getElementById('estimate')) {
@@ -282,27 +311,27 @@ if (document.getElementById('estimate')) {
   const setu02 = document.querySelectorAll('input[name=オプション01]');
   const radio = document.querySelectorAll("input[type='radio']")
   console.log(radio)
-  for(i=0;i<setu01.length;i++){
-    setu01[i].addEventListener('click', function(e){
+  for (i = 0; i < setu01.length; i++) {
+    setu01[i].addEventListener('click', function (e) {
       price_sum();
     });
   }
   //optionのクリックを監視
-  for(i=0;i<setu02.length;i++){
-    setu02[i].addEventListener('click', function(e){
+  for (i = 0; i < setu02.length; i++) {
+    setu02[i].addEventListener('click', function (e) {
       price_sum();
     });
   }
   //合計計算
-  function price_sum(){
+  function price_sum() {
     var sum = 0;
-    for (var i = 0; i < setu01.length; i++){
-      if(setu01[i].checked){
+    for (var i = 0; i < setu01.length; i++) {
+      if (setu01[i].checked) {
         sum += parseInt(setu01[i].value);
       }
     }
-    for(var i = 0; i < setu02.length; i ++){
-      if(setu02[i].checked){
+    for (var i = 0; i < setu02.length; i++) {
+      if (setu02[i].checked) {
         sum += parseInt(setu02[i].value);
       }
     }
@@ -319,17 +348,17 @@ if (document.getElementById('estimate')) {
 /*******************
   外部リンク別窓
 *******************/
-var external_link__add_blank = function(){
+var external_link__add_blank = function () {
   var a_tags = document.querySelectorAll('a:not([target="_blank"])'),
-  res = [];
-  if(!a_tags.length) return; // a_tagsがマッチなし = end
-  for(var i = 0; i < a_tags.length; i++ ){
-    if( a_tags[i].href.indexOf(window.location.host) !== -1 ) continue;
-    if( a_tags[i].href.indexOf('#') === 1 ) continue;
-    a_tags[i].setAttribute('target','_blank');
+    res = [];
+  if (!a_tags.length) return; // a_tagsがマッチなし = end
+  for (var i = 0; i < a_tags.length; i++) {
+    if (a_tags[i].href.indexOf(window.location.host) !== -1) continue;
+    if (a_tags[i].href.indexOf('#') === 1) continue;
+    a_tags[i].setAttribute('target', '_blank');
     res.push(a_tags[i])
   }
   return res;
 }
 // var a__add_blanks = external_link__add_blank(); console.log(a__add_blanks);
-document.addEventListener('DOMContentLoaded',external_link__add_blank,false);
+document.addEventListener('DOMContentLoaded', external_link__add_blank, false);
