@@ -8,11 +8,11 @@
 // font-wight 100 400 700
 
 /*color*/
-$color-theme: #ce0613;
-$color-sub: #160804;
+$color-theme: #222d66;
+$color-sub: #f2f2f2;
 $color-base: white;
 $color-text: #000;
-$color-accent: #ce0613;
+$color-accent: #d31d4f;
 
 /*font*/
 //$gothic_fonts: 'Noto Serif', 游明朝,"Yu Mincho",YuMincho,"Hiragino Mincho ProN",HGS明朝E,メイリオ,Meiryo,serif;
@@ -55,8 +55,10 @@ $mincho_fonts: 游明朝, 'Yu Mincho', YuMincho, 'Hiragino Mincho ProN', HGS明�
     /*右上、左下*/ $v 0px 1px 0, $v 0-1px 0, /*右、左*/ $v -1px 0 0, $v 1px 0 0; /*上、下*/
 }
 
-.mont {
-  font-family: 'Montserrat', sans-serif;
+@mixin awesome($c: '\f054', $w: 900) {
+  font-family: 'Font Awesome 5 Free';
+  font-weight: $w;
+  content: $c;
 }
 
 img {
@@ -83,7 +85,7 @@ body {
 }
 
 p {
-  margin: 0 0 1em 0;
+  margin: 0 0 1.7em 0;
   &:last-child {
     margin-bottom: 0;
   }
@@ -185,10 +187,20 @@ a {
   color: $color-text;
   text-decoration: none;
   &:hover {
-    color: lighten($color-sub, 15);
+    color: lighten($color-theme, 15);
     img {
       opacity: 0.7;
     }
+  }
+}
+
+.cover{
+  img{
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    font-family: "object-fit: cover;";
   }
 }
 
@@ -219,8 +231,10 @@ a {
 *******************************/
 .container {
   &__min {
+    max-width: 960px;
   }
   &__large {
+    max-width: 1440px;
   }
 }
 
@@ -249,82 +263,81 @@ a {
 .menu__btnwrap {
   display: none;
   @media screen and (max-width: 810px) {
-    display: block;
-    position: fixed;
-    right: 10px;
-    top: 10px;
-    z-index: 6;
-    text-align: center;
-    background-color: rgba($color-theme, 0.7);
-    color: $color-base;
-    padding: 5px;
-    line-height: 1.3;
+  display: block;
+  position: fixed;
+  right: 10px;
+  top: 10px;
+  z-index: 6;
+  text-align: center;
+  background-color: rgba($color-theme, 0.7);
+  color: $color-base;
+  padding: 5px;
+  line-height: 1.3;
   }
 }
 .spmenu_btn {
   display: none;
   @media screen and (max-width: 810px) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    position: relative;
-    width: 45px;
-    height: 25px;
-    margin-bottom: 5px;
-    &:hover {
-      cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+  width: 45px;
+  height: 25px;
+  margin-bottom: 5px;
+  &:hover {
+    cursor: pointer;
+  }
+  &::before,
+  &::after {
+    content: '';
+    display: block;
+    height: 1px;
+    width: 100%;
+    background-color: $color-base;
+    transition: all 0.3s;
+    position: absolute;
+  }
+  &::before {
+    left: 0px;
+    top: 0px;
+  }
+  &::after {
+    left: 0px;
+    bottom: 0px;
+  }
+  span {
+    display: block;
+    height: 1px;
+    width: 100%;
+    background-color: $color-base;
+    transition: all 0.3s;
+  }
+  &Close {
+    span {
+      width: 0;
     }
     &::before,
     &::after {
-      content: '';
-      display: block;
-      height: 1px;
-      width: 100%;
-      background-color: $color-base;
-      transition: all 0.3s;
+      transform-origin: center;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      margin: auto;
       position: absolute;
+      width: 100%;
     }
     &::before {
-      left: 0px;
-      top: 0px;
+      transform: rotate(45deg);
     }
     &::after {
-      left: 0px;
-      bottom: 0px;
-    }
-    span {
-      display: block;
-      height: 1px;
-      width: 100%;
-      background-color: $color-base;
-      transition: all 0.3s;
-    }
-    &Close {
-      span {
-        width: 0;
-      }
-      &::before,
-      &::after {
-        transform-origin: center;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        margin: auto;
-        position: absolute;
-        width: 100%;
-      }
-      &::before {
-        transform: rotate(45deg);
-      }
-      &::after {
-        transform: rotate(-45deg);
-      }
+      transform: rotate(-45deg);
     }
   }
+  }
 }
-
 .globalNav {
   @media screen and (max-width: 810px) {
     display: flex;
@@ -357,6 +370,9 @@ a {
       display: flex;
       align-content: center;
     }
+  }
+  @media screen and (min-width: 811px) {
+    display: none;
   }
 }
 
@@ -417,6 +433,8 @@ a {
     text-align: center;
     @include font-size(16);
     border-left: 1px solid $color-sub;
+    background-color: $color-sub;
+    padding: 0.8rem 0;
     &:first-child {
       border-left: none;
     }
@@ -437,8 +455,30 @@ a {
 }
 
 /*******************************
-  text
+  size
 *******************************/
+.size{}
+
+/*******************************
+  color
+*******************************/
+.color{
+  &__theme{
+    color: $color-theme;
+  }
+  &__sub{
+    color: $color-sub;
+  }
+  &__accent{
+    color: $color-accent;
+  }
+  &__base{
+    color: $color-base;
+  }
+  &__text{
+    color: $color-text;
+  }
+}
 
 /*******************************
   btn
@@ -451,6 +491,23 @@ a {
 /*******************************
   background
 *******************************/
+.bg{
+  &__theme{
+    background-color: $color-theme;
+  }
+  &__sub{
+    background-color: $color-sub;
+  }
+  &__accent{
+    background-color: $color-accent;
+  }
+  &__base{
+    background-color: $color-base;
+  }
+  &__text{
+    background-color: $color-text;
+  }
+}
 
 /*******************************
   border
@@ -459,6 +516,13 @@ a {
 /*******************************
   map
 *******************************/
+.map{
+  iframe{
+    display: block;
+    width: 100%;
+    height: 450px;
+  }
+}
 
 /*******************************
   single
@@ -569,6 +633,7 @@ a {
     background-color: $color-theme;
     padding: 0.4rem;
     margin-bottom: 0.5rem;
+    @include font-size(18);
   }
   ul {
     & > li {
@@ -632,12 +697,21 @@ a {
       font-size: 16px;
       padding: 0.4rem 0.6rem;
       margin-bottom: 0.3rem;
+      max-width: 30em;
+      background-color: $color-base;
       @media screen and (max-width: 810px) {
         width: 100%;
       }
     }
     &:last-child {
       margin-bottom: 0;
+    }
+  }
+  .mwform-tel-field{
+    input{
+      @media screen and (max-width: 810px) {
+        width: 4em;
+      }
     }
   }
   select {
@@ -669,6 +743,7 @@ a {
     font-size: 16px;
     padding: 0.4rem 0.6rem;
     width: 100%;
+    max-width: 30em;
   }
   .error {
     position: absolute;
@@ -786,6 +861,15 @@ a {
 /*******************************
   サイト固有
 *******************************/
+.module{
+  &__img{
+    img{
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}
 
 @media screen and (min-width: 429px) {
   // iphone 12 Proよりも大きい場合
