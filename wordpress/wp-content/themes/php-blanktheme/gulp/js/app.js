@@ -354,6 +354,8 @@ var external_link__add_blank = function () {
   if (!a_tags.length) return; // a_tagsがマッチなし = end
   for (var i = 0; i < a_tags.length; i++) {
     if (a_tags[i].href.indexOf(window.location.host) !== -1) continue;
+    if (a_tags[i].classList.contains('none')) continue;
+    // console.log(a_tags[i].className)
     if (a_tags[i].href.indexOf('#') === 1) continue;
     a_tags[i].setAttribute('target', '_blank');
     res.push(a_tags[i])

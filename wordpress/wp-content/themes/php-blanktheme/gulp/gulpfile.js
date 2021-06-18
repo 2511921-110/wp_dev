@@ -44,7 +44,7 @@ function browserSyncFunc(done) {
     //     })
     //   ]
     // },
-    proxy: 'http://tsujiifood.wise/',
+    proxy: 'http://wpdev.wise/',
     files: ['../**/*.css', '../**/*.js', '../**/*.php'],
     port: 4000,
     reloadOnRestart: true,
