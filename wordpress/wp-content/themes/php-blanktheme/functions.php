@@ -1,11 +1,12 @@
 <?php
 
 // wp_enqueue_script('jquery');
-function change_editor_default( $editor ) {
-  $editor = 'tinymce';
-  return $editor;
+function change_editor_default($editor)
+{
+    $editor = 'tinymce';
+    return $editor;
 }
-add_filter( 'wp_default_editor', 'change_editor_default' );
+add_filter('wp_default_editor', 'change_editor_default');
 
 //画像のサイズ追加
 add_image_size('square__large', 600, 600, true);
@@ -19,12 +20,13 @@ function editor_stylesheets_custom_demo($stylesheets)
     //$stylesheets配列に対してフルパスでCSSファイルURLを指定する
 
     //$stylesheets配列の最後に読み込む順番でファイルパスを追加していく
-    array_push($stylesheets,
-    get_template_directory_uri().'/css/bootstrap-grid.css',
+    array_push(
+        $stylesheets,
+        get_template_directory_uri().'/css/bootstrap5/bootstrap-grid.css',
     // get_template_directory_uri().'/css/editor-style.css',
     get_template_directory_uri().'/css/style.css',
-    get_template_directory_uri().'/style.css'
-  );
+        get_template_directory_uri().'/style.css'
+    );
     //読み込むCSSファイル配列は返り値として返す
     return $stylesheets;
 }
@@ -45,7 +47,7 @@ if (!is_admin()) {
         }
         //以下のように使う
         wp_script('js', '/js/bundle.js');
-        wp_css('bootstrap', '/css/bootstrap-grid.css');
+        wp_css('bootstrap', '/css/bootstrap5/bootstrap-grid.css');
         wp_css('css_style', '/css/style.css');
         wp_css('common_style', '/style.css');
     }
@@ -89,7 +91,9 @@ function show_Cat_Posts_fix_func($atts)
     $cat = rtrim($cat, ',');
     // get_postsで指定カテゴリーの記事を指定件数取得
     $sticky = get_option('sticky_posts');
-    if ( !empty($sticky) ) $show -= count($sticky);
+    if (!empty($sticky)) {
+        $show -= count($sticky);
+    }
     $sticky_args = array(
       'cat' => $cat,
       // 'posts_per_page' => $show,
@@ -99,62 +103,62 @@ function show_Cat_Posts_fix_func($atts)
         'cat' => $cat,
         'posts_per_page' => $show,
     );
-    if ( count($sticky) > 0 ){
-      $sticky_posts = get_posts($sticky_args);
+    if (count($sticky) > 0) {
+        $sticky_posts = get_posts($sticky_args);
     }
     $my_posts = get_posts($args);
 
     // 上記条件の投稿があるなら$outputに出力、マークアップはお好みで
     if ($sticky) {
-      // カテゴリーを配列に
-      $cat2 = explode(',', $cat);
-      $catnames2 = '';
-      foreach ($cat2 as $catID) : // カテゴリー名取得ループ
+        // カテゴリーを配列に
+        $cat2 = explode(',', $cat);
+        $catnames2 = '';
+        foreach ($cat2 as $catID) : // カテゴリー名取得ループ
           $catnames2 .= get_the_category_by_ID($catID).', ';
-      endforeach;
-      $catnames2 = rtrim($catnames2, ', ');
-      $output .= '<div class="module__posts">'."\n";
-      foreach ($sticky_posts as $post) : // ループスタート
+        endforeach;
+        $catnames2 = rtrim($catnames2, ', ');
+        $output .= '<div class="module__posts">'."\n";
+        foreach ($sticky_posts as $post) : // ループスタート
       $post_id = get_the_id();
-      $thumb_id = get_post_thumbnail_id($post_id);
-      $thumb_img = wp_get_attachment_image_src($thumb_id, 'medium');
-      setup_postdata($post); // get_the_title() などのテンプレートタグを使えるようにする
-      $output .= '<div id="post-'.get_the_ID().'" class="module__post-item">';
-      if (has_post_thumbnail($post_id)) {
-          $output .= '<div class="module__post-img"><img src="'.$thumb_img[0].'" alt="'.get_the_title().'"></div>';
-      }
-      $output .= '<div class="module__post-date">'.get_the_date().'</div><div class="module__post-title"><a href="'.get_permalink().'">'.get_the_title()."</a></div><div>カテゴリー：".$catnames2 ."</div></div>\n";
-      endforeach; // ループ終わり
-      $output .= "</div>\n";
-      //$output .= "</aside>\n";
+        $thumb_id = get_post_thumbnail_id($post_id);
+        $thumb_img = wp_get_attachment_image_src($thumb_id, 'medium');
+        setup_postdata($post); // get_the_title() などのテンプレートタグを使えるようにする
+        $output .= '<div id="post-'.get_the_ID().'" class="module__post-item">';
+        if (has_post_thumbnail($post_id)) {
+            $output .= '<div class="module__post-img"><img src="'.$thumb_img[0].'" alt="'.get_the_title().'"></div>';
+        }
+        $output .= '<div class="module__post-date">'.get_the_date().'</div><div class="module__post-title"><a href="'.get_permalink().'">'.get_the_title()."</a></div><div>カテゴリー：".$catnames2 ."</div></div>\n";
+        endforeach; // ループ終わり
+        $output .= "</div>\n";
+        //$output .= "</aside>\n";
     }
-    if($show > 0){
-      if ($my_posts) {
-          // カテゴリーを配列に
-          $cat = explode(',', $cat);
-          $catnames = '';
-          foreach ($cat as $catID) : // カテゴリー名取得ループ
+    if ($show > 0) {
+        if ($my_posts) {
+            // カテゴリーを配列に
+            $cat = explode(',', $cat);
+            $catnames = '';
+            foreach ($cat as $catID) : // カテゴリー名取得ループ
               $catnames .= get_the_category_by_ID($catID).', ';
-          endforeach;
-          $catnames = rtrim($catnames, ', ');
+            endforeach;
+            $catnames = rtrim($catnames, ', ');
 
-          /*$output .= '<aside class="showcatposts">'."\n";
-          $output .= '<h2 class="showcatposts-title">カテゴリー「'.$catnames.'」'."の最新記事（".$show."件）</h2>\n";*/
-          $output .= '<div class="module__posts">'."\n";
-          foreach ($my_posts as $post) : // ループスタート
+            /*$output .= '<aside class="showcatposts">'."\n";
+            $output .= '<h2 class="showcatposts-title">カテゴリー「'.$catnames.'」'."の最新記事（".$show."件）</h2>\n";*/
+            $output .= '<div class="module__posts">'."\n";
+            foreach ($my_posts as $post) : // ループスタート
           $post_id = get_the_id();
-          $thumb_id = get_post_thumbnail_id($post_id);
-          $thumb_img = wp_get_attachment_image_src($thumb_id, 'medium');
-          setup_postdata($post); // get_the_title() などのテンプレートタグを使えるようにする
-          $output .= '<div id="post-'.get_the_ID().'" class="module__post-item">';
-          if (has_post_thumbnail($post_id)) {
-              $output .= '<div class="module__post-img"><img src="'.$thumb_img[0].'" alt="'.get_the_title().'"></div>';
-          }
-          $output .= '<div class="module__post-date">'.get_the_date().'</div><div class="module__post-title"><a href="'.get_permalink().'">'.get_the_title()."</a></div><div>カテゴリー：".$catnames ."</div></div>\n";
-          endforeach; // ループ終わり
-          $output .= "</div>\n";
-          //$output .= "</aside>\n";
-      }
+            $thumb_id = get_post_thumbnail_id($post_id);
+            $thumb_img = wp_get_attachment_image_src($thumb_id, 'medium');
+            setup_postdata($post); // get_the_title() などのテンプレートタグを使えるようにする
+            $output .= '<div id="post-'.get_the_ID().'" class="module__post-item">';
+            if (has_post_thumbnail($post_id)) {
+                $output .= '<div class="module__post-img"><img src="'.$thumb_img[0].'" alt="'.get_the_title().'"></div>';
+            }
+            $output .= '<div class="module__post-date">'.get_the_date().'</div><div class="module__post-title"><a href="'.get_permalink().'">'.get_the_title()."</a></div><div>カテゴリー：".$catnames ."</div></div>\n";
+            endforeach; // ループ終わり
+            $output .= "</div>\n";
+            //$output .= "</aside>\n";
+        }
     }
     // クエリのリセット
     wp_reset_postdata();
@@ -223,20 +227,24 @@ add_shortcode('showcatposts', 'show_Cat_Posts_func');
 
 
 // 日付アーカイブ title 変更
-function jp_date_archive_wp_title( $title ) {
-	if ( is_date() ) {
-		$title = '';
-		if ( $y = intval(get_query_var('year')) )
-			$title .= sprintf('%4d年', $y);
-		if ( $m = intval(get_query_var('monthnum')) )
-			$title .= sprintf('%02d月', $m);
-		if ( $d = intval(get_query_var('day')) )
-			$title .= sprintf('%02d日', $d);
-		$title .= ' | ';
-	}
-	return $title;
+function jp_date_archive_wp_title($title)
+{
+    if (is_date()) {
+        $title = '';
+        if ($y = intval(get_query_var('year'))) {
+            $title .= sprintf('%4d年', $y);
+        }
+        if ($m = intval(get_query_var('monthnum'))) {
+            $title .= sprintf('%02d月', $m);
+        }
+        if ($d = intval(get_query_var('day'))) {
+            $title .= sprintf('%02d日', $d);
+        }
+        $title .= ' | ';
+    }
+    return $title;
 }
-add_filter( 'wp_title', 'jp_date_archive_wp_title', 1 );
+add_filter('wp_title', 'jp_date_archive_wp_title', 1);
 
 
 //headerの不要なタグを消す
@@ -598,17 +606,18 @@ function get_current_term()
         $term = get_term_by('slug', $term_slug, $tax_slug);
         $id = $term->term_id;
     } elseif (is_month()) {
-      $id = "";
-      $tax_slug = "";
+        $id = "";
+        $tax_slug = "";
     }
 
     return get_term($id, $tax_slug);
 }
 
 //woo commerce の機能を使う
-add_action( 'after_setup_theme', 'woocommerce_support' );
-function woocommerce_support() {
-    add_theme_support( 'woocommerce' );
+add_action('after_setup_theme', 'woocommerce_support');
+function woocommerce_support()
+{
+    add_theme_support('woocommerce');
 }
 
 //カスタム投稿追加
@@ -655,7 +664,7 @@ function woocommerce_support() {
 // }
 
 
-function generate_upload_image_tag($name, $value){?>
+function generate_upload_image_tag($name, $value) {?>
 <h3>ロゴ</h3>
 <p>※ファビコンとローディング画面へ表示されます</p>
 <div id="<?php echo $name; ?>_thumbnail" class="uploded-thumbnail">
@@ -742,32 +751,30 @@ function generate_upload_image_tag($name, $value){?>
 
 
 //管理画面にメニュー追加
-function add_site_settings_menu() {
-	add_menu_page('サイト設定ページ', 'サイトの設定', 'manage_options', 'site_settings.php', 'site_settings_page' );
+function add_site_settings_menu()
+{
+    add_menu_page('サイト設定ページ', 'サイトの設定', 'manage_options', 'site_settings.php', 'site_settings_page');
 }
 add_action('admin_menu', 'add_site_settings_menu');
 
 //データの保存
-function site_settings_page() {
-	if (isset($_POST['siteoption_keyword'])) {
-		update_option('siteoption_keyword', wp_unslash($_POST['siteoption_keyword']));
+function site_settings_page()
+{
+    if (isset($_POST['siteoption_keyword'])) {
+        update_option('siteoption_keyword', wp_unslash($_POST['siteoption_keyword']));
+    }
+    if (isset($_POST['home_image_url'])) {
+        update_option('home_image_url', wp_unslash($_POST['home_image_url']));
+    } ?>
 
-  }
-  if (isset($_POST['home_image_url'])) {
-		update_option('home_image_url', wp_unslash($_POST['home_image_url']));
-
-	}
-?>
-
-<?php //管理画面の表示 ?>
+<?php //管理画面の表示?>
 <div class="wrap">
   <h2>サイトの設定</h2>
   <?php
-	if (isset($_POST['siteoption_keyword'])) {
-		echo '<div id="setting-error-settings_updated" class="updated settings-error notice is-dismissible">
+    if (isset($_POST['siteoption_keyword'])) {
+        echo '<div id="setting-error-settings_updated" class="updated settings-error notice is-dismissible">
 			<p><strong>設定を保存しました。</strong></p></div>';
-	}
-?>
+    } ?>
   <form method="post" action="">
     <?php submit_button(); ?>
     <!-- <table class="form-table setting-table">
@@ -777,28 +784,29 @@ function site_settings_page() {
 	</tr>
 </table> -->
     <?php
-  generate_upload_image_tag('home_image_url', get_option('home_image_url'));
-?>
+  generate_upload_image_tag('home_image_url', get_option('home_image_url')); ?>
     <?php submit_button(); ?>
   </form>
 </div>
 
-<?php //関数 ?>
+<?php //関数?>
 <?php
 }
-function siteoption_keyword() {
-	echo esc_attr(get_option('siteoption_keyword'));
-	echo esc_attr(get_option('home_image_url'));
+function siteoption_keyword()
+{
+    echo esc_attr(get_option('siteoption_keyword'));
+    echo esc_attr(get_option('home_image_url'));
 }
-function my_admin_scripts() {
-  //メディアアップローダの javascript API
-  wp_enqueue_media();
+function my_admin_scripts()
+{
+    //メディアアップローダの javascript API
+    wp_enqueue_media();
 }
-add_action( 'admin_print_scripts', 'my_admin_scripts' );
+add_action('admin_print_scripts', 'my_admin_scripts');
 
 add_filter('gettext', 'change_admin_cpt_text_filter', 20, 3);
 
-function change_admin_cpt_text_filter( $translated_text, $untranslated_text, $domain )
+function change_admin_cpt_text_filter($translated_text, $untranslated_text, $domain)
 {
     switch ($untranslated_text) {
       case 'Website'://変更したい文言の元テキストを入れる
@@ -812,20 +820,81 @@ function change_admin_cpt_text_filter( $translated_text, $untranslated_text, $do
 }
 
 
-//[template arg1="content" arg2="contact"]
-function wrap_get_template_part($atts) {
-  extract(shortcode_atts(
-      array(
+//[template arg1="includes/post" arg2="loop"]
+function wrap_get_template_part($atts)
+{
+    extract(
+        shortcode_atts(
+            array(
           'arg1' => '',
           'arg2' => '',
-      ), $atts)
-  );
+      ),
+            $atts
+        )
+    );
 
-  ob_start();
-  get_template_part( $arg1, $arg2 );
-  $html = ob_get_contents();
-  ob_end_clean();
+    ob_start();
+    get_template_part($arg1, $arg2);
+    $html = ob_get_contents();
+    ob_end_clean();
 
-  return $html;
+    return $html;
 }
-add_shortcode( 'template', 'wrap_get_template_part' );
+add_shortcode('template', 'wrap_get_template_part');
+
+
+/*******************
+  検索結果にカスタムフィールドを含める
+*******************/
+function posts_search_custom_fields($orig_search, $query)
+{
+    if ($query -> is_search() && $query -> is_main_query() && !is_admin()) {
+        global $wpdb;
+        $q = $query -> query_vars;
+        $n = !empty($q['exact']) ? '' : '%';
+        $searchand = $query_temp = '';
+        $query_temp = $q['search_terms'];
+
+        if ($query_temp) {
+            foreach ($query_temp as $term) {
+                $include = '-' !== substr($term, 0, 1);
+                if ($include) {
+                    $like_op = 'LIKE';
+                    $andor_op = 'OR';
+                } else {
+                    $like_op = 'NOT LIKE';
+                    $andor_op = 'AND';
+                    $term = substr($term, 1);
+                }
+                $like = $n.$wpdb -> esc_like($term).$n;
+
+                $search.= $wpdb -> prepare("{$searchand}(($wpdb->posts.post_title $like_op %s) $andor_op ($wpdb->posts.post_content $like_op %s) $andor_op (custom.meta_value $like_op %s))", $like, $like, $like);
+                $searchand = ' AND ';
+            }
+        } // end if
+
+        if (!empty($search)) {
+            $search = " AND ({$search}) ";
+            if (!is_user_logged_in()) {
+                $search.= " AND ($wpdb->posts.post_password = '') ";
+            }
+        }
+        return $search;
+    } else {
+        return $orig_search;
+    }
+}
+
+function posts_join_custom_fields($join, $query)
+{
+    if ($query -> is_search() && $query -> is_main_query() && !is_admin()) {
+        global $wpdb;
+        $join.= " INNER JOIN ( ";
+        $join.= " SELECT post_id, group_concat( meta_value separator ' ') AS meta_value FROM $wpdb->postmeta ";
+        $join.= " GROUP BY post_id ";
+        $join.= " ) AS custom ON ($wpdb->posts.ID = custom.post_id) ";
+    }
+    return $join;
+}
+add_filter('posts_search', 'posts_search_custom_fields', 10, 2);
+add_filter('posts_join', 'posts_join_custom_fields', 10, 2);
