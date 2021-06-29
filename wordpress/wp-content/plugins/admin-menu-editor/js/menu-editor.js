@@ -238,6 +238,7 @@ function randomMenuId(prefix, size){
 
     return prefix + suffix;
 }
+AmeEditorApi.randomMenuId = randomMenuId;
 
 function outputWpMenu(menu){
 	var menuCopy = $.extend(true, {}, menu);
@@ -619,13 +620,9 @@ var knownMenuFields = {
 		caption: 'Embedded page ID',
 		defaultValue: 'Select page to display',
 		type: 'text',
-		visible: false, //Displayed on-demand.
 		addDropdown: 'ws_embedded_page_selector',
 
 		display: function(menuItem, displayValue, input) {
-			//Only show this field if the "Embed WP page" template is selected.
-			input.closest('.ws_edit_field').toggle(menuItem.template_id === wsEditorData.embeddedPageTemplateId);
-
 			input.prop('readonly', true);
 			var pageId = parseInt(getFieldValue(menuItem, 'embedded_page_id', 0), 10),
 				blogId = parseInt(getFieldValue(menuItem, 'embedded_page_blog_id', 1), 10),
@@ -658,6 +655,11 @@ var knownMenuFields = {
 
 		write: function() {
 			//The user cannot directly edit this field. We deliberately ignore writes.
+		},
+
+		visible: function(menuItem) {
+			//Only show this field if the "Embed WP page" template is selected.
+			return (menuItem.template_id === wsEditorData.embeddedPageTemplateId);
 		}
 	}),
 
@@ -719,6 +721,7 @@ var knownMenuFields = {
 		}
 	}),
 
+	//TODO: Never save this field. It just wastes database space.
 	'required_capability_read_only' : $.extend({}, baseField, {
 		caption: 'Required capability',
 		defaultValue: 'none',
@@ -985,6 +988,8 @@ var knownMenuFields = {
 		standardCaption: false
 	})
 };
+
+var visibleMenuFieldsByType = {};
 
 AmeEditorApi.getItemDisplayUrl = function(menuItem) {
 	var url = getFieldValue(menuItem, 'file', '');
@@ -1330,11 +1335,17 @@ function updateParentAccessUi(containerNode) {
  */
 function updateItemEditor(containerNode) {
 	var menuItem = containerNode.data('menu_item');
+	var itemSubType = (menuItem.hasOwnProperty('sub_type') ? menuItem['sub_type'] : '');
 
 	//Apply flags based on the item's state.
 	var flags = ['hidden', 'unused', 'custom'];
 	for (var i = 0; i < flags.length; i++) {
 		setMenuFlag(containerNode, flags[i], getFieldValue(menuItem, flags[i], false));
+	}
+
+	if (itemSubType) {
+		var typeTitle = itemSubType.charAt(0).toUpperCase() + itemSubType.slice(1);
+		setMenuFlag(containerNode, 'subtype_' + itemSubType, true, typeTitle);
 	}
 
 	//Update the permissions checkbox & other actor-specific UI
@@ -1374,13 +1385,16 @@ function updateItemEditor(containerNode) {
 			$.data(input.get(0), 'ame_last_display_value', displayValue);
 		}
 
+		var isFieldVisible = _.get(visibleMenuFieldsByType, [itemSubType, fieldName], true);
 		if (typeof (knownMenuFields[fieldName].visible) === 'function') {
-			var isFieldVisible = knownMenuFields[fieldName].visible(menuItem, fieldName);
-			if (isFieldVisible) {
-				field.css('display', '');
-			} else {
-				field.css('display', 'none');
-			}
+			isFieldVisible = isFieldVisible && knownMenuFields[fieldName].visible(menuItem, fieldName);
+		} else {
+			isFieldVisible = isFieldVisible && knownMenuFields[fieldName].visible;
+		}
+		if (isFieldVisible) {
+			field.css('display', '');
+		} else {
+			field.css('display', 'none');
 		}
     });
 }
@@ -2056,8 +2070,9 @@ function ameOnDomReady() {
 		$('.ws_hide_if_pro').hide();
 	}
 
-	//Let other plugins filter knownMenuFields.
+	//Let other plugins filter knownMenuFields and menu fields by type.
 	$(document).trigger('filterMenuFields.adminMenuEditor', [knownMenuFields, baseField]);
+	$(document).trigger('filterVisibleMenuFields.adminMenuEditor', [visibleMenuFieldsByType]);
 
 	//Make the top menu box sortable (we only need to do this once)
     var mainMenuBox = $('#ws_menu_box');
@@ -2123,7 +2138,7 @@ function ameOnDomReady() {
 				verticalBoxOffset = (submenuBox.offset().top - mainMenuBox.offset().top),
 				minSubmenuHeight = (selectedMenu.offset().top - mainMenuBox.offset().top)
 					- verticalBoxOffset
-					+ menuTipHeight - submenuDropZone.outerHeight() + empiricalExtraHeight;
+					+ menuTipHeight - (submenuDropZone.outerHeight() || 0) + empiricalExtraHeight;
 			minSubmenuHeight = Math.max(minSubmenuHeight, 0);
 			submenuBox.css('min-height', minSubmenuHeight);
 		}
@@ -2326,6 +2341,21 @@ function ameOnDomReady() {
 		updateItemEditor(containerNode);
 		updateParentAccessUi(containerNode);
 	}
+
+	/**
+	 * Insert a new top level menu after the selected menu or at the end of the list.
+	 *
+	 * @param {Object} menu
+	 */
+	function insertMenu(menu) {
+		const selection = (typeof getSelectedMenu !== 'undefined') ? getSelectedMenu() : null;
+		if (selection && (selection.length > 0) ) {
+			outputTopMenu(menu, selection);
+		} else {
+			outputTopMenu(menu);
+		}
+	}
+	AmeEditorApi.insertMenu = insertMenu;
 
 	/**
 	 * Confirm with the user that they want to hide "Dashboard -> Home".
@@ -3487,6 +3517,7 @@ function ameOnDomReady() {
     function getSelectedMenu() {
 	    return $('#ws_menu_box').find('.ws_active');
     }
+    AmeEditorApi.getSelectedMenu = getSelectedMenu;
 
 	//Show/Hide menu
 	$('#ws_hide_menu').on('click', function (event) {

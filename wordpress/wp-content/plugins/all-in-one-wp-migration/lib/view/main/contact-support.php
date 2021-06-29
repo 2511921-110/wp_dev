@@ -26,49 +26,6 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	die( 'Kangaroos cannot jump here' );
 }
+?>
 
-class Ai1wm_Report {
-
-	/**
-	 * Submit customer report to servmask.com
-	 *
-	 * @param  string  $email   User e-mail
-	 * @param  string  $message User message
-	 * @param  integer $terms   User accept terms
-	 *
-	 * @return array
-	 */
-	public static function add( $email, $message, $terms ) {
-		// Validate email
-		if ( filter_var( $email, FILTER_VALIDATE_EMAIL ) === false ) {
-			throw new Ai1wm_Report_Exception( __( 'Your email is not valid.', AI1WM_PLUGIN_NAME ) );
-		}
-
-		// Validate message
-		if ( empty( $message ) ) {
-			throw new Ai1wm_Report_Exception( __( 'Please enter comments in the text area.', AI1WM_PLUGIN_NAME ) );
-		}
-
-		// Validate terms
-		if ( empty( $terms ) ) {
-			throw new Ai1wm_Report_Exception( __( 'Please accept report term conditions.', AI1WM_PLUGIN_NAME ) );
-		}
-
-		$response = wp_remote_post(
-			AI1WM_REPORT_URL,
-			array(
-				'timeout' => 15,
-				'body'    => array(
-					'email'   => $email,
-					'message' => $message,
-				),
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			throw new Ai1wm_Report_Exception( sprintf( __( 'Something went wrong: %s', AI1WM_PLUGIN_NAME ), $response->get_error_message() ) );
-		}
-
-		return $response;
-	}
-}
+<a href="https://servmask.com/contact-support" target="_blank"><?php _e( 'Contact Support', AI1WM_PLUGIN_NAME ); ?></a>
