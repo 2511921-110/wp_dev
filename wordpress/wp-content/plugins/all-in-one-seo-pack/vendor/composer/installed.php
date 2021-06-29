@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => '22d9f81fbc1d94a24ab360b06a8de6b3cf2def79',
+    'reference' => '92cc20164467f8856c461977c05d43cda6f99c68',
     'name' => 'awesomemotive/all-in-one-seo-pack-pro',
   ),
   'versions' => 
@@ -18,7 +18,7 @@
       'aliases' => 
       array (
       ),
-      'reference' => '22d9f81fbc1d94a24ab360b06a8de6b3cf2def79',
+      'reference' => '92cc20164467f8856c461977c05d43cda6f99c68',
     ),
     'monolog/monolog' => 
     array (
