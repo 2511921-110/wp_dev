@@ -776,6 +776,14 @@ a:hover img {
   -ms-flex-pack: center;
   justify-content: center;
   z-index: 10;
+  display: none;
+}
+
+.loader.active {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
 }
 
 .loader img {

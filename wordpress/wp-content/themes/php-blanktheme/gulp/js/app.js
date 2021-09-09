@@ -1,5 +1,5 @@
-import Vue from 'vue'
-import axios from 'axios'
+// import Vue from 'vue'
+// import axios from 'axios'
 // import Inview from 'in-view'
 import objectFitImages from 'object-fit-images';
 
@@ -12,8 +12,25 @@ objectFitImages('.cover img', { watchMQ: true });
 /*******************
   loading 画面
 *******************/
+
 if (document.getElementById('js-loader')) {
   const loader = document.getElementById('js-loader');
+  const keyName = 'visited';
+  const keyValue = true;
+
+  if (!sessionStorage.getItem(keyName)) {
+    //sessionStorageにキーと値を追加
+    sessionStorage.setItem(keyName, keyValue);
+
+    //ここに初回アクセス時の処理
+    // console.log("初めての訪問です");
+    loader.classList.add("active");
+
+  } else {
+    //ここに通常アクセス時の処理
+    // console.log("訪問済みです");
+
+  }
   window.addEventListener('load', () => {
     const ms = 400;
     loader.style.transition = 'opacity ' + ms + 'ms';
@@ -86,71 +103,71 @@ if (document.getElementsByClassName('globalNav')[0]) {
 /*******************
   map
 *******************/
-if (document.getElementById('Map')) {
-  const mapInstance = new Vue({
-    el: "#Map",
-    data() {
-      return {
-        lat: 34.6704542,
-        lng: 135.5013464,
-        zoom: 16,
-        icon: THEME_URL + "/assets/mappin.png",
-        geometry: {
-          hue: '#111',       // 色
-          gamma: 0.1,        // ガンマ 0.01 ~ 10
-          lightness: -70,    // 明度  -100 ~ 100
-          saturation: -100,   // 彩度 -100 ~ 100
-        },
-        labels: {
-          hue: '#ae9e74',       // 色
-          gamma: 1,        // ガンマ
-          lightness: 0,    // 明度
-          saturation: -50, // 彩度
-        }
-      }
-    },
-    mounted() {
-      let map
-      let marker
-      let center = {
-        lat: Number(this.lat), // 緯度
-        lng: Number(this.lng) // 経度
-      }
-      map = new google.maps.Map(document.getElementById('Map'), { // #sampleに地図を埋め込む
-        center: center, // 地図の中心を指定
-        zoom: this.zoom, // 地図のズームを指定
-        disableDefaultUI: true,
-        styles: [
-          {
-            featureType: 'all',
-            elementType: 'geometry',
-            stylers: [
-              { hue: this.geometry.hue },
-              { gamma: this.geometry.gamma },
-              { lightness: this.geometry.lightness },
-              { saturation: this.geometry.saturation },
-            ],
-          },
-          {
-            featureType: 'all',
-            elementType: 'labels',
-            stylers: [
-              { hue: this.labels.hue },
-              { gamma: this.labels.gamma },
-              { lightness: this.labels.lightness },
-              { saturation: this.labels.saturation },
-            ],
-          },
-        ]
-      })
-      marker = new google.maps.Marker({ // マーカーの追加
-        position: center, // マーカーを立てる位置を指定
-        map: map, // マーカーを立てる地図を指定
-        icon: this.icon // マーカーのアイコン指定
-      })
-    },
-  })
-}
+// if (document.getElementById('Map')) {
+//   const mapInstance = new Vue({
+//     el: "#Map",
+//     data() {
+//       return {
+//         lat: 34.6704542,
+//         lng: 135.5013464,
+//         zoom: 16,
+//         icon: THEME_URL + "/assets/mappin.png",
+//         geometry: {
+//           hue: '#111',       // 色
+//           gamma: 0.1,        // ガンマ 0.01 ~ 10
+//           lightness: -70,    // 明度  -100 ~ 100
+//           saturation: -100,   // 彩度 -100 ~ 100
+//         },
+//         labels: {
+//           hue: '#ae9e74',       // 色
+//           gamma: 1,        // ガンマ
+//           lightness: 0,    // 明度
+//           saturation: -50, // 彩度
+//         }
+//       }
+//     },
+//     mounted() {
+//       let map
+//       let marker
+//       let center = {
+//         lat: Number(this.lat), // 緯度
+//         lng: Number(this.lng) // 経度
+//       }
+//       map = new google.maps.Map(document.getElementById('Map'), { // #sampleに地図を埋め込む
+//         center: center, // 地図の中心を指定
+//         zoom: this.zoom, // 地図のズームを指定
+//         disableDefaultUI: true,
+//         styles: [
+//           {
+//             featureType: 'all',
+//             elementType: 'geometry',
+//             stylers: [
+//               { hue: this.geometry.hue },
+//               { gamma: this.geometry.gamma },
+//               { lightness: this.geometry.lightness },
+//               { saturation: this.geometry.saturation },
+//             ],
+//           },
+//           {
+//             featureType: 'all',
+//             elementType: 'labels',
+//             stylers: [
+//               { hue: this.labels.hue },
+//               { gamma: this.labels.gamma },
+//               { lightness: this.labels.lightness },
+//               { saturation: this.labels.saturation },
+//             ],
+//           },
+//         ]
+//       })
+//       marker = new google.maps.Marker({ // マーカーの追加
+//         position: center, // マーカーを立てる位置を指定
+//         map: map, // マーカーを立てる地図を指定
+//         icon: this.icon // マーカーのアイコン指定
+//       })
+//     },
+//   })
+// }
 
 
 /*******************
@@ -178,36 +195,36 @@ for (var i = 0; i < trigger.length; i++) {
   posts
 *******************/
 
-if (document.getElementById('Posts')) {
-  const postsInstance = new Vue({
-    el: "#Posts",
-    data() {
-      return {
-        cats: [],
-        posts: [],
-        eventObject: '',
-      }
-    },
-    mounted() {
-      axios(BASEURL + 'posts')
-        .then((res) => {
-          this.posts = res.data
-        })
-      axios(BASEURL + 'categories')
-        .then((res) => {
-          this.cats = res.data.filter(item => item.slug != 'uncategorized')
-        })
-    },
-    methods: {
-      btnClicked(e) {
-        axios(BASEURL + 'posts')
-          .then((res) => {
-            this.posts = res.data.filter(item => item.categories.includes(e))
-          })
-      }
-    },
-  })
-}
+// if (document.getElementById('Posts')) {
+//   const postsInstance = new Vue({
+//     el: "#Posts",
+//     data() {
+//       return {
+//         cats: [],
+//         posts: [],
+//         eventObject: '',
+//       }
+//     },
+//     mounted() {
+//       axios(BASEURL + 'posts')
+//         .then((res) => {
+//           this.posts = res.data
+//         })
+//       axios(BASEURL + 'categories')
+//         .then((res) => {
+//           this.cats = res.data.filter(item => item.slug != 'uncategorized')
+//         })
+//     },
+//     methods: {
+//       btnClicked(e) {
+//         axios(BASEURL + 'posts')
+//           .then((res) => {
+//             this.posts = res.data.filter(item => item.categories.includes(e))
+//           })
+//       }
+//     },
+//   })
+// }
 
 /*******************
   posts

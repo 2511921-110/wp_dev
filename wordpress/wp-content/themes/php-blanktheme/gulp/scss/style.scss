@@ -73,6 +73,45 @@ $mincho_fonts: 游明朝, 'Yu Mincho', YuMincho, 'Hiragino Mincho ProN', HGS明�
   content: $c;
 }
 
+@mixin noto($w: 'medium'){
+  @if $w == 'thin' {
+    font-weight: 100;
+  } @else if $w == 'light' {
+    font-weight: 300;
+  } @else if $w == 'regular' {
+    font-weight: 400;
+  } @else if $w == 'medium' {
+    font-weight: 500;
+  } @else if $w == 'bold' {
+    font-weight: 700;
+  } @else if $w == 'black' {
+    font-weight: 900;
+  }
+}
+
+@mixin mont($w: 'medium'){
+  font-family: 'Montserrat', sans-serif;
+  @if $w == 'thin' {
+    font-weight: 100;
+  } @else if $w == 'ex-l' {
+    font-weight: 200;
+  } @else if $w == 'light' {
+    font-weight: 300;
+  } @else if $w == 'regular' {
+    font-weight: 400;
+  } @else if $w == 'medium' {
+    font-weight: 500;
+  } @else if $w == 'semi-bold' {
+    font-weight: 600;
+  } @else if $w == 'bold' {
+    font-weight: 700;
+  } @else if $w == 'ex-bold' {
+    font-weight: 800;
+  } @else if $w == 'black' {
+    font-weight: 900;
+  }
+}
+
 img {
   max-width: 100%;
   height: auto;
@@ -230,6 +269,10 @@ a {
   align-items: center;
   justify-content: center;
   z-index: 10;
+  display: none;
+  &.active{
+    display: flex;
+  }
   img {
     max-width: 30vw;
     @media screen and (min-width: 811px) {
