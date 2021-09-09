@@ -898,3 +898,13 @@ function posts_join_custom_fields($join, $query)
 }
 add_filter('posts_search', 'posts_search_custom_fields', 10, 2);
 add_filter('posts_join', 'posts_join_custom_fields', 10, 2);
+
+
+/* 検索結果から固定ページを除外する */
+function SearchFilter($query)
+{
+    if (!is_admin() && $query->is_main_query() && $query->is_search()) {
+        $query->set('post_type', 'post');
+    }
+}
+add_action('pre_get_posts', 'SearchFilter');
