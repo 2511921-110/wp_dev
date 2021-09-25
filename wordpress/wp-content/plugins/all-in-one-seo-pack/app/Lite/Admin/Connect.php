@@ -73,7 +73,8 @@ class Connect {
 		remove_action( 'admin_print_styles', 'gutenberg_block_editor_admin_print_styles' );
 
 		if ( 'aioseo-connect-pro' === wp_unslash( $_GET['page'] ) ) { // phpcs:ignore HM.Security.ValidatedSanitizedInput.InputNotSanitized
-			return $this->loadConnectPro();
+			$this->loadConnectPro();
+			return;
 		}
 
 		$this->loadConnect();
@@ -330,6 +331,9 @@ class Connect {
 			'v'        => 1,
 		], defined( 'AIOSEO_UPGRADE_URL' ) ? AIOSEO_UPGRADE_URL : 'https://upgrade.aioseo.com' );
 
+		// We're storing the ID of the user who is installing Pro so that we can add capabilties for him after upgrading.
+		aioseo()->transients->update( 'connect_active_user', get_current_user_id(), 15 * MINUTE_IN_SECONDS );
+
 		return [
 			'url' => $url,
 		];
@@ -409,6 +413,8 @@ class Connect {
 		if ( ! is_wp_error( $active ) ) {
 			aioseo()->internalOptions->internal->connect->reset();
 
+			$this->addCapabilitiesOnUpgrade();
+
 			deactivate_plugins( plugin_basename( AIOSEO_FILE ), false, $network );
 
 			wp_send_json_success( $success );
@@ -453,8 +459,35 @@ class Connect {
 
 		aioseo()->internalOptions->internal->connect->reset();
 
+		$this->addCapabilitiesOnUpgrade();
+
 		deactivate_plugins( plugin_basename( AIOSEO_FILE ), false, $network );
 
 		wp_send_json_success( $success );
+	}
+
+	/**
+	 * Adds our capabilities to all roles on the next request and the installing user on the current request after upgrading to Pro.
+	 * See #2267 and #2288 for context.
+	 *
+	 * @since 4.1.4.4
+	 *
+	 * @return void
+	 */
+	private function addCapabilitiesOnUpgrade() {
+		// We need to set this transient here because the regular activation hooks won't run and Pro otherwise won't clear the cache and add the required capabilities.
+		aioseo()->transients->update( 'pro_just_deactivated_lite', true );
+
+		// Doing the above isn't sufficient because the logged in user will be lacking the capabilities on the first request and see an error. Therefore, we add them manually just for him.
+		$userId = aioseo()->transients->get( 'connect_active_user' );
+		$user   = get_userdata( $userId );
+		if ( is_object( $user ) ) {
+			$capabilities = aioseo()->access->getCapabilityList();
+			foreach ( $capabilities as $capability ) {
+				$user->add_cap( $capability );
+			}
+		}
+
+		aioseo()->transients->delete( 'connect_active_user' );
 	}
 }

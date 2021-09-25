@@ -316,7 +316,7 @@ a {
   nav
 *******************************/
 .menu__btnwrap {
-  display: none;
+  // display: none;
   @media screen and (max-width: 810px) {
   display: block;
   position: fixed;
@@ -331,7 +331,7 @@ a {
   }
 }
 .spmenu_btn {
-  display: none;
+  // display: none;
   @media screen and (max-width: 810px) {
   display: flex;
   align-items: center;
@@ -427,7 +427,7 @@ a {
     }
   }
   @media screen and (min-width: 811px) {
-    display: none;
+    // display: none;
   }
 }
 

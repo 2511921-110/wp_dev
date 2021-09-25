@@ -809,13 +809,6 @@ a:hover img {
 /*******************************
   nav
 *******************************/
-.menu__btnwrap {
-  display: none;
-}
-
-.spmenu_btn {
-  display: none;
-}
 
 /*******************************
   header
@@ -1546,9 +1539,6 @@ a:hover img {
   }
   .loader img {
     max-width: 10vw;
-  }
-  .globalNav {
-    display: none;
   }
   .mw_wp_form th {
     white-space: nowrap;
