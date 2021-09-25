@@ -6,7 +6,7 @@
       <main>
         <article id="post-<?php the_ID(); ?>" <?php post_class('row'); ?>>
           <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
-          <?php get_template_part('post-content'); ?>
+          <?php get_template_part('layout/layout-style04'); ?>
           <?php endwhile; else : ?>
           <div class="col-120">
             <p>記事がありません</p>
